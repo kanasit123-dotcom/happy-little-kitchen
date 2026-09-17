@@ -16,6 +16,12 @@
 - Use original visuals and mechanics. Do not copy another children's app's art, brand, characters, or screen layout.
 - Keep activities playful and creative, with several valid outcomes.
 
+## Recipes and art (2026-09-17)
+
+Nine recipes: cupcake, pizza, smoothie, omelet, noodle soup, cookie, ice cream, toast, birthday cake. Six appliances: oven, blender, pan, pot, freezer, toaster. Five mixing tools: spoon, whisk, ladle, rolling pin, butter knife. All food, appliance, ingredient, tool and topping art is Gemini-drawn PNG in the kitchen's pastel picture-book style (no faces on food). Emoji are no longer used for game objects; keep new content illustrated the same way via `design/PROMPTS-gemini.md`.
+
+The user generates art in Gemini themselves; the AI writes prompts, cuts backgrounds and integrates. Ideas held in reserve for later recipes: fried rice, popcorn (shaking pot), hot cocoa, donut, rice ball.
+
 ## Characters
 
 Preferred friends include the seal, turtle, and rabbit already used here. Avoid adding bears, pigs, hippos, dogs, koalas, or teddy bears.
