@@ -46,17 +46,17 @@ const FRIENDS = {
 const COPY = {
   th: {
     title: 'ครัวจิ๋วแสนสนุก', subtitle: 'เลือกของอร่อย แล้วลงมือทำเลย', language: '🇹🇭 ไทย',
-    home: 'กลับหน้าครัว', listen: 'ฟังอีกครั้ง', add: 'แตะหนึ่งครั้ง หรือลากนิดเดียว',
+    home: 'กลับหน้าครัว', listen: 'ฟังอีกครั้ง', add: 'ลากวัตถุดิบลงชาม หรือแตะของแล้วแตะชาม',
     mixHint: 'กดค้างหรือวนช้อนให้เต็ม', start: 'เริ่มเลย', decorate: 'ตกแต่งได้ตามใจ',
-    done: 'เสร็จแล้ว', serve: 'เลือกเพื่อนที่จะชิม', again: 'ทำอีกจาน', gallery: 'ผลงานของฉัน',
+    done: 'เสร็จแล้ว', serve: 'เลือกเพื่อนที่จะชิม', again: 'ทำอีกจาน', gallery: 'ผลงานของฉัน', place: 'แตะจุดบนอาหาร หรือลากไปวาง',
     praise: ['น่ากินมาก!', 'หอมจังเลย!', 'ทำเก่งมาก!'],
     friendHappy: 'อร่อยมาก ขอบคุณนะ', ready: 'พร้อมแล้ว ไปตกแต่งกัน', mixed: 'เข้ากันดีแล้ว', cooked: 'สุกกำลังดีเลย'
   },
   en: {
     title: 'Happy Little Kitchen', subtitle: 'Pick a treat and make it your way', language: '🇬🇧 ENG',
-    home: 'Back to the kitchen', listen: 'Listen again', add: 'Tap once or drag a little',
+    home: 'Back to the kitchen', listen: 'Listen again', add: 'Drag into the bowl, or tap an item then tap the bowl',
     mixHint: 'Hold or stir until the bar is full', start: 'Start', decorate: 'Decorate it your way',
-    done: 'All done', serve: 'Choose a friend to taste it', again: 'Make another', gallery: 'My creations',
+    done: 'All done', serve: 'Choose a friend to taste it', again: 'Make another', gallery: 'My creations', place: 'Tap the food or drag to place it',
     praise: ['That looks delicious!', 'It smells wonderful!', 'Great cooking!'],
     friendHappy: 'Yummy! Thank you!', ready: 'Ready! Let us decorate it', mixed: 'Perfectly mixed', cooked: 'Cooked just right'
   }
@@ -251,20 +251,108 @@ function renderStep() {
   else renderServe();
 }
 
+function bindDragChoice(button, options) {
+  let active = null;
+  let ignoreClick = false;
+
+  const clear = () => {
+    if (!active) return;
+    window.removeEventListener('pointermove', active.move);
+    window.removeEventListener('pointerup', active.up);
+    window.removeEventListener('pointercancel', active.cancel);
+    active.ghost?.remove();
+    button.classList.remove('drag-source');
+    options.onHover?.(false);
+    active = null;
+  };
+
+  button.addEventListener('pointerdown', (event) => {
+    if (event.button !== undefined && event.button !== 0) return;
+    if (button.disabled || button.classList.contains('used')) return;
+    event.preventDefault();
+    const pointerId = event.pointerId;
+    const startX = event.clientX;
+    const startY = event.clientY;
+
+    const move = (moveEvent) => {
+      if (!active || moveEvent.pointerId !== pointerId) return;
+      moveEvent.preventDefault();
+      const distance = Math.hypot(moveEvent.clientX - startX, moveEvent.clientY - startY);
+      if (!active.moved && distance >= 8) {
+        active.moved = true;
+        const ghost = button.cloneNode(true);
+        ghost.className = `${button.className} drag-ghost`;
+        ghost.removeAttribute('data-index');
+        ghost.removeAttribute('data-top');
+        ghost.setAttribute('aria-hidden', 'true');
+        document.body.appendChild(ghost);
+        active.ghost = ghost;
+        button.classList.add('drag-source');
+      }
+      if (!active.moved) return;
+      active.ghost.style.left = `${moveEvent.clientX}px`;
+      active.ghost.style.top = `${moveEvent.clientY}px`;
+      options.onHover?.(options.isOverTarget(moveEvent.clientX, moveEvent.clientY));
+    };
+
+    const up = (upEvent) => {
+      if (!active || upEvent.pointerId !== pointerId) return;
+      const moved = active.moved;
+      const overTarget = moved && options.isOverTarget(upEvent.clientX, upEvent.clientY);
+      ignoreClick = true;
+      clear();
+      if (!moved) options.onTap();
+      else if (overTarget) options.onDrop(upEvent.clientX, upEvent.clientY);
+      else options.onMiss?.();
+      setTimeout(() => { ignoreClick = false; }, 0);
+    };
+
+    const cancel = (cancelEvent) => {
+      if (active && cancelEvent.pointerId === pointerId) clear();
+    };
+
+    active = { moved: false, ghost: null, move, up, cancel };
+    window.addEventListener('pointermove', move, { passive: false });
+    window.addEventListener('pointerup', up);
+    window.addEventListener('pointercancel', cancel);
+  });
+
+  button.addEventListener('click', () => {
+    if (!ignoreClick) options.onTap();
+  });
+}
+
 function renderIngredients() {
   const recipe = RECIPES[activeRecipe];
   const prompt = t('add');
-  screen(`<div class="stage-zone"><div class="bowl ready" id="bowl" aria-label="bowl"></div></div>
+  screen(`<div class="stage-zone"><button class="bowl ready" id="bowl" aria-label="bowl"></button></div>
     <div class="tray" id="ingredients">
       ${recipe.ingredients.map((item, index) => `<button class="ingredient" data-index="${index}" aria-label="${local(item.name)}">${item.icon}</button>`).join('')}
     </div>`, prompt);
 
   const bowl = app.querySelector('#bowl');
-  const stage = app.querySelector('.stage-zone');
   let added = 0;
+  let selected = null;
+  const isOverBowl = (x, y) => {
+    const rect = bowl.getBoundingClientRect();
+    const padding = 54;
+    return x >= rect.left - padding && x <= rect.right + padding
+      && y >= rect.top - padding && y <= rect.bottom + padding;
+  };
+  const selectIngredient = (button) => {
+    if (button.classList.contains('used')) return;
+    selected?.classList.remove('selected');
+    selected = button;
+    selected.classList.add('selected');
+    bowl.classList.add('awaiting-drop');
+    tone(470);
+  };
   const useIngredient = async (button) => {
     if (button.classList.contains('used')) return;
     button.classList.add('used');
+    button.classList.remove('selected');
+    if (selected === button) selected = null;
+    bowl.classList.remove('awaiting-drop');
     bowl.classList.add('drop-target');
     setTimeout(() => bowl.isConnected && bowl.classList.remove('drop-target'), 420);
     const item = recipe.ingredients[Number(button.dataset.index)];
@@ -282,48 +370,19 @@ function renderIngredients() {
   };
 
   app.querySelectorAll('.ingredient').forEach((button) => {
-    let drag = null;
-    const clearDrag = () => {
-      if (!drag) return;
-      window.removeEventListener('pointermove', drag.onMove);
-      window.removeEventListener('pointerup', drag.onUp);
-      window.removeEventListener('pointercancel', drag.onCancel);
-      drag = null;
-      button.classList.remove('dragging');
-      stage.classList.remove('drag-active');
-      button.style.transform = '';
-    };
-    const finishDrag = (shouldAdd) => {
-      if (!drag) return;
-      clearDrag();
-      if (shouldAdd) useIngredient(button);
-    };
-    button.addEventListener('pointerdown', (event) => {
-      event.preventDefault();
-      if (button.classList.contains('used')) return;
-      const pointerId = event.pointerId;
-      const onMove = (moveEvent) => {
-        if (!drag || moveEvent.pointerId !== pointerId) return;
-        moveEvent.preventDefault();
-        const dx = moveEvent.clientX - drag.x;
-        const dy = moveEvent.clientY - drag.y;
-        button.style.transform = `translate(${dx}px, ${dy}px) scale(1.08)`;
-        if (Math.hypot(dx, dy) >= 14) finishDrag(true);
-      };
-      const onUp = (upEvent) => {
-        if (upEvent.pointerId === pointerId) finishDrag(true);
-      };
-      const onCancel = (cancelEvent) => {
-        if (cancelEvent.pointerId === pointerId) finishDrag(false);
-      };
-      drag = { x: event.clientX, y: event.clientY, onMove, onUp, onCancel };
-      button.classList.add('dragging');
-      stage.classList.add('drag-active');
-      window.addEventListener('pointermove', onMove, { passive: false });
-      window.addEventListener('pointerup', onUp);
-      window.addEventListener('pointercancel', onCancel);
+    bindDragChoice(button, {
+      onTap: () => selectIngredient(button),
+      isOverTarget: isOverBowl,
+      onHover: (over) => bowl.classList.toggle('drop-target', over),
+      onDrop: () => useIngredient(button),
+      onMiss: () => {
+        bowl.classList.add('drop-miss');
+        setTimeout(() => bowl.isConnected && bowl.classList.remove('drop-miss'), 380);
+      }
     });
-    button.addEventListener('click', () => useIngredient(button));
+  });
+  bowl.addEventListener('click', () => {
+    if (selected) useIngredient(selected);
   });
 }
 
@@ -370,9 +429,28 @@ function renderMix() {
 function renderCook() {
   const recipe = RECIPES[activeRecipe];
   const prompt = local(recipe.cook);
+  const machine = activeRecipe === 'smoothie'
+    ? `<div class="blender-machine">
+        <div class="blender-lid"></div>
+        <div class="blender-jar">
+          <div class="blender-liquid"></div>
+          <div class="blender-fruit">🍓 🍌</div>
+          <div class="blender-blades">✦</div>
+        </div>
+        <div class="blender-base"><span class="cook-light"></span></div>
+      </div>`
+    : `<div class="oven-machine">
+        <div class="oven-controls"><i></i><i></i><i></i><span class="cook-light"></span></div>
+        <div class="oven-handle"></div>
+        <div class="oven-window">
+          <div class="heat-lines"><i></i><i></i><i></i></div>
+          <div class="oven-rack"></div>
+          <span class="oven-food">${recipe.icon}</span>
+        </div>
+      </div>`;
   screen(`<div class="stage-zone" style="display:flex;flex-direction:column;gap:18px">
       <div class="appliance ${recipe.applianceClass}" id="appliance">
-        <span class="appliance-icon">${recipe.appliance}</span><span class="cook-light"></span>
+        ${machine}
         <button class="action-btn" id="cook">▶ ${t('start')}</button>
       </div>
       <div class="meter"><div class="meter-fill" id="meter"></div></div>
@@ -405,7 +483,11 @@ function dishHTML() {
   return `<div class="dish" id="dish">
     <span class="food-color" id="food-color" style="background:${creation.color}"></span>
     <span class="food-icon">${recipe.icon}</span>
-    ${creation.toppings.map((top, index) => `<span class="topping" style="left:${POSITIONS[index % POSITIONS.length][0]}%;top:${POSITIONS[index % POSITIONS.length][1]}%">${top}</span>`).join('')}
+    ${creation.toppings.map((top, index) => {
+      const fallback = POSITIONS[index % POSITIONS.length];
+      const item = typeof top === 'string' ? { icon: top, x: fallback[0], y: fallback[1] } : top;
+      return `<span class="topping" style="left:${item.x}%;top:${item.y}%">${item.icon}</span>`;
+    }).join('')}
   </div>`;
 }
 
@@ -415,8 +497,33 @@ function renderDecorate() {
     <div class="tray decorate-controls">
       ${COLORS.map((color) => `<button class="swatch ${color === creation.color ? 'selected' : ''}" data-color="${color}" style="background:${color}" aria-label="color"></button>`).join('')}
       ${TOPPINGS.map((top) => `<button class="topping-btn" data-top="${top}" aria-label="topping">${top}</button>`).join('')}
-      <button class="action-btn primary" id="done" ${creation.toppings.length ? '' : 'disabled'}>✓ ${t('done')}</button>
+      <button class="action-btn primary" id="done">✓ ${t('done')}</button>
     </div>`, prompt);
+  const dish = app.querySelector('#dish');
+  const promptElement = app.querySelector('#prompt');
+  let selectedTop = null;
+  const isOverDish = (x, y) => {
+    const rect = dish.getBoundingClientRect();
+    const padding = 20;
+    return x >= rect.left - padding && x <= rect.right + padding
+      && y >= rect.top - padding && y <= rect.bottom + padding;
+  };
+  const selectTopping = (button) => {
+    selectedTop = button.dataset.top;
+    app.querySelectorAll('.topping-btn').forEach((item) => item.classList.toggle('selected', item === button));
+    dish.classList.add('awaiting-drop');
+    promptElement.textContent = `${selectedTop} ${t('place')}`;
+    tone(560);
+  };
+  const placeTopping = (icon, clientX, clientY) => {
+    if (creation.toppings.length >= 8) return;
+    const rect = dish.getBoundingClientRect();
+    const x = Math.max(15, Math.min(80, ((clientX - rect.left) / rect.width) * 100));
+    const y = Math.max(15, Math.min(80, ((clientY - rect.top) / rect.height) * 100));
+    creation.toppings.push({ icon, x, y });
+    dish.insertAdjacentHTML('beforeend', `<span class="topping" style="left:${x}%;top:${y}%">${icon}</span>`);
+    tone(680 + creation.toppings.length * 20);
+  };
   app.querySelectorAll('.swatch').forEach((button) => {
     button.onclick = () => {
       creation.color = button.dataset.color;
@@ -426,14 +533,19 @@ function renderDecorate() {
     };
   });
   app.querySelectorAll('.topping-btn').forEach((button) => {
-    button.onclick = () => {
-      if (creation.toppings.length >= 8) return;
-      creation.toppings.push(button.dataset.top);
-      tone(680 + creation.toppings.length * 20);
-      const [left, top] = POSITIONS[(creation.toppings.length - 1) % POSITIONS.length];
-      app.querySelector('#dish').insertAdjacentHTML('beforeend', `<span class="topping" style="left:${left}%;top:${top}%">${button.dataset.top}</span>`);
-      app.querySelector('#done').disabled = false;
-    };
+    bindDragChoice(button, {
+      onTap: () => selectTopping(button),
+      isOverTarget: isOverDish,
+      onHover: (over) => dish.classList.toggle('drop-target', over),
+      onDrop: (x, y) => placeTopping(button.dataset.top, x, y),
+      onMiss: () => {
+        dish.classList.add('drop-miss');
+        setTimeout(() => dish.isConnected && dish.classList.remove('drop-miss'), 380);
+      }
+    });
+  });
+  dish.addEventListener('click', (event) => {
+    if (selectedTop) placeTopping(selectedTop, event.clientX, event.clientY);
   });
   app.querySelector('#done').onclick = async () => {
     await speak(COPY[state.lang].praise[Math.floor(Math.random() * COPY[state.lang].praise.length)]);

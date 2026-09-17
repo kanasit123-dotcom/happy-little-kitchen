@@ -223,6 +223,11 @@ button:focus-visible { outline: 4px solid var(--sky); outline-offset: 4px; }
   align-items: center;
   gap: 4px;
   font-size: 3rem;
+  padding: 0;
+  color: var(--ink);
+  font-family: inherit;
+  cursor: pointer;
+  touch-action: none;
   transition: transform .16s ease, border-color .16s ease, box-shadow .16s ease, background-color .16s ease;
 }
 .bowl.ready { animation: bounce-ready 1.2s ease-in-out infinite; }
@@ -252,6 +257,8 @@ button:focus-visible { outline: 4px solid var(--sky); outline-offset: 4px; }
   box-shadow: inset 0 -18px 0 rgba(36,56,71,.08), 0 0 0 12px rgba(244,189,63,.34), var(--shadow);
 }
 .bowl.drop-target::after { content: '✓'; background: var(--mint); color: white; }
+.bowl.awaiting-drop { outline: 8px solid rgba(244,189,63,.55); outline-offset: 8px; }
+.bowl.drop-miss { animation: nudge .12s ease-in-out 3; }
 .bowl .in-bowl { animation: drop-in .35s ease-out both; }
 
 .tray {
@@ -287,8 +294,18 @@ button:focus-visible { outline: 4px solid var(--sky); outline-offset: 4px; }
   transition: opacity .2s, transform .1s;
 }
 .ingredient.used { opacity: .28; pointer-events: none; transform: scale(.85); }
-.ingredient.dragging { position: relative; z-index: 20; transform: scale(1.1); transition: none; }
-.stage-zone.drag-active { cursor: grabbing; }
+.ingredient.selected { outline: 6px solid var(--yellow); outline-offset: 3px; transform: translateY(-8px); }
+.ingredient.drag-source, .topping-btn.drag-source { opacity: .3; }
+.drag-ghost {
+  position: fixed !important;
+  z-index: 100;
+  margin: 0;
+  pointer-events: none;
+  transform: translate(-50%, -50%) scale(1.08) !important;
+  transition: none !important;
+  opacity: .96 !important;
+  box-shadow: 0 12px 24px rgba(36,56,71,.24) !important;
+}
 
 .mix-tool {
   width: clamp(220px, 52vw, 380px);
@@ -317,22 +334,72 @@ button:focus-visible { outline: 4px solid var(--sky); outline-offset: 4px; }
 .meter-fill { width: 0; height: 100%; background: var(--mint); border-radius: 8px; transition: width .1s linear; }
 
 .appliance {
-  width: clamp(230px, 55vw, 390px);
-  min-height: clamp(230px, 46vh, 360px);
-  border: 10px solid white;
-  border-radius: 8px;
-  background: var(--coral);
-  box-shadow: var(--shadow);
+  width: clamp(250px, 58vw, 390px);
+  min-height: 300px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 16px;
+  gap: 14px;
 }
-.appliance.blender { background: var(--mint); }
-.appliance-icon { font-size: 7.5rem; line-height: 1; }
 .cook-light { width: 38px; height: 38px; border-radius: 50%; background: #fff; border: 5px solid rgba(36,56,71,.14); }
 .appliance.running .cook-light { background: var(--yellow); animation: blink .45s ease-in-out infinite alternate; }
+
+.oven-machine {
+  width: clamp(250px, 55vw, 350px);
+  height: clamp(230px, 38vh, 310px);
+  padding: 10px 16px 16px;
+  border: 9px solid white;
+  border-radius: 8px;
+  background: var(--coral);
+  box-shadow: var(--shadow);
+}
+.oven-controls { height: 48px; display: flex; align-items: center; gap: 13px; }
+.oven-controls > i { width: 27px; height: 27px; border-radius: 50%; background: white; border: 5px solid #d9554d; }
+.oven-controls .cook-light { width: 25px; height: 25px; border-width: 4px; margin-left: auto; }
+.oven-handle { height: 12px; margin: 0 8px 7px; border-radius: 8px; background: var(--ink); box-shadow: 0 4px 0 rgba(255,255,255,.25); }
+.oven-window {
+  height: calc(100% - 67px);
+  position: relative;
+  overflow: hidden;
+  border: 9px solid #313f47;
+  border-radius: 8px;
+  background: #d8eef3;
+  box-shadow: inset 0 0 0 7px rgba(255,255,255,.55);
+}
+.oven-rack { position: absolute; left: 12%; right: 12%; bottom: 24%; height: 7px; border-radius: 5px; background: #75858d; }
+.oven-food { position: absolute; left: 50%; bottom: 22%; transform: translateX(-50%); font-size: 5.4rem; line-height: 1; z-index: 2; }
+.heat-lines { position: absolute; inset: 12px 20% auto; display: flex; justify-content: space-around; opacity: 0; }
+.heat-lines i { width: 8px; height: 48px; border-radius: 8px; background: var(--yellow); }
+.appliance.running .oven-window { background: #f6c56a; box-shadow: inset 0 0 0 7px rgba(255,255,255,.45), inset 0 0 28px #ef6f61; }
+.appliance.running .heat-lines { opacity: .75; }
+.appliance.running .heat-lines i { animation: oven-heat .55s ease-in-out infinite alternate; }
+.appliance.running .heat-lines i:nth-child(2) { animation-delay: .15s; }
+.appliance.running .heat-lines i:nth-child(3) { animation-delay: .3s; }
+.appliance.running .oven-food { animation: oven-food .7s ease-in-out infinite alternate; }
+
+.blender-machine { width: 240px; height: 270px; position: relative; display: flex; flex-direction: column; align-items: center; }
+.blender-lid { width: 176px; height: 24px; border: 7px solid white; border-radius: 8px; background: var(--ink); z-index: 3; }
+.blender-jar {
+  width: 190px;
+  height: 180px;
+  position: relative;
+  overflow: hidden;
+  border: 9px solid white;
+  border-top: 0;
+  border-radius: 4px 4px 38px 38px;
+  background: rgba(216,238,243,.92);
+  box-shadow: inset 0 0 0 6px rgba(103,189,227,.2), var(--shadow);
+  transform-origin: 50% 100%;
+}
+.blender-liquid { position: absolute; left: 0; right: 0; bottom: 0; height: 53%; background: #ef8f9b; }
+.blender-fruit { position: absolute; inset: 42% 0 auto; text-align: center; font-size: 2.5rem; z-index: 2; }
+.blender-blades { position: absolute; left: 50%; bottom: 3px; transform: translateX(-50%); color: white; font-size: 2.5rem; z-index: 2; }
+.blender-base { width: 220px; height: 62px; margin-top: -2px; border: 8px solid white; border-radius: 8px; background: var(--mint); display: grid; place-items: center; box-shadow: var(--shadow); z-index: 3; }
+.blender-base .cook-light { width: 29px; height: 29px; border-width: 4px; }
+.appliance.running .blender-jar { animation: blender-shake .12s linear infinite alternate; }
+.appliance.running .blender-liquid { animation: liquid-rise .45s ease-in-out infinite alternate; }
+.appliance.running .blender-fruit { animation: stir .55s linear infinite; }
 
 .action-btn {
   min-width: 116px;
@@ -358,15 +425,22 @@ button:focus-visible { outline: 4px solid var(--sky); outline-offset: 4px; }
   display: grid;
   place-items: center;
   position: relative;
+  cursor: crosshair;
+  touch-action: none;
+  transition: transform .16s ease, box-shadow .16s ease, border-color .16s ease;
 }
+.dish.awaiting-drop { outline: 8px solid rgba(244,189,63,.5); outline-offset: 7px; }
+.dish.drop-target { transform: scale(1.04); border-color: var(--yellow); box-shadow: 0 0 0 12px rgba(244,189,63,.3), var(--shadow); }
+.dish.drop-miss { animation: nudge .12s ease-in-out 3; }
 .food-icon { font-size: 10rem; line-height: 1; filter: drop-shadow(0 7px 3px rgba(36,56,71,.15)); }
 .food-color { position: absolute; inset: 19%; border-radius: 50%; opacity: .45; pointer-events: none; }
-.topping { position: absolute; font-size: 2.15rem; animation: drop-in .3s ease-out both; }
+.topping { position: absolute; font-size: 2.15rem; transform: translate(-50%, -50%); animation: topping-pop .3s ease-out both; pointer-events: none; }
 
 .decorate-controls { flex-wrap: wrap; }
 .swatch { width: 56px; height: 56px; border-radius: 50%; border: 5px solid white; box-shadow: 0 4px 0 rgba(36,56,71,.16); }
 .swatch.selected { outline: 5px solid var(--ink); outline-offset: 2px; }
 .topping-btn { width: 66px; height: 60px; border-radius: 8px; background: white; border: 3px solid var(--edge); font-size: 2rem; box-shadow: 0 4px 0 rgba(36,56,71,.14); }
+.topping-btn.selected { outline: 5px solid var(--yellow); outline-offset: 2px; transform: translateY(-5px); }
 
 .serve-layout { width: min(860px, 100%); display: flex; align-items: center; justify-content: center; gap: clamp(12px, 4vw, 50px); }
 .customer-grid { display: flex; gap: clamp(8px, 2vw, 18px); }
@@ -382,6 +456,12 @@ button:focus-visible { outline: 4px solid var(--sky); outline-offset: 4px; }
 @keyframes bounce-ready { 50% { transform: translateY(-7px); } }
 @keyframes stir { to { transform: rotate(360deg); } }
 @keyframes blink { to { transform: scale(.72); } }
+@keyframes nudge { 50% { transform: translateX(9px); } }
+@keyframes topping-pop { from { transform: translate(-50%, -90px) scale(.5) rotate(-10deg); opacity: 0; } to { transform: translate(-50%, -50%) scale(1) rotate(0); opacity: 1; } }
+@keyframes oven-heat { to { transform: translateY(12px); opacity: .35; } }
+@keyframes oven-food { to { transform: translateX(-50%) scale(1.08); } }
+@keyframes blender-shake { to { transform: rotate(2deg) translateX(3px); } }
+@keyframes liquid-rise { to { height: 68%; } }
 @keyframes happy { 50% { transform: translateY(-10px) rotate(3deg); } }
 @keyframes fall { to { transform: translateY(110vh) rotate(540deg); opacity: .8; } }
 
