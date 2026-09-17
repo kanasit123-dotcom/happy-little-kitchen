@@ -54,12 +54,27 @@ const path = require('node:path');
         }
       }
       await page.locator('#mix').waitFor();
-      for (let i = 0; i < 8; i++) await page.locator('#mix-button').click();
-      await page.locator('#cook').waitFor();
+      for (let i = 0; i < 8; i++) await page.locator('#mix').click();
+      await page.locator('#appliance').waitFor();
       assert.equal(await page.locator(recipe === 'smoothie' ? '.blender-machine' : '.oven-machine').count(), 1);
-      await page.locator('#cook').click();
+      const applianceBox = await page.locator('#appliance').boundingBox();
+      await page.mouse.move(applianceBox.x + applianceBox.width / 2, applianceBox.y + applianceBox.height / 2);
+      await page.mouse.down();
+      await page.waitForTimeout(300);
       if (recipe === 'cupcake') await page.screenshot({ path: path.join(output, 'oven-running-mobile.png'), fullPage: true });
-      for (let i = 1; i < 12; i++) await page.locator('#cook').click();
+      if (recipe === 'cupcake') {
+        await page.waitForTimeout(700);
+        await page.mouse.up();
+        const pausedWidth = await page.locator('#meter').evaluate((element) => element.style.width);
+        await page.waitForTimeout(400);
+        assert.equal(await page.locator('#meter').evaluate((element) => element.style.width), pausedWidth);
+        await page.mouse.down();
+        await page.waitForTimeout(4300);
+        await page.mouse.up();
+      } else {
+        await page.waitForTimeout(5000);
+        await page.mouse.up();
+      }
       await page.locator('.topping-btn').first().waitFor();
       await page.locator('.swatch').nth(2).click();
       if (recipe === 'cupcake') {
@@ -102,7 +117,7 @@ const path = require('node:path');
     await page.locator('#back').click();
 
     await page.waitForFunction(() => navigator.serviceWorker.controller);
-    assert.ok((await page.evaluate(() => caches.keys())).includes('happy-little-kitchen-v5'));
+    assert.ok((await page.evaluate(() => caches.keys())).includes('happy-little-kitchen-v6'));
     await context.setOffline(true);
     await page.reload();
     await page.locator('.recipe-card').first().waitFor();

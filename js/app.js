@@ -11,7 +11,7 @@ const RECIPES = {
       { icon: '🥛', name: { th: 'นม', en: 'milk' } }
     ],
     tool: '🥄', appliance: '🔥', applianceClass: '', action: { th: 'คนให้เข้ากัน', en: 'Mix it together' },
-    cook: { th: 'แตะปุ่มอบหลายครั้งจนแถบเต็ม', en: 'Tap the bake button until the bar is full' }
+    cook: { th: 'กดเตาอบค้างไว้จนแถบเต็ม', en: 'Press and hold the oven until the bar is full' }
   },
   pizza: {
     icon: '🍕',
@@ -22,7 +22,7 @@ const RECIPES = {
       { icon: '🧀', name: { th: 'ชีส', en: 'cheese' } }
     ],
     tool: '🥄', appliance: '🔥', applianceClass: '', action: { th: 'เกลี่ยซอสให้ทั่ว', en: 'Spread the sauce' },
-    cook: { th: 'แตะปุ่มอบหลายครั้งจนแถบเต็ม', en: 'Tap the bake button until the bar is full' }
+    cook: { th: 'กดเตาอบค้างไว้จนแถบเต็ม', en: 'Press and hold the oven until the bar is full' }
   },
   smoothie: {
     icon: '🥤',
@@ -33,7 +33,7 @@ const RECIPES = {
       { icon: '🥛', name: { th: 'นม', en: 'milk' } }
     ],
     tool: '⚙️', appliance: '🫙', applianceClass: 'blender', action: { th: 'ปั่นผลไม้ให้เนียน', en: 'Blend it smooth' },
-    cook: { th: 'แตะปุ่มปั่นหลายครั้งจนแถบเต็ม', en: 'Tap the blend button until the bar is full' }
+    cook: { th: 'กดเครื่องปั่นค้างไว้จนแถบเต็ม', en: 'Press and hold the blender until the bar is full' }
   }
 };
 
@@ -47,7 +47,7 @@ const COPY = {
   th: {
     title: 'ครัวจิ๋วแสนสนุก', subtitle: 'เลือกของอร่อย แล้วลงมือทำเลย', language: '🇹🇭 ไทย',
     home: 'กลับหน้าครัว', listen: 'ฟังอีกครั้ง', add: 'ลากวัตถุดิบลงชาม หรือแตะของแล้วแตะชาม',
-    mixHint: 'แตะปุ่มคนหลายครั้งจนแถบเต็ม', start: 'เริ่มเลย', tapMix: 'แตะเพื่อคน', tapBake: 'แตะเพื่ออบ', tapBlend: 'แตะเพื่อปั่น', decorate: 'ตกแต่งได้ตามใจ',
+    mixHint: 'แตะช้อนในชามหลายครั้งจนแถบเต็ม', start: 'เริ่มเลย', hold: 'กดค้าง', decorate: 'ตกแต่งได้ตามใจ',
     done: 'เสร็จแล้ว', serve: 'เลือกเพื่อนที่จะชิม', again: 'ทำอีกจาน', gallery: 'ผลงานของฉัน', place: 'แตะจุดบนอาหาร หรือลากไปวาง',
     praise: ['น่ากินมาก!', 'หอมจังเลย!', 'ทำเก่งมาก!'],
     friendHappy: 'อร่อยมาก ขอบคุณนะ', ready: 'พร้อมแล้ว ไปตกแต่งกัน', mixed: 'เข้ากันดีแล้ว', cooked: 'สุกกำลังดีเลย'
@@ -55,7 +55,7 @@ const COPY = {
   en: {
     title: 'Happy Little Kitchen', subtitle: 'Pick a treat and make it your way', language: '🇬🇧 ENG',
     home: 'Back to the kitchen', listen: 'Listen again', add: 'Drag into the bowl, or tap an item then tap the bowl',
-    mixHint: 'Tap the mix button until the bar is full', start: 'Start', tapMix: 'Tap to mix', tapBake: 'Tap to bake', tapBlend: 'Tap to blend', decorate: 'Decorate it your way',
+    mixHint: 'Tap the spoon in the bowl until the bar is full', start: 'Start', hold: 'Hold', decorate: 'Decorate it your way',
     done: 'All done', serve: 'Choose a friend to taste it', again: 'Make another', gallery: 'My creations', place: 'Tap the food or drag to place it',
     praise: ['That looks delicious!', 'It smells wonderful!', 'Great cooking!'],
     friendHappy: 'Yummy! Thank you!', ready: 'Ready! Let us decorate it', mixed: 'Perfectly mixed', cooked: 'Cooked just right'
@@ -390,12 +390,10 @@ function renderMix() {
   const recipe = RECIPES[activeRecipe];
   const prompt = `${local(recipe.action)} · ${t('mixHint')}`;
   screen(`<div class="stage-zone" style="display:flex;flex-direction:column;gap:16px">
-      <button class="mix-tool" id="mix" aria-label="${t('tapMix')}"><span class="mix-fill"></span><span class="spoon">${recipe.tool}</span></button>
+      <button class="mix-tool invite-tool" id="mix" aria-label="${local(recipe.action)}"><span class="mix-fill"></span><span class="spoon">${recipe.tool}</span><span class="touch-hint" aria-hidden="true">☝</span></button>
       <div class="meter"><div class="meter-fill" id="meter"></div></div>
-      <button class="action-btn primary tap-action" id="mix-button">🥄 ${t('tapMix')}</button>
     </div>`, prompt);
   const tool = app.querySelector('#mix');
-  const button = app.querySelector('#mix-button');
   const meter = app.querySelector('#meter');
   let progress = 0;
   let finished = false;
@@ -404,19 +402,15 @@ function renderMix() {
     progress = Math.min(100, progress + 12.5);
     meter.style.width = `${progress}%`;
     tool.classList.remove('tap-once');
-    button.classList.remove('tap-once');
     requestAnimationFrame(() => {
       tool.classList.add('tap-once');
-      button.classList.add('tap-once');
     });
     setTimeout(() => {
       tool.classList.remove('tap-once');
-      button.classList.remove('tap-once');
     }, 360);
     tone(430 + progress * 2, .09);
     if (progress >= 100) {
       finished = true;
-      button.disabled = true;
       tool.disabled = true;
       tone(760, .22);
       await new Promise((resolve) => setTimeout(resolve, 700));
@@ -426,7 +420,6 @@ function renderMix() {
     }
   };
   tool.addEventListener('click', advance);
-  button.addEventListener('click', advance);
 }
 
 function renderCook() {
@@ -452,41 +445,63 @@ function renderCook() {
         </div>
       </div>`;
   screen(`<div class="stage-zone" style="display:flex;flex-direction:column;gap:18px">
-      <div class="appliance ${recipe.applianceClass}" id="appliance">
+      <div class="appliance ${recipe.applianceClass}" id="appliance" role="button" tabindex="0" aria-label="${prompt}">
         ${machine}
-        <button class="action-btn primary tap-action" id="cook">👆 ${activeRecipe === 'smoothie' ? t('tapBlend') : t('tapBake')}</button>
+        <span class="hold-hint" aria-hidden="true"><b>☝</b><span>${t('hold')}</span></span>
       </div>
       <div class="meter"><div class="meter-fill" id="meter"></div></div>
     </div>`, prompt);
+  const appliance = app.querySelector('#appliance');
+  const meter = app.querySelector('#meter');
   let progress = 0;
   let finished = false;
-  let effectTimer = null;
-  app.querySelector('#cook').onclick = async (event) => {
+  let holdTimer = null;
+  let nextChime = 20;
+  const finishCooking = async () => {
     if (finished) return;
-    const button = event.currentTarget;
-    const appliance = app.querySelector('#appliance');
-    const meter = app.querySelector('#meter');
-    progress = Math.min(100, progress + (100 / 12));
-    meter.style.width = `${progress}%`;
-    button.classList.remove('tap-once');
-    appliance.classList.add('running');
-    requestAnimationFrame(() => button.classList.add('tap-once'));
-    setTimeout(() => button.classList.remove('tap-once'), 320);
-    tone(activeRecipe === 'smoothie' ? 190 + progress : 390 + progress * 2, .13);
-    clearTimeout(effectTimer);
-    effectTimer = setTimeout(() => appliance.classList.remove('running'), 650);
-    if (progress < 99.9) return;
     finished = true;
-    button.disabled = true;
-    clearTimeout(effectTimer);
+    clearInterval(holdTimer);
+    appliance.removeAttribute('tabindex');
     appliance.classList.add('running');
-    await new Promise((resolve) => setTimeout(resolve, 1600));
+    await new Promise((resolve) => setTimeout(resolve, 1200));
     appliance.classList.remove('running');
     tone(820, .25);
     await speak(t('cooked'));
     step++;
     renderStep();
   };
+  const startHold = (event) => {
+    if (finished || holdTimer) return;
+    event?.preventDefault();
+    appliance.classList.add('running', 'holding');
+    tone(activeRecipe === 'smoothie' ? 210 : 430, .18);
+    window.addEventListener('pointerup', stopHold, { once: true });
+    window.addEventListener('pointercancel', stopHold, { once: true });
+    holdTimer = setInterval(() => {
+      progress = Math.min(100, progress + 2);
+      meter.style.width = `${progress}%`;
+      if (progress >= nextChime && progress < 100) {
+        tone(400 + progress * 2, .08);
+        nextChime += 20;
+      }
+      if (progress >= 100) finishCooking();
+    }, 100);
+  };
+  const stopHold = () => {
+    window.removeEventListener('pointerup', stopHold);
+    window.removeEventListener('pointercancel', stopHold);
+    if (finished) return;
+    clearInterval(holdTimer);
+    holdTimer = null;
+    appliance.classList.remove('running', 'holding');
+  };
+  appliance.addEventListener('pointerdown', startHold);
+  appliance.addEventListener('keydown', (event) => {
+    if ((event.key === 'Enter' || event.key === ' ') && !event.repeat) startHold(event);
+  });
+  appliance.addEventListener('keyup', (event) => {
+    if (event.key === 'Enter' || event.key === ' ') stopHold();
+  });
 }
 
 const COLORS = ['#ef6f61', '#f4bd3f', '#54b99a', '#67bde3', '#9a78bd'];
