@@ -29,13 +29,11 @@ const path = require('node:path');
       const ingredients = page.locator('.ingredient');
       if (recipe === 'cupcake') {
         const ingredientBox = await ingredients.first().boundingBox();
-        const bowlBox = await page.locator('#bowl').boundingBox();
         await page.mouse.move(ingredientBox.x + ingredientBox.width / 2, ingredientBox.y + ingredientBox.height / 2);
         await page.mouse.down();
-        await page.mouse.move(bowlBox.x + bowlBox.width / 2, bowlBox.y + bowlBox.height / 2, { steps: 8 });
-        assert.equal(await page.locator('#bowl').evaluate((element) => element.classList.contains('drop-target')), true);
-        await page.mouse.up();
+        await page.mouse.move(ingredientBox.x + ingredientBox.width / 2 + 18, ingredientBox.y + ingredientBox.height / 2, { steps: 3 });
         assert.equal(await ingredients.first().evaluate((element) => element.classList.contains('used')), true);
+        await page.mouse.up();
         const secondBox = await ingredients.nth(1).boundingBox();
         await page.mouse.move(secondBox.x + secondBox.width / 2, secondBox.y + secondBox.height / 2);
         await page.mouse.down();
@@ -80,7 +78,7 @@ const path = require('node:path');
     await page.locator('#back').click();
 
     await page.waitForFunction(() => navigator.serviceWorker.controller);
-    assert.ok((await page.evaluate(() => caches.keys())).includes('happy-little-kitchen-v2'));
+    assert.ok((await page.evaluate(() => caches.keys())).includes('happy-little-kitchen-v3'));
     await context.setOffline(true);
     await page.reload();
     await page.locator('.recipe-card').first().waitFor();

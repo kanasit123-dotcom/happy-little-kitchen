@@ -46,7 +46,7 @@ const FRIENDS = {
 const COPY = {
   th: {
     title: 'ครัวจิ๋วแสนสนุก', subtitle: 'เลือกของอร่อย แล้วลงมือทำเลย', language: '🇹🇭 ไทย',
-    home: 'กลับหน้าครัว', listen: 'ฟังอีกครั้ง', add: 'แตะวัตถุดิบ หรือลากขึ้นมาที่ชาม',
+    home: 'กลับหน้าครัว', listen: 'ฟังอีกครั้ง', add: 'แตะหนึ่งครั้ง หรือลากนิดเดียว',
     mixHint: 'กดค้างหรือวนช้อนให้เต็ม', start: 'เริ่มเลย', decorate: 'ตกแต่งได้ตามใจ',
     done: 'เสร็จแล้ว', serve: 'เลือกเพื่อนที่จะชิม', again: 'ทำอีกจาน', gallery: 'ผลงานของฉัน',
     praise: ['น่ากินมาก!', 'หอมจังเลย!', 'ทำเก่งมาก!'],
@@ -54,7 +54,7 @@ const COPY = {
   },
   en: {
     title: 'Happy Little Kitchen', subtitle: 'Pick a treat and make it your way', language: '🇬🇧 ENG',
-    home: 'Back to the kitchen', listen: 'Listen again', add: 'Tap an ingredient or drag it up to the bowl',
+    home: 'Back to the kitchen', listen: 'Listen again', add: 'Tap once or drag a little',
     mixHint: 'Hold or stir until the bar is full', start: 'Start', decorate: 'Decorate it your way',
     done: 'All done', serve: 'Choose a friend to taste it', again: 'Make another', gallery: 'My creations',
     praise: ['That looks delicious!', 'It smells wonderful!', 'Great cooking!'],
@@ -262,16 +262,11 @@ function renderIngredients() {
   const bowl = app.querySelector('#bowl');
   const stage = app.querySelector('.stage-zone');
   let added = 0;
-  const isNearBowl = (x, y) => {
-    const rect = bowl.getBoundingClientRect();
-    const paddingX = Math.max(70, rect.width * .22);
-    const paddingY = Math.max(80, rect.height * .4);
-    return x >= rect.left - paddingX && x <= rect.right + paddingX
-      && y >= rect.top - paddingY && y <= rect.bottom + paddingY;
-  };
   const useIngredient = async (button) => {
     if (button.classList.contains('used')) return;
     button.classList.add('used');
+    bowl.classList.add('drop-target');
+    setTimeout(() => bowl.isConnected && bowl.classList.remove('drop-target'), 420);
     const item = recipe.ingredients[Number(button.dataset.index)];
     bowl.insertAdjacentHTML('beforeend', `<span class="in-bowl">${item.icon}</span>`);
     tone(520 + added * 80);
@@ -288,46 +283,47 @@ function renderIngredients() {
 
   app.querySelectorAll('.ingredient').forEach((button) => {
     let drag = null;
-    let suppressClick = false;
+    const clearDrag = () => {
+      if (!drag) return;
+      window.removeEventListener('pointermove', drag.onMove);
+      window.removeEventListener('pointerup', drag.onUp);
+      window.removeEventListener('pointercancel', drag.onCancel);
+      drag = null;
+      button.classList.remove('dragging');
+      stage.classList.remove('drag-active');
+      button.style.transform = '';
+    };
+    const finishDrag = (shouldAdd) => {
+      if (!drag) return;
+      clearDrag();
+      if (shouldAdd) useIngredient(button);
+    };
     button.addEventListener('pointerdown', (event) => {
       event.preventDefault();
-      drag = { x: event.clientX, y: event.clientY, moved: false };
+      if (button.classList.contains('used')) return;
+      const pointerId = event.pointerId;
+      const onMove = (moveEvent) => {
+        if (!drag || moveEvent.pointerId !== pointerId) return;
+        moveEvent.preventDefault();
+        const dx = moveEvent.clientX - drag.x;
+        const dy = moveEvent.clientY - drag.y;
+        button.style.transform = `translate(${dx}px, ${dy}px) scale(1.08)`;
+        if (Math.hypot(dx, dy) >= 14) finishDrag(true);
+      };
+      const onUp = (upEvent) => {
+        if (upEvent.pointerId === pointerId) finishDrag(true);
+      };
+      const onCancel = (cancelEvent) => {
+        if (cancelEvent.pointerId === pointerId) finishDrag(false);
+      };
+      drag = { x: event.clientX, y: event.clientY, onMove, onUp, onCancel };
       button.classList.add('dragging');
       stage.classList.add('drag-active');
-      try { button.setPointerCapture(event.pointerId); } catch {}
+      window.addEventListener('pointermove', onMove, { passive: false });
+      window.addEventListener('pointerup', onUp);
+      window.addEventListener('pointercancel', onCancel);
     });
-    button.addEventListener('pointermove', (event) => {
-      if (!drag) return;
-      const dx = event.clientX - drag.x;
-      const dy = event.clientY - drag.y;
-      drag.moved ||= Math.hypot(dx, dy) > 8;
-      button.style.transform = `translate(${dx}px, ${dy}px) scale(1.08)`;
-      bowl.classList.toggle('drop-target', isNearBowl(event.clientX, event.clientY));
-    });
-    button.addEventListener('pointerup', (event) => {
-      if (!drag) return;
-      const wasDrag = drag.moved;
-      const movedUp = event.clientY < drag.y - 35;
-      const shouldAdd = !wasDrag || isNearBowl(event.clientX, event.clientY) || movedUp;
-      drag = null;
-      suppressClick = wasDrag;
-      button.classList.remove('dragging');
-      stage.classList.remove('drag-active');
-      bowl.classList.remove('drop-target');
-      button.style.transform = '';
-      if (shouldAdd) useIngredient(button);
-      setTimeout(() => { suppressClick = false; }, 0);
-    });
-    button.addEventListener('pointercancel', () => {
-      drag = null;
-      button.classList.remove('dragging');
-      stage.classList.remove('drag-active');
-      bowl.classList.remove('drop-target');
-      button.style.transform = '';
-    });
-    button.addEventListener('click', () => {
-      if (!suppressClick) useIngredient(button);
-    });
+    button.addEventListener('click', () => useIngredient(button));
   });
 }
 
