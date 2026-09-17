@@ -1,4 +1,4 @@
-const CACHE = 'happy-little-kitchen-v1';
+const CACHE = 'happy-little-kitchen-v2';
 
 const FILES = [
   './',

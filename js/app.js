@@ -46,7 +46,7 @@ const FRIENDS = {
 const COPY = {
   th: {
     title: 'ครัวจิ๋วแสนสนุก', subtitle: 'เลือกของอร่อย แล้วลงมือทำเลย', language: '🇹🇭 ไทย',
-    home: 'กลับหน้าครัว', listen: 'ฟังอีกครั้ง', add: 'ลากหรือแตะวัตถุดิบใส่ชาม',
+    home: 'กลับหน้าครัว', listen: 'ฟังอีกครั้ง', add: 'แตะวัตถุดิบ หรือลากขึ้นมาที่ชาม',
     mixHint: 'กดค้างหรือวนช้อนให้เต็ม', start: 'เริ่มเลย', decorate: 'ตกแต่งได้ตามใจ',
     done: 'เสร็จแล้ว', serve: 'เลือกเพื่อนที่จะชิม', again: 'ทำอีกจาน', gallery: 'ผลงานของฉัน',
     praise: ['น่ากินมาก!', 'หอมจังเลย!', 'ทำเก่งมาก!'],
@@ -54,7 +54,7 @@ const COPY = {
   },
   en: {
     title: 'Happy Little Kitchen', subtitle: 'Pick a treat and make it your way', language: '🇬🇧 ENG',
-    home: 'Back to the kitchen', listen: 'Listen again', add: 'Drag or tap the ingredients into the bowl',
+    home: 'Back to the kitchen', listen: 'Listen again', add: 'Tap an ingredient or drag it up to the bowl',
     mixHint: 'Hold or stir until the bar is full', start: 'Start', decorate: 'Decorate it your way',
     done: 'All done', serve: 'Choose a friend to taste it', again: 'Make another', gallery: 'My creations',
     praise: ['That looks delicious!', 'It smells wonderful!', 'Great cooking!'],
@@ -260,7 +260,15 @@ function renderIngredients() {
     </div>`, prompt);
 
   const bowl = app.querySelector('#bowl');
+  const stage = app.querySelector('.stage-zone');
   let added = 0;
+  const isNearBowl = (x, y) => {
+    const rect = bowl.getBoundingClientRect();
+    const paddingX = Math.max(70, rect.width * .22);
+    const paddingY = Math.max(80, rect.height * .4);
+    return x >= rect.left - paddingX && x <= rect.right + paddingX
+      && y >= rect.top - paddingY && y <= rect.bottom + paddingY;
+  };
   const useIngredient = async (button) => {
     if (button.classList.contains('used')) return;
     button.classList.add('used');
@@ -285,6 +293,7 @@ function renderIngredients() {
       event.preventDefault();
       drag = { x: event.clientX, y: event.clientY, moved: false };
       button.classList.add('dragging');
+      stage.classList.add('drag-active');
       try { button.setPointerCapture(event.pointerId); } catch {}
     });
     button.addEventListener('pointermove', (event) => {
@@ -293,21 +302,27 @@ function renderIngredients() {
       const dy = event.clientY - drag.y;
       drag.moved ||= Math.hypot(dx, dy) > 8;
       button.style.transform = `translate(${dx}px, ${dy}px) scale(1.08)`;
+      bowl.classList.toggle('drop-target', isNearBowl(event.clientX, event.clientY));
     });
     button.addEventListener('pointerup', (event) => {
       if (!drag) return;
       const wasDrag = drag.moved;
+      const movedUp = event.clientY < drag.y - 35;
+      const shouldAdd = !wasDrag || isNearBowl(event.clientX, event.clientY) || movedUp;
       drag = null;
       suppressClick = wasDrag;
       button.classList.remove('dragging');
+      stage.classList.remove('drag-active');
+      bowl.classList.remove('drop-target');
       button.style.transform = '';
-      const hit = document.elementFromPoint(event.clientX, event.clientY);
-      if (!wasDrag || hit?.closest('#bowl')) useIngredient(button);
+      if (shouldAdd) useIngredient(button);
       setTimeout(() => { suppressClick = false; }, 0);
     });
     button.addEventListener('pointercancel', () => {
       drag = null;
       button.classList.remove('dragging');
+      stage.classList.remove('drag-active');
+      bowl.classList.remove('drop-target');
       button.style.transform = '';
     });
     button.addEventListener('click', () => {
