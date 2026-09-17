@@ -1,7 +1,7 @@
 {
-  "name": "Lilly Playhouse - ครัวของลิลลี่",
-  "short_name": "ครัวลิลลี่",
-  "description": "เกมทำอาหารอิสระ ภาษาไทยและอังกฤษ สำหรับลิลลี่",
+  "name": "Happy Little Kitchen - ครัวจิ๋วแสนสนุก",
+  "short_name": "ครัวจิ๋ว",
+  "description": "เกมทำอาหารสร้างสรรค์ ภาษาไทยและอังกฤษ สำหรับเด็กทุกคน",
   "start_url": "./",
   "display": "standalone",
   "background_color": "#fff8e8",

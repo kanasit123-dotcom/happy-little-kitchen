@@ -2,12 +2,12 @@
 
 ## Purpose
 
-`Lilly Playhouse` is a separate, open-ended creative game for Lilly. It must remain independent from the lesson game in `game-lilly`, including its URL, saved data, and deployment.
+`Happy Little Kitchen` is a separate, open-ended creative game for children. It must remain independent from the lesson game, including its URL, saved data, and deployment.
 
 ## Product Rules
 
 - Thai and English are both welcome. Keep a visible language switch.
-- Picture-first controls, large touch targets, and short spoken prompts are preferred because Lilly is still learning to read.
+- Picture-first controls, large touch targets, and short spoken prompts are preferred for children who are still learning to read.
 - Never add scores, countdowns, wrong-answer states, advertisements, subscriptions, or pressure to continue.
 - Let every spoken prompt finish before advancing to the next prompt or game step.
 - Support direct taps and touch dragging on iPad.
@@ -20,4 +20,4 @@ Preferred friends include the seal, turtle, and rabbit already used here. Avoid 
 
 ## Storage
 
-Use the local storage key `lilly-playhouse-v1`. Do not share storage keys with `game-lilly`.
+Use the local storage key `happy-little-kitchen-v1`. Keep the legacy key migration so existing saved creations are preserved.

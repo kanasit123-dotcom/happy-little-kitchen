@@ -1,4 +1,5 @@
-const STORE_KEY = 'lilly-playhouse-v1';
+const STORE_KEY = 'happy-little-kitchen-v1';
+const LEGACY_STORE_KEY = 'lilly-playhouse-v1';
 
 const RECIPES = {
   cupcake: {
@@ -44,20 +45,20 @@ const FRIENDS = {
 
 const COPY = {
   th: {
-    title: 'ครัวของลิลลี่', subtitle: 'เลือกของอร่อย แล้วลงมือทำเลย', language: '🇹🇭 ไทย',
+    title: 'ครัวจิ๋วแสนสนุก', subtitle: 'เลือกของอร่อย แล้วลงมือทำเลย', language: '🇹🇭 ไทย',
     home: 'กลับหน้าครัว', listen: 'ฟังอีกครั้ง', add: 'ลากหรือแตะวัตถุดิบใส่ชาม',
     mixHint: 'กดค้างหรือวนช้อนให้เต็ม', start: 'เริ่มเลย', decorate: 'ตกแต่งได้ตามใจ',
-    done: 'เสร็จแล้ว', serve: 'เลือกเพื่อนที่จะชิม', again: 'ทำอีกจาน', gallery: 'ผลงานของลิลลี่',
-    praise: ['น่ากินมาก!', 'หอมจังเลย!', 'ลิลลี่ทำเก่งมาก!'],
-    friendHappy: 'อร่อยมาก ขอบคุณนะลิลลี่', ready: 'พร้อมแล้ว ไปตกแต่งกัน', mixed: 'เข้ากันดีแล้ว', cooked: 'สุกกำลังดีเลย'
+    done: 'เสร็จแล้ว', serve: 'เลือกเพื่อนที่จะชิม', again: 'ทำอีกจาน', gallery: 'ผลงานของฉัน',
+    praise: ['น่ากินมาก!', 'หอมจังเลย!', 'ทำเก่งมาก!'],
+    friendHappy: 'อร่อยมาก ขอบคุณนะ', ready: 'พร้อมแล้ว ไปตกแต่งกัน', mixed: 'เข้ากันดีแล้ว', cooked: 'สุกกำลังดีเลย'
   },
   en: {
-    title: "Lilly's Kitchen", subtitle: 'Pick a treat and make it your way', language: '🇬🇧 ENG',
+    title: 'Happy Little Kitchen', subtitle: 'Pick a treat and make it your way', language: '🇬🇧 ENG',
     home: 'Back to the kitchen', listen: 'Listen again', add: 'Drag or tap the ingredients into the bowl',
     mixHint: 'Hold or stir until the bar is full', start: 'Start', decorate: 'Decorate it your way',
-    done: 'All done', serve: 'Choose a friend to taste it', again: 'Make another', gallery: "Lilly's creations",
-    praise: ['That looks delicious!', 'It smells wonderful!', 'Great cooking, Lilly!'],
-    friendHappy: 'Yummy! Thank you, Lilly!', ready: 'Ready! Let us decorate it', mixed: 'Perfectly mixed', cooked: 'Cooked just right'
+    done: 'All done', serve: 'Choose a friend to taste it', again: 'Make another', gallery: 'My creations',
+    praise: ['That looks delicious!', 'It smells wonderful!', 'Great cooking!'],
+    friendHappy: 'Yummy! Thank you!', ready: 'Ready! Let us decorate it', mixed: 'Perfectly mixed', cooked: 'Cooked just right'
   }
 };
 
@@ -73,7 +74,7 @@ let speechGeneration = 0;
 
 function loadState() {
   try {
-    const saved = JSON.parse(localStorage.getItem(STORE_KEY));
+    const saved = JSON.parse(localStorage.getItem(STORE_KEY) || localStorage.getItem(LEGACY_STORE_KEY));
     return {
       lang: saved?.lang === 'en' ? 'en' : 'th',
       sound: saved?.sound !== false,

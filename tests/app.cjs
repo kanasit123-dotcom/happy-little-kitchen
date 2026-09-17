@@ -4,7 +4,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 
 (async () => {
-  const base = process.env.LILLY_PLAYHOUSE_URL || 'http://127.0.0.1:5174';
+  const base = process.env.HAPPY_KITCHEN_URL || 'http://127.0.0.1:5174';
   const browser = await chromium.launch({ channel: 'chrome', headless: true });
   const output = path.join(__dirname, 'screenshots');
   fs.mkdirSync(output, { recursive: true });
@@ -21,7 +21,7 @@ const path = require('node:path');
     await page.screenshot({ path: path.join(output, 'home-mobile.png'), fullPage: true });
 
     await page.locator('#language').click();
-    assert.match(await page.locator('.brand h1').innerText(), /Lilly/);
+    assert.equal(await page.locator('.brand h1').innerText(), 'Happy Little Kitchen');
     await page.locator('#language').click();
 
     for (const recipe of ['cupcake', 'pizza', 'smoothie']) {
@@ -42,7 +42,7 @@ const path = require('node:path');
       await page.locator('#home').click();
     }
 
-    const saved = await page.evaluate(() => JSON.parse(localStorage.getItem('lilly-playhouse-v1')));
+    const saved = await page.evaluate(() => JSON.parse(localStorage.getItem('happy-little-kitchen-v1')));
     assert.equal(saved.gallery.length, 3);
     assert.equal(await page.locator('.gallery-item').count(), 3);
     assert.deepEqual(errors, []);
@@ -62,7 +62,7 @@ const path = require('node:path');
     await page.locator('#back').click();
 
     await page.waitForFunction(() => navigator.serviceWorker.controller);
-    assert.ok((await page.evaluate(() => caches.keys())).includes('lilly-playhouse-v1'));
+    assert.ok((await page.evaluate(() => caches.keys())).includes('happy-little-kitchen-v1'));
     await context.setOffline(true);
     await page.reload();
     await page.locator('.recipe-card').first().waitFor();

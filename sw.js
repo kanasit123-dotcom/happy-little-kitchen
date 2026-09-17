@@ -1,4 +1,4 @@
-const CACHE = 'lilly-playhouse-v1';
+const CACHE = 'happy-little-kitchen-v1';
 
 const FILES = [
   './',
@@ -21,7 +21,9 @@ self.addEventListener('install', (event) => {
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys()
-      .then((keys) => Promise.all(keys.filter((key) => key.startsWith('lilly-playhouse-') && key !== CACHE).map((key) => caches.delete(key))))
+      .then((keys) => Promise.all(keys.filter((key) => (
+        key.startsWith('happy-little-kitchen-') || key.startsWith('lilly-playhouse-')
+      ) && key !== CACHE).map((key) => caches.delete(key))))
       .then(() => self.clients.claim())
   );
 });
