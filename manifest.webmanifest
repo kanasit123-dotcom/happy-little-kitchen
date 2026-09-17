@@ -1,0 +1,14 @@
+{
+  "name": "Lilly Playhouse - ครัวของลิลลี่",
+  "short_name": "ครัวลิลลี่",
+  "description": "เกมทำอาหารอิสระ ภาษาไทยและอังกฤษ สำหรับลิลลี่",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#fff8e8",
+  "theme_color": "#fff8e8",
+  "orientation": "any",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}
