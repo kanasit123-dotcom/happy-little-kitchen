@@ -11,6 +11,8 @@
 - Never add scores, countdowns, wrong-answer states, advertisements, subscriptions, or pressure to continue.
 - Let every spoken prompt finish before advancing to the next prompt or game step.
 - Support direct taps and touch dragging on iPad.
+- Finished food can be fed to several friends, with each friend accepting one serving per dish.
+- Long presses and drags must never trigger browser text selection, image dragging, copy menus, or page zoom.
 - Use original visuals and mechanics. Do not copy another children's app's art, brand, characters, or screen layout.
 - Keep activities playful and creative, with several valid outcomes.
 

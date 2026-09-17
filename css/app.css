@@ -26,6 +26,7 @@
   user-select: none;
   -webkit-touch-callout: none;
 }
+*::selection { background: transparent; color: inherit; }
 html, body, #app { width: 100%; min-height: 100%; margin: 0; }
 #app { min-height: 100svh; }
 body { min-height: 100svh; overflow-x: hidden; overscroll-behavior: none; touch-action: manipulation; }
@@ -312,6 +313,11 @@ button:focus-visible { outline: 4px solid var(--sky); outline-offset: 4px; }
   transition: none !important;
   opacity: .96 !important;
   box-shadow: 0 12px 24px rgba(36,56,71,.24) !important;
+  -webkit-user-select: none !important;
+  user-select: none !important;
+  -webkit-touch-callout: none !important;
+  caret-color: transparent;
+  isolation: isolate;
 }
 
 .mix-tool {
@@ -476,7 +482,18 @@ button:focus-visible { outline: 4px solid var(--sky); outline-offset: 4px; }
 .dish.drop-target { transform: scale(1.04); border-color: var(--yellow); box-shadow: 0 0 0 12px rgba(244,189,63,.3), var(--shadow); }
 .dish.drop-miss { animation: nudge .12s ease-in-out 3; }
 .food-icon { font-size: 10rem; line-height: 1; filter: drop-shadow(0 7px 3px rgba(36,56,71,.15)); }
-.food-icon.feed-handle { position: relative; z-index: 4; cursor: grab; touch-action: none; outline: none; }
+.food-icon.feed-handle {
+  position: relative;
+  z-index: 4;
+  cursor: grab;
+  touch-action: none;
+  outline: none;
+  -webkit-user-select: none !important;
+  user-select: none !important;
+  -webkit-touch-callout: none !important;
+  -webkit-tap-highlight-color: transparent;
+  caret-color: transparent;
+}
 .food-icon.feed-handle:active { cursor: grabbing; }
 .food-icon.feed-handle:focus-visible { outline: 5px solid var(--yellow); outline-offset: 8px; border-radius: 50%; }
 .food-color { position: absolute; inset: 19%; border-radius: 50%; opacity: .45; pointer-events: none; }
@@ -490,11 +507,29 @@ button:focus-visible { outline: 4px solid var(--sky); outline-offset: 4px; }
 
 .serve-layout { width: min(860px, 100%); display: flex; align-items: center; justify-content: center; gap: clamp(12px, 4vw, 50px); }
 .customer-grid { display: flex; gap: clamp(8px, 2vw, 18px); }
-.friend-btn { width: clamp(88px, 19vw, 145px); height: clamp(110px, 22vw, 175px); border-radius: 8px; background: rgba(255,253,248,.95); border: 4px solid white; box-shadow: var(--shadow); padding: 6px; }
+.friend-btn { width: clamp(88px, 19vw, 145px); height: clamp(110px, 22vw, 175px); border-radius: 8px; background: rgba(255,253,248,.95); border: 4px solid white; box-shadow: var(--shadow); padding: 6px; position: relative; }
 .friend-btn img { width: 100%; height: 100%; object-fit: contain; }
 .friend-btn.feed-target { outline: 7px solid var(--yellow); outline-offset: 4px; transform: scale(1.08); background: #fff2b8; }
 .friend-btn.feeding img { animation: chomp .24s ease-in-out 3; }
 .friend-btn.happy { background: #fff2b8; animation: happy .55s ease-in-out 3; }
+.friend-btn.fed { border-color: var(--mint); background: #e3f7ef; }
+.friend-btn.fed::after {
+  content: '\2713';
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  border: 3px solid white;
+  border-radius: 50%;
+  background: var(--mint);
+  color: white;
+  font-size: 1.25rem;
+  font-weight: 900;
+  box-shadow: 0 3px 0 rgba(36,56,71,.15);
+}
 
 .feed-bite {
   position: fixed;

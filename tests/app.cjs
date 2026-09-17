@@ -99,6 +99,7 @@ const path = require('node:path');
       await page.locator('#done').click();
       assert.equal(await page.locator('#finish-actions').isVisible(), false);
       if (recipe === 'cupcake') {
+        assert.equal(await page.locator('#feed-food').evaluate((element) => getComputedStyle(element).userSelect), 'none');
         const foodBox = await page.locator('#feed-food').boundingBox();
         const friendBox = await page.locator('.friend-btn').first().boundingBox();
         await page.mouse.move(foodBox.x + foodBox.width / 2, foodBox.y + foodBox.height / 2);
@@ -108,16 +109,28 @@ const path = require('node:path');
         assert.equal(await page.locator('.feed-bite').count(), 1);
         await page.waitForTimeout(260);
         await page.screenshot({ path: path.join(output, 'feeding-mobile.png'), fullPage: true });
+        await page.locator('.friend-btn').first().waitFor({ state: 'visible' });
       } else {
         await page.locator('.friend-btn').first().click();
       }
       await page.locator('#finish-actions:not([hidden])').waitFor();
-      if (recipe === 'cupcake') await page.screenshot({ path: path.join(output, 'serve-mobile.png'), fullPage: true });
+      if (recipe === 'cupcake') {
+        assert.equal(await page.locator('.friend-btn.fed').count(), 1);
+        await page.locator('.friend-btn').nth(1).click();
+        await page.waitForFunction(() => document.querySelectorAll('.friend-btn.fed').length === 2);
+        await page.locator('.friend-btn').nth(2).click();
+        await page.waitForFunction(() => document.querySelectorAll('.friend-btn.fed').length === 3);
+        await page.locator('.friend-btn').first().click();
+        assert.equal(await page.locator('.friend-btn.fed').count(), 3);
+        assert.equal(await page.evaluate(() => window.getSelection().toString()), '');
+        await page.screenshot({ path: path.join(output, 'serve-mobile.png'), fullPage: true });
+      }
       await page.locator('#home').click();
     }
 
     const saved = await page.evaluate(() => JSON.parse(localStorage.getItem('happy-little-kitchen-v1')));
     assert.equal(saved.gallery.length, 3);
+    assert.equal(saved.gallery.find((item) => item.recipe === 'cupcake').friends.length, 3);
     assert.equal(await page.locator('.gallery-item').count(), 3);
     assert.deepEqual(errors, []);
 
@@ -136,11 +149,11 @@ const path = require('node:path');
     await page.locator('#back').click();
 
     await page.waitForFunction(() => navigator.serviceWorker.controller);
-    assert.ok((await page.evaluate(() => caches.keys())).includes('happy-little-kitchen-v7'));
+    assert.ok((await page.evaluate(() => caches.keys())).includes('happy-little-kitchen-v8'));
     await context.setOffline(true);
     await page.reload();
     await page.locator('.recipe-card').first().waitFor();
-    console.log('PASS three recipes, Thai/English, saved gallery, responsive views, and offline mode.');
+    console.log('PASS three recipes, multi-friend feeding, selection protection, Thai/English, gallery, responsive views, and offline mode.');
   } finally {
     await browser.close();
   }

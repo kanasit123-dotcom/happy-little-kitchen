@@ -48,7 +48,7 @@ const COPY = {
     title: 'ครัวจิ๋วแสนสนุก', subtitle: 'เลือกของอร่อย แล้วลงมือทำเลย', language: '🇹🇭 ไทย',
     home: 'กลับหน้าครัว', listen: 'ฟังอีกครั้ง', add: 'ลากวัตถุดิบลงชาม หรือแตะของแล้วแตะชาม',
     mixHint: 'แตะช้อนในชามหลายครั้งจนแถบเต็ม', start: 'เริ่มเลย', hold: 'กดค้าง', decorate: 'ตกแต่งได้ตามใจ',
-    done: 'เสร็จแล้ว', serve: 'ลากอาหารไปหาเพื่อน หรือแตะเพื่อนเพื่อป้อน', again: 'ทำอีกจาน', gallery: 'ผลงานของฉัน', place: 'แตะจุดบนอาหาร หรือลากไปวาง',
+    done: 'เสร็จแล้ว', serve: 'ลากอาหารไปหาเพื่อน ป้อนได้หลายคน', again: 'ทำอีกจาน', gallery: 'ผลงานของฉัน', place: 'แตะจุดบนอาหาร หรือลากไปวาง',
     praise: ['น่ากินมาก!', 'หอมจังเลย!', 'ทำเก่งมาก!'],
     friendHappy: 'อร่อยมาก ขอบคุณนะ', ready: 'พร้อมแล้ว ไปตกแต่งกัน', mixed: 'เข้ากันดีแล้ว', cooked: 'สุกกำลังดีเลย'
   },
@@ -56,7 +56,7 @@ const COPY = {
     title: 'Happy Little Kitchen', subtitle: 'Pick a treat and make it your way', language: '🇬🇧 ENG',
     home: 'Back to the kitchen', listen: 'Listen again', add: 'Drag into the bowl, or tap an item then tap the bowl',
     mixHint: 'Tap the spoon in the bowl until the bar is full', start: 'Start', hold: 'Hold', decorate: 'Decorate it your way',
-    done: 'All done', serve: 'Drag the food to a friend, or tap a friend to feed them', again: 'Make another', gallery: 'My creations', place: 'Tap the food or drag to place it',
+    done: 'All done', serve: 'Drag food to friends. You can feed more than one', again: 'Make another', gallery: 'My creations', place: 'Tap the food or drag to place it',
     praise: ['That looks delicious!', 'It smells wonderful!', 'Great cooking!'],
     friendHappy: 'Yummy! Thank you!', ready: 'Ready! Let us decorate it', mixed: 'Perfectly mixed', cooked: 'Cooked just right'
   }
@@ -257,6 +257,9 @@ function bindDragChoice(button, options) {
 
   const clear = () => {
     if (!active) return;
+    try {
+      if (button.hasPointerCapture?.(active.pointerId)) button.releasePointerCapture(active.pointerId);
+    } catch {}
     window.removeEventListener('pointermove', active.move);
     window.removeEventListener('pointerup', active.up);
     window.removeEventListener('pointercancel', active.cancel);
@@ -270,6 +273,7 @@ function bindDragChoice(button, options) {
     if (event.button !== undefined && event.button !== 0) return;
     if (button.disabled || button.classList.contains('used')) return;
     event.preventDefault();
+    window.getSelection()?.removeAllRanges();
     const pointerId = event.pointerId;
     const startX = event.clientX;
     const startY = event.clientY;
@@ -312,7 +316,8 @@ function bindDragChoice(button, options) {
       if (active && cancelEvent.pointerId === pointerId) clear();
     };
 
-    active = { moved: false, ghost: null, move, up, cancel };
+    active = { moved: false, ghost: null, move, up, cancel, pointerId };
+    try { button.setPointerCapture?.(pointerId); } catch {}
     window.addEventListener('pointermove', move, { passive: false });
     window.addEventListener('pointerup', up);
     window.addEventListener('pointercancel', cancel);
@@ -601,13 +606,16 @@ function renderServe() {
   const friendButtons = [...app.querySelectorAll('.friend-btn')];
   let feeding = false;
   let hoveredFriend = null;
+  let gallerySaved = false;
   food.id = 'feed-food';
   food.classList.add('feed-handle');
   food.setAttribute('role', 'button');
   food.setAttribute('tabindex', '0');
+  food.setAttribute('draggable', 'false');
 
   const friendAt = (x, y) => {
     hoveredFriend = friendButtons.find((button) => {
+      if (button.classList.contains('fed')) return false;
       const rect = button.getBoundingClientRect();
       const padding = 20;
       return x >= rect.left - padding && x <= rect.right + padding
@@ -635,14 +643,21 @@ function renderServe() {
   };
 
   const feedFriend = async (button) => {
-    if (feeding || creation.friend) return;
+    if (feeding || button.classList.contains('fed')) return;
     feeding = true;
     friendButtons.forEach((item) => item.classList.remove('feed-target'));
     dish.classList.remove('awaiting-drop');
     await animateFeeding(button);
-    creation.friend = button.dataset.friend;
-    button.classList.add('happy');
-    state.gallery.unshift({ ...creation });
+    creation.friends ||= [];
+    creation.friends.push(button.dataset.friend);
+    creation.friend ||= button.dataset.friend;
+    button.classList.add('happy', 'fed');
+    if (!gallerySaved) {
+      state.gallery.unshift({ ...creation, friends: [...creation.friends] });
+      gallerySaved = true;
+    } else {
+      state.gallery[0] = { ...creation, friends: [...creation.friends] };
+    }
     state.gallery = state.gallery.slice(0, 6);
     saveState();
     tone(880, .35);
@@ -652,6 +667,7 @@ function renderServe() {
     actions.hidden = false;
     app.querySelector('#again').onclick = () => startRecipe(activeRecipe);
     app.querySelector('#home').onclick = showHome;
+    feeding = false;
   };
 
   bindDragChoice(food, {
@@ -693,6 +709,10 @@ document.addEventListener('contextmenu', (event) => event.preventDefault());
 document.addEventListener('dragstart', (event) => event.preventDefault());
 document.addEventListener('selectstart', (event) => event.preventDefault());
 document.addEventListener('gesturestart', (event) => event.preventDefault(), { passive: false });
+document.addEventListener('selectionchange', () => {
+  const selection = window.getSelection();
+  if (selection && !selection.isCollapsed) selection.removeAllRanges();
+});
 showHome();
 
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
