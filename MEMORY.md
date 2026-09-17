@@ -22,9 +22,13 @@ Nine recipes: cupcake, pizza, smoothie, omelet, noodle soup, cookie, ice cream, 
 
 The user generates art in Gemini themselves; the AI writes prompts, cuts backgrounds and integrates. Ideas held in reserve for later recipes: fried rice, popcorn (shaking pot), hot cocoa, donut, rice ball.
 
+## Friends, orders and unlocks (2026-09-17)
+
+Market research (Toca Kitchen 2, Dr. Panda Restaurant, Sago Mini) showed the strongest hooks are character reactions and "a friend asks for a dish". The kitchen now has a daily order bubble, four reactions (love / yum / sneeze / full — all positive or funny, never disappointed), and eight extra friends that unlock at 3, 6, 10, 14, 18, 22, 26, 30 feedings. Planned next, in order: slicing step (needs cut-ingredient art), deeper decorating (finger-drawn icing + 14 more toppings), sandbox "mystery dish" mode, sound effects. Art prompts for all of these are in `design/PROMPTS-gemini-2.md`.
+
 ## Characters
 
-Preferred friends include the seal, turtle, and rabbit already used here. Avoid adding bears, pigs, hippos, dogs, koalas, or teddy bears.
+Preferred friends include the seal, turtle, and rabbit already used here. The unlockable friends (cat, penguin, fox, unicorn, dolphin, butterfly, octopus, squirrel) reuse the game-lilly art, resized to 480 px. Avoid adding bears, pigs, hippos, dogs, koalas, or teddy bears.
 
 ## Storage
 

@@ -89,11 +89,32 @@ const RECIPES = {
 const COLORS = ['#ef6f61', '#f4bd3f', '#54b99a', '#67bde3', '#9a78bd'];
 const POSITIONS = [[25,24], [68,28], [48,48], [28,66], [70,68], [48,20], [18,46], [78,48]];
 
+// likes = เมนูโปรด (กินแล้วดีใจสุดๆ) · unlock = จำนวนครั้งที่ป้อนเพื่อนสะสม ก่อนตัวนี้จะมาเล่นด้วย
 const FRIENDS = {
-  seal: { src: 'assets/friends/seal.png', name: { th: 'แมวน้ำ', en: 'Seal' } },
-  turtle: { src: 'assets/friends/turtle.png', name: { th: 'เต่า', en: 'Turtle' } },
-  rabbit: { src: 'assets/friends/rabbit.png', name: { th: 'กระต่าย', en: 'Rabbit' } }
+  seal: { name: { th: 'แมวน้ำ', en: 'Seal' }, likes: ['icecream', 'smoothie', 'noodles'], unlock: 0 },
+  turtle: { name: { th: 'เต่า', en: 'Turtle' }, likes: ['noodles', 'omelet', 'pizza'], unlock: 0 },
+  rabbit: { name: { th: 'กระต่าย', en: 'Rabbit' }, likes: ['cake', 'cupcake', 'cookie'], unlock: 0 },
+  cat: { name: { th: 'แมว', en: 'Cat' }, likes: ['omelet', 'toast', 'noodles'], unlock: 3 },
+  penguin: { name: { th: 'เพนกวิน', en: 'Penguin' }, likes: ['icecream', 'smoothie', 'toast'], unlock: 6 },
+  fox: { name: { th: 'จิ้งจอก', en: 'Fox' }, likes: ['pizza', 'cookie', 'omelet'], unlock: 10 },
+  unicorn: { name: { th: 'ยูนิคอร์น', en: 'Unicorn' }, likes: ['cake', 'cupcake', 'icecream'], unlock: 14 },
+  dolphin: { name: { th: 'โลมา', en: 'Dolphin' }, likes: ['smoothie', 'noodles', 'toast'], unlock: 18 },
+  butterfly: { name: { th: 'ผีเสื้อ', en: 'Butterfly' }, likes: ['cupcake', 'cake', 'smoothie'], unlock: 22 },
+  octopus: { name: { th: 'หมึกยักษ์', en: 'Octopus' }, likes: ['noodles', 'pizza', 'omelet'], unlock: 26 },
+  squirrel: { name: { th: 'กระรอก', en: 'Squirrel' }, likes: ['cookie', 'toast', 'cake'], unlock: 30 }
 };
+// รูปหน้าตาที่วาดแล้ว: assets/friends/<id>-<อารมณ์>.png (ตัว/อารมณ์ที่ยังไม่มีใช้ท่า CSS + รูปปกติ)
+const FRIEND_ART = {};
+const FRIEND_MAX_ON_SCREEN = 4;
+// ปฏิกิริยาตอนกิน เรียงตามลำดับที่เช็ก: จาม (มีพริกหวาน) > อิ่มแปล้ (ท็อปปิ้ง 10+) > ชอบสุดๆ (เมนูโปรด/ตามสั่ง) > อร่อย
+const REACTIONS = {
+  sneeze: { th: 'ฮัดเช้ย! จี๊ดจ๊าดจัง', en: 'Achoo! So zingy!', tone: 300, particle: '💨' },
+  full: { th: 'อิ่มแปล้เลย', en: 'So full!', tone: 380, particle: '💤' },
+  love: { th: 'ชอบที่สุดเลย!', en: 'My favorite!', tone: 980, particle: '💗' },
+  yum: { th: 'อร่อยมาก ขอบคุณนะ', en: 'Yummy! Thank you!', tone: 880, particle: '✨' }
+};
+const SNEEZE_TOPPINGS = ['pepper'];
+const FULL_TOPPINGS = 10;
 
 const COPY = {
   th: {
@@ -103,7 +124,7 @@ const COPY = {
     start: 'เริ่มเลย', hold: 'กดค้าง', decorate: 'ตกแต่งได้ตามใจ',
     done: 'เสร็จแล้ว', serve: 'ลากอาหารไปหาเพื่อน ป้อนได้หลายคน', again: 'ทำอีกจาน', gallery: 'ผลงานของฉัน', place: 'แตะจุดบนอาหาร หรือลากไปวาง',
     praise: ['น่ากินมาก!', 'หอมจังเลย!', 'ทำเก่งมาก!'],
-    friendHappy: 'อร่อยมาก ขอบคุณนะ', ready: 'พร้อมแล้ว ไปตกแต่งกัน',
+    ready: 'พร้อมแล้ว ไปตกแต่งกัน', wants: 'อยากกิน', orderDone: 'ตรงใจเลย ขอบคุณนะ!', newFriend: 'เพื่อนใหม่มาเล่นด้วย', nextFriend: 'เพื่อนคนต่อไป', ok: 'ตกลง',
     mixed: { stir: 'เข้ากันดีแล้ว', whisk: 'ฟูกำลังดี', roll: 'แบนสวยเลย', spread: 'ทาทั่วแล้ว' }
   },
   en: {
@@ -113,7 +134,7 @@ const COPY = {
     start: 'Start', hold: 'Hold', decorate: 'Decorate it your way',
     done: 'All done', serve: 'Drag food to friends. You can feed more than one', again: 'Make another', gallery: 'My creations', place: 'Tap the food or drag to place it',
     praise: ['That looks delicious!', 'It smells wonderful!', 'Great cooking!'],
-    friendHappy: 'Yummy! Thank you!', ready: 'Ready! Let us decorate it',
+    ready: 'Ready! Let us decorate it', wants: 'wants to eat', orderDone: 'Just what I wanted! Thank you!', newFriend: 'A new friend came to play', nextFriend: 'Next friend', ok: 'OK',
     mixed: { stir: 'Perfectly mixed', whisk: 'Nice and fluffy', roll: 'Rolled out nicely', spread: 'All spread out' }
   }
 };
@@ -146,17 +167,36 @@ function loadState() {
   try {
     const saved = JSON.parse(localStorage.getItem(STORE_KEY) || localStorage.getItem(LEGACY_STORE_KEY));
     const gallery = Array.isArray(saved?.gallery) ? saved.gallery : [];
+    const order = saved?.order && FRIENDS[saved.order.friend] && RECIPES[saved.order.recipe] ? saved.order : null;
     return {
       lang: saved?.lang === 'en' ? 'en' : 'th',
       sound: saved?.sound !== false,
       gallery: gallery
         .filter((item) => item && RECIPES[item.recipe])
         .slice(0, 6)
-        .map((item) => ({ ...item, toppings: (Array.isArray(item.toppings) ? item.toppings : []).map(normalizeTopping) }))
+        .map((item) => ({ ...item, toppings: (Array.isArray(item.toppings) ? item.toppings : []).map(normalizeTopping) })),
+      served: Number.isFinite(saved?.served) ? saved.served : 0,
+      ordersDone: Number.isFinite(saved?.ordersDone) ? saved.ordersDone : 0,
+      order
     };
   } catch {
-    return { lang: 'th', sound: true, gallery: [] };
+    return { lang: 'th', sound: true, gallery: [], served: 0, ordersDone: 0, order: null };
   }
+}
+
+const friendSrc = (id, expression) => (expression && FRIEND_ART[id]?.includes(expression)) ? `assets/friends/${id}-${expression}.png` : `assets/friends/${id}.png`;
+const unlockedFriends = () => Object.keys(FRIENDS).filter((id) => FRIENDS[id].unlock <= state.served);
+const nextLockedFriend = () => Object.keys(FRIENDS).find((id) => FRIENDS[id].unlock > state.served) || null;
+const todayKey = () => new Date().toISOString().slice(0, 10);
+const pick = (list) => list[Math.floor(Math.random() * list.length)];
+
+// เพื่อนคนหนึ่งขออาหาร 1 เมนู (จากเมนูโปรดของตัวเอง) เปลี่ยนเมื่อทำสำเร็จหรือขึ้นวันใหม่
+function ensureOrder() {
+  if (state.order && state.order.date === todayKey() && FRIENDS[state.order.friend].unlock <= state.served) return state.order;
+  const friend = pick(unlockedFriends());
+  state.order = { friend, recipe: pick(FRIENDS[friend].likes), date: todayKey() };
+  saveState();
+  return state.order;
 }
 
 function saveState() {
@@ -254,6 +294,25 @@ function galleryHTML() {
   </div>`;
 }
 
+function orderBubbleHTML(order, done = false) {
+  return `<span class="bubble ${done ? 'done' : ''}" aria-hidden="true"><img src="${dishSrc(order.recipe)}" alt="">${done ? '<b>✓</b>' : ''}</span>`;
+}
+
+// แถวเพื่อนบนหน้าครัว: คนที่สั่งอาหาร (มีป้าย) + เพื่อนคนอื่นที่มาแล้ว + เงาของเพื่อนคนต่อไป
+function friendsRowHTML() {
+  const order = ensureOrder();
+  const others = unlockedFriends().filter((id) => id !== order.friend).sort((a, b) => FRIENDS[b].unlock - FRIENDS[a].unlock).slice(0, 4).reverse();
+  const next = nextLockedFriend();
+  const orderLabel = `${local(FRIENDS[order.friend].name)} ${t('wants')} ${local(RECIPES[order.recipe].name)}`;
+  return `<div class="friends-row">
+    <button class="friend-peek order" id="order" data-order-friend="${order.friend}" data-order-recipe="${order.recipe}" aria-label="${orderLabel}">
+      ${orderBubbleHTML(order)}<img src="${friendSrc(order.friend)}" alt="">
+    </button>
+    ${others.map((id) => `<img class="friend-peek" src="${friendSrc(id)}" alt="${local(FRIENDS[id].name)}">`).join('')}
+    ${next ? `<span class="friend-peek next" title="${t('nextFriend')}" aria-label="${t('nextFriend')}"><img src="${friendSrc(next)}" alt=""><i style="--p:${Math.round(state.served / FRIENDS[next].unlock * 100)}%"></i></span>` : ''}
+  </div>`;
+}
+
 function showHome() {
   if (activeRecipe) stopSpeech();
   activeRecipe = null;
@@ -268,12 +327,20 @@ function showHome() {
         </button>`).join('')}
       </div>
       ${galleryHTML()}
-      <div class="friends-row" aria-hidden="true">
-        ${Object.values(FRIENDS).map((friend) => `<img class="friend-peek" src="${friend.src}" alt="">`).join('')}
-      </div>
+      ${friendsRowHTML()}
     </section>
   </div>`;
   bindTopbar(showHome);
+  const orderButton = app.querySelector('#order');
+  if (orderButton) {
+    orderButton.onclick = async () => {
+      unlockAudio();
+      tone(620);
+      const { friend, recipe } = state.order;
+      await speak(`${local(FRIENDS[friend].name)} ${t('wants')} ${local(RECIPES[recipe].name)}`);
+      startRecipe(recipe);
+    };
+  }
   app.querySelectorAll('[data-recipe]').forEach((button) => {
     button.onclick = async () => {
       unlockAudio();
@@ -752,11 +819,54 @@ function renderDecorate() {
   };
 }
 
+// เพื่อนที่มารอกินจานนี้: คนที่สั่งมาก่อน แล้วสุ่มคนอื่นที่มาแล้วจนครบ 4
+function pickDiners() {
+  const order = ensureOrder();
+  const rest = unlockedFriends().filter((id) => id !== order.friend);
+  for (let i = rest.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [rest[i], rest[j]] = [rest[j], rest[i]];
+  }
+  return [order.friend, ...rest.slice(0, FRIEND_MAX_ON_SCREEN - 1)];
+}
+
+function reactionFor(friendId) {
+  const keys = creation.toppings.map((item) => item.key);
+  if (keys.some((key) => SNEEZE_TOPPINGS.includes(key))) return 'sneeze';
+  if (keys.length >= FULL_TOPPINGS) return 'full';
+  if (FRIENDS[friendId].likes.includes(activeRecipe)) return 'love';
+  return 'yum';
+}
+
+function popup(html, spoken) {
+  const layer = document.createElement('div');
+  layer.className = 'popup-layer';
+  layer.innerHTML = `<div class="popup">${html}<button class="action-btn primary" id="popup-ok">👍 ${t('ok')}</button></div>`;
+  document.body.appendChild(layer);
+  return new Promise((resolve) => {
+    let closed = false;
+    const close = () => {
+      if (closed) return;
+      closed = true;
+      layer.remove();
+      resolve();
+    };
+    layer.querySelector('#popup-ok').onclick = close;
+    layer.addEventListener('click', (event) => { if (event.target === layer) close(); });
+    setTimeout(close, 9000);
+    if (spoken) speak(spoken);
+  });
+}
+
 function renderServe() {
   const prompt = t('serve');
+  const order = ensureOrder();
+  const diners = pickDiners();
   screen(`<div class="stage-zone">
       <div class="serve-layout">${dishHTML()}<div class="customer-grid">
-        ${Object.entries(FRIENDS).map(([id, friend]) => `<button class="friend-btn" data-friend="${id}" aria-label="${local(friend.name)}"><img src="${friend.src}" alt="${local(friend.name)}"></button>`).join('')}
+        ${diners.map((id) => `<button class="friend-btn" data-friend="${id}" aria-label="${local(FRIENDS[id].name)}">
+          <img class="portrait" src="${friendSrc(id)}" alt="${local(FRIENDS[id].name)}">${id === order.friend ? orderBubbleHTML(order) : ''}
+        </button>`).join('')}
       </div></div>
     </div>
     <div class="finish-actions" id="finish-actions" hidden>
@@ -805,16 +915,37 @@ function renderServe() {
     friendButton.classList.remove('feeding');
   };
 
+  // เพื่อนแสดงปฏิกิริยา: สลับรูปหน้าตา (ถ้ามี) + ท่า CSS + อนุภาคลอย + พูด แล้วกลับเป็นรูปปกติ
+  const react = async (button, reaction) => {
+    const id = button.dataset.friend;
+    const img = button.querySelector('img.portrait');
+    const info = REACTIONS[reaction];
+    img.src = friendSrc(id, reaction);
+    button.classList.add('reacting', `react-${reaction}`);
+    button.dataset.reaction = reaction;
+    const burst = document.createElement('span');
+    burst.className = 'burst';
+    burst.innerHTML = Array.from({ length: reaction === 'yum' ? 3 : 5 }, (_, i) => `<i style="left:${18 + i * 16}%;animation-delay:${i * .12}s">${info.particle}</i>`).join('');
+    button.appendChild(burst);
+    tone(info.tone, .35);
+    await speak(local(info));
+    await new Promise((resolve) => setTimeout(resolve, 400));
+    burst.remove();
+    button.classList.remove('reacting', `react-${reaction}`);
+    img.src = friendSrc(id);
+  };
+
   const feedFriend = async (button) => {
     if (feeding || button.classList.contains('fed')) return;
     feeding = true;
     friendButtons.forEach((item) => item.classList.remove('feed-target'));
     dish.classList.remove('awaiting-drop');
     await animateFeeding(button);
+    const friendId = button.dataset.friend;
     creation.friends ||= [];
-    creation.friends.push(button.dataset.friend);
-    creation.friend ||= button.dataset.friend;
-    button.classList.add('happy', 'fed');
+    creation.friends.push(friendId);
+    creation.friend ||= friendId;
+    button.classList.add('fed');
     if (!gallerySaved) {
       state.gallery.unshift({ ...creation, friends: [...creation.friends] });
       gallerySaved = true;
@@ -822,14 +953,30 @@ function renderServe() {
       state.gallery[0] = { ...creation, friends: [...creation.friends] };
     }
     state.gallery = state.gallery.slice(0, 6);
+    const orderMatched = state.order && state.order.friend === friendId && state.order.recipe === activeRecipe;
+    const unlockedBefore = unlockedFriends();
+    state.served++;
+    if (orderMatched) {
+      state.ordersDone++;
+      state.order = null;
+      button.querySelector('.bubble')?.classList.add('done');
+      button.querySelector('.bubble')?.insertAdjacentHTML('beforeend', '<b>✓</b>');
+    }
     saveState();
-    tone(880, .35);
     confetti();
-    await speak(t('friendHappy'));
+    await react(button, orderMatched ? 'love' : reactionFor(friendId));
+    if (orderMatched) await speak(t('orderDone'));
     const actions = app.querySelector('#finish-actions');
     actions.hidden = false;
     app.querySelector('#again').onclick = () => startRecipe(activeRecipe);
     app.querySelector('#home').onclick = showHome;
+    const newFriend = unlockedFriends().find((id) => !unlockedBefore.includes(id));
+    if (newFriend) {
+      tone(1046, .4);
+      confetti();
+      await popup(`<img class="popup-friend" src="${friendSrc(newFriend)}" alt=""><h2>${t('newFriend')}</h2><p>${local(FRIENDS[newFriend].name)}</p>`,
+        `${t('newFriend')} ${local(FRIENDS[newFriend].name)}`);
+    }
     feeding = false;
   };
 
