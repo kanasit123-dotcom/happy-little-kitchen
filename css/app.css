@@ -19,10 +19,17 @@
   font-synthesis: none;
 }
 
-* { box-sizing: border-box; letter-spacing: 0; }
+* {
+  box-sizing: border-box;
+  letter-spacing: 0;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
 html, body, #app { width: 100%; min-height: 100%; margin: 0; }
 #app { min-height: 100svh; }
-body { min-height: 100svh; overflow-x: hidden; overscroll-behavior: none; }
+body { min-height: 100svh; overflow-x: hidden; overscroll-behavior: none; touch-action: manipulation; }
+img { -webkit-user-drag: none; user-drag: none; }
 button { font: inherit; letter-spacing: 0; -webkit-tap-highlight-color: transparent; }
 button:focus-visible { outline: 4px solid var(--sky); outline-offset: 4px; }
 
@@ -469,6 +476,9 @@ button:focus-visible { outline: 4px solid var(--sky); outline-offset: 4px; }
 .dish.drop-target { transform: scale(1.04); border-color: var(--yellow); box-shadow: 0 0 0 12px rgba(244,189,63,.3), var(--shadow); }
 .dish.drop-miss { animation: nudge .12s ease-in-out 3; }
 .food-icon { font-size: 10rem; line-height: 1; filter: drop-shadow(0 7px 3px rgba(36,56,71,.15)); }
+.food-icon.feed-handle { position: relative; z-index: 4; cursor: grab; touch-action: none; outline: none; }
+.food-icon.feed-handle:active { cursor: grabbing; }
+.food-icon.feed-handle:focus-visible { outline: 5px solid var(--yellow); outline-offset: 8px; border-radius: 50%; }
 .food-color { position: absolute; inset: 19%; border-radius: 50%; opacity: .45; pointer-events: none; }
 .topping { position: absolute; font-size: 2.15rem; transform: translate(-50%, -50%); animation: topping-pop .3s ease-out both; pointer-events: none; }
 
@@ -482,11 +492,26 @@ button:focus-visible { outline: 4px solid var(--sky); outline-offset: 4px; }
 .customer-grid { display: flex; gap: clamp(8px, 2vw, 18px); }
 .friend-btn { width: clamp(88px, 19vw, 145px); height: clamp(110px, 22vw, 175px); border-radius: 8px; background: rgba(255,253,248,.95); border: 4px solid white; box-shadow: var(--shadow); padding: 6px; }
 .friend-btn img { width: 100%; height: 100%; object-fit: contain; }
+.friend-btn.feed-target { outline: 7px solid var(--yellow); outline-offset: 4px; transform: scale(1.08); background: #fff2b8; }
+.friend-btn.feeding img { animation: chomp .24s ease-in-out 3; }
 .friend-btn.happy { background: #fff2b8; animation: happy .55s ease-in-out 3; }
+
+.feed-bite {
+  position: fixed;
+  z-index: 120;
+  transform: translate(-50%, -50%);
+  transform-origin: center;
+  transition: transform .68s cubic-bezier(.2,.8,.3,1), opacity .68s ease;
+  pointer-events: none;
+  font-size: 5.5rem;
+  line-height: 1;
+  filter: drop-shadow(0 8px 4px rgba(36,56,71,.22));
+}
 
 .celebration { position: fixed; inset: 0; pointer-events: none; overflow: hidden; z-index: 50; }
 .confetti { position: absolute; top: -30px; width: 14px; height: 24px; border-radius: 3px; animation: fall 1.8s ease-in forwards; }
 .finish-actions { display: flex; justify-content: center; gap: 14px; flex-wrap: wrap; }
+.finish-actions[hidden] { display: none; }
 
 @keyframes drop-in { from { transform: translateY(-70px) scale(.5) rotate(-10deg); opacity: 0; } to { transform: translateY(0) scale(1) rotate(0); opacity: 1; } }
 @keyframes bounce-ready { 50% { transform: translateY(-7px); } }
@@ -504,6 +529,7 @@ button:focus-visible { outline: 4px solid var(--sky); outline-offset: 4px; }
 @keyframes blender-shake { to { transform: rotate(2deg) translateX(3px); } }
 @keyframes liquid-rise { to { height: 68%; } }
 @keyframes happy { 50% { transform: translateY(-10px) rotate(3deg); } }
+@keyframes chomp { 50% { transform: scale(1.13) rotate(-4deg); } }
 @keyframes fall { to { transform: translateY(110vh) rotate(540deg); opacity: .8; } }
 
 @media (max-width: 620px) {

@@ -48,7 +48,7 @@ const COPY = {
     title: 'ครัวจิ๋วแสนสนุก', subtitle: 'เลือกของอร่อย แล้วลงมือทำเลย', language: '🇹🇭 ไทย',
     home: 'กลับหน้าครัว', listen: 'ฟังอีกครั้ง', add: 'ลากวัตถุดิบลงชาม หรือแตะของแล้วแตะชาม',
     mixHint: 'แตะช้อนในชามหลายครั้งจนแถบเต็ม', start: 'เริ่มเลย', hold: 'กดค้าง', decorate: 'ตกแต่งได้ตามใจ',
-    done: 'เสร็จแล้ว', serve: 'เลือกเพื่อนที่จะชิม', again: 'ทำอีกจาน', gallery: 'ผลงานของฉัน', place: 'แตะจุดบนอาหาร หรือลากไปวาง',
+    done: 'เสร็จแล้ว', serve: 'ลากอาหารไปหาเพื่อน หรือแตะเพื่อนเพื่อป้อน', again: 'ทำอีกจาน', gallery: 'ผลงานของฉัน', place: 'แตะจุดบนอาหาร หรือลากไปวาง',
     praise: ['น่ากินมาก!', 'หอมจังเลย!', 'ทำเก่งมาก!'],
     friendHappy: 'อร่อยมาก ขอบคุณนะ', ready: 'พร้อมแล้ว ไปตกแต่งกัน', mixed: 'เข้ากันดีแล้ว', cooked: 'สุกกำลังดีเลย'
   },
@@ -56,7 +56,7 @@ const COPY = {
     title: 'Happy Little Kitchen', subtitle: 'Pick a treat and make it your way', language: '🇬🇧 ENG',
     home: 'Back to the kitchen', listen: 'Listen again', add: 'Drag into the bowl, or tap an item then tap the bowl',
     mixHint: 'Tap the spoon in the bowl until the bar is full', start: 'Start', hold: 'Hold', decorate: 'Decorate it your way',
-    done: 'All done', serve: 'Choose a friend to taste it', again: 'Make another', gallery: 'My creations', place: 'Tap the food or drag to place it',
+    done: 'All done', serve: 'Drag the food to a friend, or tap a friend to feed them', again: 'Make another', gallery: 'My creations', place: 'Tap the food or drag to place it',
     praise: ['That looks delicious!', 'It smells wonderful!', 'Great cooking!'],
     friendHappy: 'Yummy! Thank you!', ready: 'Ready! Let us decorate it', mixed: 'Perfectly mixed', cooked: 'Cooked just right'
   }
@@ -292,17 +292,18 @@ function bindDragChoice(button, options) {
       if (!active.moved) return;
       active.ghost.style.left = `${moveEvent.clientX}px`;
       active.ghost.style.top = `${moveEvent.clientY}px`;
-      options.onHover?.(options.isOverTarget(moveEvent.clientX, moveEvent.clientY));
+      options.onHover?.(options.isOverTarget(moveEvent.clientX, moveEvent.clientY), moveEvent.clientX, moveEvent.clientY);
     };
 
     const up = (upEvent) => {
       if (!active || upEvent.pointerId !== pointerId) return;
       const moved = active.moved;
       const overTarget = moved && options.isOverTarget(upEvent.clientX, upEvent.clientY);
+      const dropData = overTarget ? options.getDropData?.() : null;
       ignoreClick = true;
       clear();
       if (!moved) options.onTap();
-      else if (overTarget) options.onDrop(upEvent.clientX, upEvent.clientY);
+      else if (overTarget) options.onDrop(upEvent.clientX, upEvent.clientY, dropData);
       else options.onMiss?.();
       setTimeout(() => { ignoreClick = false; }, 0);
     };
@@ -595,22 +596,86 @@ function renderServe() {
       <button class="action-btn primary" id="again">↻ ${t('again')}</button>
       <button class="action-btn" id="home">⌂ ${t('home')}</button>
     </div>`, prompt);
-  app.querySelectorAll('.friend-btn').forEach((button) => {
-    button.onclick = async () => {
-      if (creation.friend) return;
-      creation.friend = button.dataset.friend;
-      button.classList.add('happy');
-      state.gallery.unshift({ ...creation });
-      state.gallery = state.gallery.slice(0, 6);
-      saveState();
-      tone(880, .35);
-      confetti();
-      await speak(t('friendHappy'));
-      const actions = app.querySelector('#finish-actions');
-      actions.hidden = false;
-      app.querySelector('#again').onclick = () => startRecipe(activeRecipe);
-      app.querySelector('#home').onclick = showHome;
-    };
+  const dish = app.querySelector('#dish');
+  const food = dish.querySelector('.food-icon');
+  const friendButtons = [...app.querySelectorAll('.friend-btn')];
+  let feeding = false;
+  let hoveredFriend = null;
+  food.id = 'feed-food';
+  food.classList.add('feed-handle');
+  food.setAttribute('role', 'button');
+  food.setAttribute('tabindex', '0');
+
+  const friendAt = (x, y) => {
+    hoveredFriend = friendButtons.find((button) => {
+      const rect = button.getBoundingClientRect();
+      const padding = 20;
+      return x >= rect.left - padding && x <= rect.right + padding
+        && y >= rect.top - padding && y <= rect.bottom + padding;
+    }) || null;
+    return Boolean(hoveredFriend);
+  };
+
+  const animateFeeding = async (friendButton) => {
+    const start = food.getBoundingClientRect();
+    const target = friendButton.getBoundingClientRect();
+    const bite = document.createElement('span');
+    bite.className = 'feed-bite';
+    bite.textContent = RECIPES[activeRecipe].icon;
+    bite.style.left = `${start.left + start.width / 2}px`;
+    bite.style.top = `${start.top + start.height / 2}px`;
+    document.body.appendChild(bite);
+    friendButton.classList.add('feeding');
+    requestAnimationFrame(() => {
+      bite.style.transform = `translate(-50%, -50%) translate(${target.left + target.width / 2 - start.left - start.width / 2}px, ${target.top + target.height / 2 - start.top - start.height / 2}px) scale(.38) rotate(14deg)`;
+    });
+    await new Promise((resolve) => setTimeout(resolve, 720));
+    bite.remove();
+    friendButton.classList.remove('feeding');
+  };
+
+  const feedFriend = async (button) => {
+    if (feeding || creation.friend) return;
+    feeding = true;
+    friendButtons.forEach((item) => item.classList.remove('feed-target'));
+    dish.classList.remove('awaiting-drop');
+    await animateFeeding(button);
+    creation.friend = button.dataset.friend;
+    button.classList.add('happy');
+    state.gallery.unshift({ ...creation });
+    state.gallery = state.gallery.slice(0, 6);
+    saveState();
+    tone(880, .35);
+    confetti();
+    await speak(t('friendHappy'));
+    const actions = app.querySelector('#finish-actions');
+    actions.hidden = false;
+    app.querySelector('#again').onclick = () => startRecipe(activeRecipe);
+    app.querySelector('#home').onclick = showHome;
+  };
+
+  bindDragChoice(food, {
+    onTap: () => {
+      dish.classList.add('awaiting-drop');
+      tone(520);
+    },
+    isOverTarget: friendAt,
+    onHover: (over) => friendButtons.forEach((button) => button.classList.toggle('feed-target', over && button === hoveredFriend)),
+    getDropData: () => hoveredFriend,
+    onDrop: (x, y, friend) => friend && feedFriend(friend),
+    onMiss: () => {
+      dish.classList.add('drop-miss');
+      setTimeout(() => dish.isConnected && dish.classList.remove('drop-miss'), 380);
+    }
+  });
+  food.addEventListener('keydown', (event) => {
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      dish.classList.add('awaiting-drop');
+    }
+  });
+  friendButtons.forEach((button) => {
+    button.onclick = () => feedFriend(button);
   });
 }
 
@@ -624,6 +689,10 @@ function confetti() {
 }
 
 document.addEventListener('pointerdown', unlockAudio, { once: true });
+document.addEventListener('contextmenu', (event) => event.preventDefault());
+document.addEventListener('dragstart', (event) => event.preventDefault());
+document.addEventListener('selectstart', (event) => event.preventDefault());
+document.addEventListener('gesturestart', (event) => event.preventDefault(), { passive: false });
 showHome();
 
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});

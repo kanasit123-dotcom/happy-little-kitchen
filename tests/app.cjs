@@ -18,6 +18,12 @@ const path = require('node:path');
     await page.locator('#sound').click();
     assert.equal(await page.locator('.recipe-card').count(), 3);
     assert.equal(await page.locator('.friend-peek').count(), 3);
+    assert.equal(await page.evaluate(() => getComputedStyle(document.body).userSelect), 'none');
+    assert.equal(await page.evaluate(() => {
+      const event = new MouseEvent('contextmenu', { bubbles: true, cancelable: true });
+      document.body.dispatchEvent(event);
+      return event.defaultPrevented;
+    }), true);
     await page.screenshot({ path: path.join(output, 'home-mobile.png'), fullPage: true });
 
     await page.locator('#language').click();
@@ -91,7 +97,20 @@ const path = require('node:path');
       assert.equal(await page.locator('#dish .topping').count(), 1);
       if (recipe === 'cupcake') await page.screenshot({ path: path.join(output, 'decorate-mobile.png'), fullPage: true });
       await page.locator('#done').click();
-      await page.locator('.friend-btn').first().click();
+      assert.equal(await page.locator('#finish-actions').isVisible(), false);
+      if (recipe === 'cupcake') {
+        const foodBox = await page.locator('#feed-food').boundingBox();
+        const friendBox = await page.locator('.friend-btn').first().boundingBox();
+        await page.mouse.move(foodBox.x + foodBox.width / 2, foodBox.y + foodBox.height / 2);
+        await page.mouse.down();
+        await page.mouse.move(friendBox.x + friendBox.width / 2, friendBox.y + friendBox.height / 2, { steps: 10 });
+        await page.mouse.up();
+        assert.equal(await page.locator('.feed-bite').count(), 1);
+        await page.waitForTimeout(260);
+        await page.screenshot({ path: path.join(output, 'feeding-mobile.png'), fullPage: true });
+      } else {
+        await page.locator('.friend-btn').first().click();
+      }
       await page.locator('#finish-actions:not([hidden])').waitFor();
       if (recipe === 'cupcake') await page.screenshot({ path: path.join(output, 'serve-mobile.png'), fullPage: true });
       await page.locator('#home').click();
@@ -117,7 +136,7 @@ const path = require('node:path');
     await page.locator('#back').click();
 
     await page.waitForFunction(() => navigator.serviceWorker.controller);
-    assert.ok((await page.evaluate(() => caches.keys())).includes('happy-little-kitchen-v6'));
+    assert.ok((await page.evaluate(() => caches.keys())).includes('happy-little-kitchen-v7'));
     await context.setOffline(true);
     await page.reload();
     await page.locator('.recipe-card').first().waitFor();
