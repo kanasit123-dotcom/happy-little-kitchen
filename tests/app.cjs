@@ -54,11 +54,12 @@ const path = require('node:path');
         }
       }
       await page.locator('#mix').waitFor();
-      for (let i = 0; i < 4; i++) await page.locator('#mix').press('Enter');
+      for (let i = 0; i < 8; i++) await page.locator('#mix-button').click();
       await page.locator('#cook').waitFor();
       assert.equal(await page.locator(recipe === 'smoothie' ? '.blender-machine' : '.oven-machine').count(), 1);
       await page.locator('#cook').click();
       if (recipe === 'cupcake') await page.screenshot({ path: path.join(output, 'oven-running-mobile.png'), fullPage: true });
+      for (let i = 1; i < 12; i++) await page.locator('#cook').click();
       await page.locator('.topping-btn').first().waitFor();
       await page.locator('.swatch').nth(2).click();
       if (recipe === 'cupcake') {
@@ -101,7 +102,7 @@ const path = require('node:path');
     await page.locator('#back').click();
 
     await page.waitForFunction(() => navigator.serviceWorker.controller);
-    assert.ok((await page.evaluate(() => caches.keys())).includes('happy-little-kitchen-v4'));
+    assert.ok((await page.evaluate(() => caches.keys())).includes('happy-little-kitchen-v5'));
     await context.setOffline(true);
     await page.reload();
     await page.locator('.recipe-card').first().waitFor();
