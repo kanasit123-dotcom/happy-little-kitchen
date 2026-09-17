@@ -14,7 +14,9 @@ Before changing code, read `README.md`, `MEMORY.md`, `index.html`, `css/app.css`
 - Do not add scores, countdowns, advertisements, subscriptions, or wrong-answer pressure.
 - Spoken prompts must finish before the next spoken prompt or automatic step transition.
 - Ingredients support real drag-and-drop, or tap an ingredient followed by tapping the bowl.
-- Mixing happens by tapping the spoon directly.
+- Mixing is a drag gesture on the bowl that depends on the tool (`TOOLS[x].motion`): spoon/ladle = circles, whisk = fast back-and-forth, rolling pin = left-right, butter knife = all over. Plain taps still add a little progress so a child who cannot drag yet can finish. Goals live in `MIX_GOAL`.
+- Drag ghosts (ingredients, toppings, the finished food) are the picture only, sized to the on-screen source. Keep it that way; a cloned button with its white card looked wrong on the iPad.
+- `body` is `position: fixed` and `#app` scrolls internally, which stops iOS Safari's rubber-band bounce; `touchmove` is blocked unless `#app` really overflows. Every screen should fit 390x664 (iPhone with Safari bars) without scrolling.
 - Cooking (oven, blender, pan, pot, freezer, toaster) requires holding the appliance itself. Progress pauses immediately on release.
 - Dish art is drawn undecorated; toppings are separate images the child places. Saved creations store toppings as `{ key, x, y }` (older saves used emoji strings and are migrated on load).
 - Long presses and drags must not select text, show a copy menu, drag browser images, or zoom the page.

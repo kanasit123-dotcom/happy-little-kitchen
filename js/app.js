@@ -22,6 +22,7 @@ const INGREDIENTS = {
   chocchips: { th: 'ช็อกโกแลตชิป', en: 'chocolate chips' }
 };
 
+// motion = ท่าลากตอนผสม: stir ลากวน, whisk ลากไปมาเร็วๆ, roll ลากซ้ายขวา, spread ลากให้ทั่ว
 const TOOLS = {
   spoon: { th: 'ช้อน', en: 'spoon', motion: 'stir' },
   whisk: { th: 'ตะกร้อ', en: 'whisk', motion: 'whisk' },
@@ -29,6 +30,10 @@ const TOOLS = {
   rollingpin: { th: 'ไม้นวดแป้ง', en: 'rolling pin', motion: 'roll' },
   knife: { th: 'มีดทาเนย', en: 'butter knife', motion: 'spread' }
 };
+// ระยะที่ต้องลากจนแถบเต็ม: stir = จำนวนรอบ, อื่นๆ = พิกเซล
+const MIX_GOAL = { stir: 3, whisk: 2000, roll: 1800, spread: 2000 };
+const MIX_TAP_GAIN = 5;
+const MAX_TOPPINGS = 30;
 
 const APPLIANCES = {
   oven: { cook: { th: 'กดเตาอบค้างไว้จนแถบเต็ม', en: 'Press and hold the oven until the bar is full' }, done: { th: 'สุกกำลังดีเลย', en: 'Baked just right' }, tone: 430 },
@@ -94,7 +99,8 @@ const COPY = {
   th: {
     title: 'ครัวจิ๋วแสนสนุก', subtitle: 'เลือกของอร่อย แล้วลงมือทำเลย', language: '🇹🇭 ไทย',
     home: 'กลับหน้าครัว', listen: 'ฟังอีกครั้ง', add: 'ลากวัตถุดิบลงชาม หรือแตะของแล้วแตะชาม',
-    mixHint: 'แตะหลายครั้งจนแถบเต็ม', start: 'เริ่มเลย', hold: 'กดค้าง', decorate: 'ตกแต่งได้ตามใจ',
+    mixHint: { stir: 'ลากวนๆ ในชามจนแถบเต็ม', whisk: 'ลากไปมาเร็วๆ จนแถบเต็ม', roll: 'ลากซ้ายขวาจนแถบเต็ม', spread: 'ลากไปมาให้ทั่วจนแถบเต็ม' },
+    start: 'เริ่มเลย', hold: 'กดค้าง', decorate: 'ตกแต่งได้ตามใจ',
     done: 'เสร็จแล้ว', serve: 'ลากอาหารไปหาเพื่อน ป้อนได้หลายคน', again: 'ทำอีกจาน', gallery: 'ผลงานของฉัน', place: 'แตะจุดบนอาหาร หรือลากไปวาง',
     praise: ['น่ากินมาก!', 'หอมจังเลย!', 'ทำเก่งมาก!'],
     friendHappy: 'อร่อยมาก ขอบคุณนะ', ready: 'พร้อมแล้ว ไปตกแต่งกัน',
@@ -103,7 +109,8 @@ const COPY = {
   en: {
     title: 'Happy Little Kitchen', subtitle: 'Pick a treat and make it your way', language: '🇬🇧 ENG',
     home: 'Back to the kitchen', listen: 'Listen again', add: 'Drag into the bowl, or tap an item then tap the bowl',
-    mixHint: 'Tap it until the bar is full', start: 'Start', hold: 'Hold', decorate: 'Decorate it your way',
+    mixHint: { stir: 'Drag in circles until the bar is full', whisk: 'Drag back and forth until the bar is full', roll: 'Drag left and right until the bar is full', spread: 'Drag all over until the bar is full' },
+    start: 'Start', hold: 'Hold', decorate: 'Decorate it your way',
     done: 'All done', serve: 'Drag food to friends. You can feed more than one', again: 'Make another', gallery: 'My creations', place: 'Tap the food or drag to place it',
     praise: ['That looks delicious!', 'It smells wonderful!', 'Great cooking!'],
     friendHappy: 'Yummy! Thank you!', ready: 'Ready! Let us decorate it',
@@ -350,11 +357,16 @@ function bindDragChoice(button, options) {
       const distance = Math.hypot(moveEvent.clientX - startX, moveEvent.clientY - startY);
       if (!active.moved && distance >= 8) {
         active.moved = true;
-        const ghost = button.cloneNode(true);
-        ghost.className = `${button.className} drag-ghost`;
-        ghost.removeAttribute('data-index');
-        ghost.removeAttribute('data-top');
+        // ตัวที่ลอยตามนิ้ว = รูปอย่างเดียว (ไม่เอากรอบขาวของปุ่ม) ขนาดเท่าของจริงบนจอ
+        const source = button.querySelector('img') || button;
+        const rect = source.getBoundingClientRect();
+        const ghost = source.cloneNode(true);
+        ghost.className = 'drag-ghost';
         ghost.removeAttribute('id');
+        ghost.removeAttribute('role');
+        ghost.removeAttribute('tabindex');
+        ghost.style.width = `${rect.width}px`;
+        ghost.style.height = `${rect.height}px`;
         ghost.setAttribute('aria-hidden', 'true');
         document.body.appendChild(ghost);
         active.ghost = ghost;
@@ -462,42 +474,125 @@ function renderIngredients() {
 function renderMix() {
   const recipe = RECIPES[activeRecipe];
   const tool = TOOLS[recipe.tool];
-  const prompt = `${local(recipe.action)} · ${t('mixHint')}`;
+  const motion = tool.motion;
+  const prompt = `${local(recipe.action)} · ${t('mixHint')[motion]}`;
   screen(`<div class="stage-zone" style="display:flex;flex-direction:column;gap:16px">
-      <button class="mix-tool invite-tool motion-${tool.motion}" id="mix" aria-label="${local(recipe.action)}">
-        <span class="mix-fill">${recipe.ingredients.map((id) => `<img src="${ingredientSrc(id)}" alt="">`).join('')}</span>
-        <img class="mix-icon" src="${toolSrc(recipe.tool)}" alt="${local(tool)}">
+      <button class="mix-tool invite-tool motion-${motion}" id="mix" data-motion="${motion}" aria-label="${local(recipe.action)}" style="--spread:0">
+        <span class="mix-fill" id="mix-fill">${recipe.ingredients.map((id) => `<img src="${ingredientSrc(id)}" alt="">`).join('')}</span>
+        <img class="mix-icon" id="mix-icon" src="${toolSrc(recipe.tool)}" alt="${local(tool)}">
         <span class="touch-hint" aria-hidden="true">☝</span>
       </button>
       <div class="meter"><div class="meter-fill" id="meter"></div></div>
     </div>`, prompt);
   const button = app.querySelector('#mix');
+  const fill = app.querySelector('#mix-fill');
+  const icon = app.querySelector('#mix-icon');
   const meter = app.querySelector('#meter');
   let progress = 0;
   let finished = false;
-  const advance = async () => {
+  let nextChime = 10;
+  let pointerId = null;
+  let center = null;
+  let last = null;
+  let turned = 0;   // มุมสะสมตอนลากวน (เรเดียน)
+  let moved = false;
+  let ignoreClick = false;
+
+  const finish = async () => {
+    finished = true;
+    button.disabled = true;
+    button.classList.remove('mixing');
+    icon.style.transform = '';
+    tone(760, .22);
+    await new Promise((resolve) => setTimeout(resolve, 700));
+    await speak(t('mixed')[motion]);
+    step++;
+    renderStep();
+  };
+  const setProgress = (value) => {
     if (finished) return;
-    progress = Math.min(100, progress + 12.5);
+    progress = Math.min(100, value);
     meter.style.width = `${progress}%`;
-    button.classList.remove('tap-once');
-    requestAnimationFrame(() => {
-      button.classList.add('tap-once');
-    });
-    setTimeout(() => {
-      button.classList.remove('tap-once');
-    }, 360);
-    tone(430 + progress * 2, .09);
-    if (progress >= 100) {
-      finished = true;
-      button.disabled = true;
-      tone(760, .22);
-      await new Promise((resolve) => setTimeout(resolve, 700));
-      await speak(t('mixed')[tool.motion]);
-      step++;
-      renderStep();
+    if (motion === 'roll') fill.style.transform = `scale(${.8 + progress / 100 * .35}, ${.8 - progress / 100 * .3})`;
+    if (motion === 'spread') button.style.setProperty('--spread', progress);
+    if (motion === 'whisk') fill.style.filter = `brightness(${1 + progress / 100 * .18})`;
+    if (progress >= nextChime && progress < 100) {
+      tone(430 + progress * 2, .07);
+      nextChime += 10;
+    }
+    if (progress >= 100) finish();
+  };
+  const moveTool = (x, y) => {
+    const max = button.clientWidth * .28;
+    const radius = Math.hypot(x, y);
+    if (radius > max) { x *= max / radius; y *= max / radius; }
+    icon.style.transform = `translate(${x}px, ${y}px)`;
+  };
+
+  button.addEventListener('pointerdown', (event) => {
+    if (finished || (event.button !== undefined && event.button !== 0)) return;
+    event.preventDefault();
+    pointerId = event.pointerId;
+    moved = false;
+    try { button.setPointerCapture?.(pointerId); } catch {}
+    const rect = button.getBoundingClientRect();
+    center = { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
+    last = { x: event.clientX, y: event.clientY, angle: Math.atan2(event.clientY - center.y, event.clientX - center.x) };
+    button.classList.add('mixing');
+  });
+  button.addEventListener('pointermove', (event) => {
+    if (finished || !last || event.pointerId !== pointerId) return;
+    event.preventDefault();
+    const dx = event.clientX - last.x;
+    const dy = event.clientY - last.y;
+    const distance = Math.hypot(dx, dy);
+    if (distance < 2) return;
+    moved = true;
+    moveTool(event.clientX - center.x, event.clientY - center.y);
+    let gain = 0;
+    if (motion === 'stir') {
+      const angle = Math.atan2(event.clientY - center.y, event.clientX - center.x);
+      let delta = angle - last.angle;
+      if (delta > Math.PI) delta -= Math.PI * 2;
+      if (delta < -Math.PI) delta += Math.PI * 2;
+      const fromCenter = Math.hypot(event.clientX - center.x, event.clientY - center.y);
+      // วนใกล้กลางเกินไปมุมจะเปลี่ยนเร็วผิดปกติ ให้นับเป็นระยะแทน
+      gain = fromCenter > 24 ? Math.abs(delta) / (Math.PI * 2 * MIX_GOAL.stir) * 100 : distance / MIX_GOAL.whisk * 100;
+      if (fromCenter > 24) turned += delta;
+      fill.style.transform = `scale(.8) rotate(${turned}rad)`;
+      last.angle = angle;
+    } else if (motion === 'roll') {
+      gain = Math.abs(dx) / MIX_GOAL.roll * 100;
+    } else {
+      gain = distance / MIX_GOAL[motion] * 100;
+      if (motion === 'whisk') fill.style.transform = `scale(.8) translate(${(Math.random() - .5) * 10}px, ${(Math.random() - .5) * 10}px)`;
+    }
+    last.x = event.clientX;
+    last.y = event.clientY;
+    setProgress(progress + gain);
+  });
+  const release = (event) => {
+    if (event.pointerId !== pointerId) return;
+    pointerId = null;
+    last = null;
+    button.classList.remove('mixing');
+    if (!finished) icon.style.transform = '';
+    if (motion === 'whisk') fill.style.transform = '';
+    if (moved) {
+      ignoreClick = true;
+      setTimeout(() => { ignoreClick = false; }, 0);
     }
   };
-  button.addEventListener('click', advance);
+  button.addEventListener('pointerup', release);
+  button.addEventListener('pointercancel', release);
+  // แตะเฉยๆ ก็ยังคืบหน้า แค่ช้ากว่าลาก (เด็กที่ยังลากไม่คล่องยังเล่นจบได้)
+  button.addEventListener('click', () => {
+    if (ignoreClick || finished) return;
+    button.classList.remove('tap-once');
+    requestAnimationFrame(() => button.classList.add('tap-once'));
+    setTimeout(() => button.classList.remove('tap-once'), 360);
+    setProgress(progress + MIX_TAP_GAIN);
+  });
 }
 
 function renderCook() {
@@ -614,7 +709,11 @@ function renderDecorate() {
     tone(560);
   };
   const placeTopping = (key, clientX, clientY) => {
-    if (creation.toppings.length >= 8) return;
+    if (creation.toppings.length >= MAX_TOPPINGS) {
+      // เต็มแล้วเอาชิ้นเก่าสุดออก จะได้วางต่อได้เรื่อยๆ ไม่มีตัน
+      creation.toppings.shift();
+      dish.querySelector('.topping')?.remove();
+    }
     const rect = dish.getBoundingClientRect();
     const x = Math.max(15, Math.min(80, ((clientX - rect.left) / rect.width) * 100));
     const y = Math.max(15, Math.min(80, ((clientY - rect.top) / rect.height) * 100));
@@ -773,6 +872,10 @@ document.addEventListener('contextmenu', (event) => event.preventDefault());
 document.addEventListener('dragstart', (event) => event.preventDefault());
 document.addEventListener('selectstart', (event) => event.preventDefault());
 document.addEventListener('gesturestart', (event) => event.preventDefault(), { passive: false });
+// iOS Safari เด้งหน้าขึ้นลงตอนลาก (rubber band) — กันไว้ ยกเว้นตอนเนื้อหาล้นจอจริงๆ ให้เลื่อนได้
+document.addEventListener('touchmove', (event) => {
+  if (app.scrollHeight <= app.clientHeight + 1) event.preventDefault();
+}, { passive: false });
 document.addEventListener('selectionchange', () => {
   const selection = window.getSelection();
   if (selection && !selection.isCollapsed) selection.removeAllRanges();

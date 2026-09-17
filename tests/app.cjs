@@ -69,7 +69,24 @@ const path = require('node:path');
       }
       await page.locator('#mix').waitFor();
       assert.equal(await page.locator('#mix img.mix-icon').count(), 1);
-      for (let i = 0; i < 8; i++) await page.locator('#mix').click();
+      if (recipe === 'cupcake') {
+        // แตะเฉยๆ ยังคืบหน้า แต่ไม่จบใน 8 ครั้ง
+        for (let i = 0; i < 8; i++) await page.locator('#mix').click();
+        assert.equal(await page.locator('#meter').evaluate((element) => element.style.width), '40%');
+      }
+      // ลากวนเป็นวงกลม (ครอบคลุมทุกท่า: มุมสะสม, ระยะ, ระยะแนวนอน)
+      const mixBox = await page.locator('#mix').boundingBox();
+      const mixX = mixBox.x + mixBox.width / 2;
+      const mixY = mixBox.y + mixBox.height / 2;
+      const mixR = Math.min(mixBox.width, mixBox.height) * .3;
+      await page.mouse.move(mixX + mixR, mixY);
+      await page.mouse.down();
+      for (let i = 1; i <= 24 * 12 && await page.locator('#mix:not(:disabled)').count(); i++) {
+        const angle = (i / 24) * Math.PI * 2;
+        await page.mouse.move(mixX + mixR * Math.cos(angle), mixY + mixR * Math.sin(angle));
+      }
+      await page.mouse.up();
+      if (recipe === 'cupcake') await page.screenshot({ path: path.join(output, 'mix-mobile.png'), fullPage: true });
       await page.locator('#appliance').waitFor();
       assert.equal(await page.locator('#appliance').getAttribute('data-appliance'), APPLIANCE[recipe]);
       assert.equal(await page.locator(`#appliance img.machine[src$="${APPLIANCE[recipe]}.png"]`).count(), 1);
@@ -108,12 +125,24 @@ const path = require('node:path');
         await page.mouse.move(topBox.x + topBox.width / 2, topBox.y + topBox.height / 2);
         await page.mouse.down();
         await page.mouse.move(dishBox.x + dishBox.width * .68, dishBox.y + dishBox.height * .35, { steps: 8 });
+        // ตัวที่ลอยตามนิ้วต้องเป็นรูปล้วน ไม่มีพื้นขาว และขนาดเท่ารูปในปุ่ม
+        const ghost = await page.locator('.drag-ghost').evaluate((element) => ({
+          tag: element.tagName, background: getComputedStyle(element).backgroundColor, width: element.getBoundingClientRect().width
+        }));
+        assert.equal(ghost.tag, 'IMG');
+        assert.equal(ghost.background, 'rgba(0, 0, 0, 0)');
+        assert.ok(ghost.width < 80, `topping ghost is small (${ghost.width})`);
         await page.mouse.up();
       } else {
         await page.locator('.topping-btn').first().click();
         await page.locator('#dish').click({ position: { x: 135, y: 100 } });
       }
       assert.equal(await page.locator('#dish img.topping').count(), 1);
+      if (recipe === 'cake') {
+        // วางได้เกิน 8 ชิ้น พอถึง 30 ชิ้นเก่าสุดหายไปแทนที่จะวางไม่ได้
+        for (let i = 0; i < 34; i++) await page.locator('#dish').click({ position: { x: 60 + (i % 5) * 12, y: 60 + (i % 7) * 10 } });
+        assert.equal(await page.locator('#dish img.topping').count(), 30);
+      }
       if (recipe === 'cupcake') await page.screenshot({ path: path.join(output, 'decorate-mobile.png'), fullPage: true });
       await page.locator('#done').click();
       assert.equal(await page.locator('#finish-actions').isVisible(), false);
@@ -124,6 +153,8 @@ const path = require('node:path');
         await page.mouse.move(foodBox.x + foodBox.width / 2, foodBox.y + foodBox.height / 2);
         await page.mouse.down();
         await page.mouse.move(friendBox.x + friendBox.width / 2, friendBox.y + friendBox.height / 2, { steps: 10 });
+        const foodGhost = await page.locator('.drag-ghost').evaluate((element) => element.getBoundingClientRect().width);
+        assert.ok(foodGhost <= foodBox.width * 1.2 + 2, `food ghost stays food-sized (${foodGhost} vs ${foodBox.width})`);
         await page.mouse.up();
         assert.equal(await page.locator('.feed-bite').count(), 1);
         await page.waitForTimeout(260);
@@ -172,9 +203,15 @@ const path = require('node:path');
     for (const width of [320, 390, 768, 1280]) {
       await page.setViewportSize({ width, height: width <= 390 ? 844 : 900 });
       await page.reload();
-      const overflow = await page.evaluate(() => document.documentElement.scrollWidth > innerWidth);
+      const overflow = await page.evaluate(() => document.documentElement.scrollWidth > innerWidth || document.querySelector('#app').scrollWidth > innerWidth);
       assert.equal(overflow, false, `home fits ${width}px`);
     }
+    // body ตรึงกับจอ (กัน iOS เด้ง) และหน้าครัวบน iPhone ที่มีแถบ Safari ยังไม่ต้องเลื่อน
+    assert.equal(await page.evaluate(() => getComputedStyle(document.body).position), 'fixed');
+    await page.setViewportSize({ width: 390, height: 664 });
+    await page.reload();
+    await page.locator('.recipe-card').first().waitFor();
+    assert.equal(await page.evaluate(() => document.querySelector('#app').scrollHeight <= document.querySelector('#app').clientHeight + 1), true, 'home fits iPhone Safari viewport');
 
     await page.setViewportSize({ width: 320, height: 844 });
     await page.locator('[data-recipe="cupcake"]').click();
@@ -184,7 +221,7 @@ const path = require('node:path');
     await page.locator('#back').click();
 
     await page.waitForFunction(() => navigator.serviceWorker.controller);
-    assert.ok((await page.evaluate(() => caches.keys())).includes('happy-little-kitchen-v9'));
+    assert.ok((await page.evaluate(() => caches.keys())).includes('happy-little-kitchen-v10'));
     await context.setOffline(true);
     await page.reload();
     await page.locator('.recipe-card').first().waitFor();

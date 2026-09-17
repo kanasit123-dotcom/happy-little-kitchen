@@ -10,7 +10,7 @@
 - Picture-first controls, large touch targets, and short spoken prompts are preferred for children who are still learning to read.
 - Never add scores, countdowns, wrong-answer states, advertisements, subscriptions, or pressure to continue.
 - Let every spoken prompt finish before advancing to the next prompt or game step.
-- Support direct taps and touch dragging on iPad.
+- Support direct taps and touch dragging on iPad and iPhone Safari. Feedback from real play (2026-09-17): no small caps on decorations (topping cap is 30, oldest is replaced), drag ghosts must be picture-only and source-sized, the page must not bounce, and mixing should be a varied gesture rather than repeated tapping.
 - Finished food can be fed to several friends, with each friend accepting one serving per dish.
 - Long presses and drags must never trigger browser text selection, image dragging, copy menus, or page zoom.
 - Use original visuals and mechanics. Do not copy another children's app's art, brand, characters, or screen layout.

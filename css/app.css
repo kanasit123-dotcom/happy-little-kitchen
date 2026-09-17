@@ -27,15 +27,16 @@
   -webkit-touch-callout: none;
 }
 *::selection { background: transparent; color: inherit; }
-html, body, #app { width: 100%; min-height: 100%; margin: 0; }
-#app { min-height: 100svh; }
-body { min-height: 100svh; overflow-x: hidden; overscroll-behavior: none; touch-action: manipulation; }
+html, body { width: 100%; height: 100%; margin: 0; }
+/* body ตรึงกับจอ กัน iOS Safari ยืดหน้าเด้งขึ้นลง; ถ้าเนื้อหาสูงกว่าจอค่อยเลื่อนใน #app */
+body { position: fixed; inset: 0; overflow: hidden; overscroll-behavior: none; touch-action: manipulation; }
+#app { width: 100%; height: 100%; overflow-x: hidden; overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; }
 img { -webkit-user-drag: none; user-drag: none; }
 button { font: inherit; letter-spacing: 0; -webkit-tap-highlight-color: transparent; }
 button:focus-visible { outline: 4px solid var(--sky); outline-offset: 4px; }
 
 .app-shell {
-  min-height: 100svh;
+  min-height: 100%;
   display: flex;
   flex-direction: column;
   background-color: #dff2f6;
@@ -176,7 +177,7 @@ button:focus-visible { outline: 4px solid var(--sky); outline-offset: 4px; }
 .gallery-item { width: 46px; height: 46px; object-fit: contain; filter: drop-shadow(0 3px 1px rgba(36,56,71,.12)); }
 
 .play-screen { flex: 1; display: flex; flex-direction: column; }
-.app-shell.play-screen { min-height: 100svh; }
+.app-shell.play-screen { min-height: 100%; }
 .progress-dots { display: flex; justify-content: center; gap: 8px; padding: 4px 0 8px; }
 .progress-dots i { width: 13px; height: 13px; border-radius: 50%; background: rgba(255,255,255,.75); border: 2px solid rgba(36,56,71,.15); }
 .progress-dots i.done { background: var(--mint); }
@@ -310,11 +311,15 @@ button:focus-visible { outline: 4px solid var(--sky); outline-offset: 4px; }
   position: fixed !important;
   z-index: 100;
   margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  object-fit: contain;
   pointer-events: none;
-  transform: translate(-50%, -50%) scale(1.08) !important;
+  transform: translate(-50%, -50%) scale(1.12) !important;
   transition: none !important;
   opacity: .96 !important;
-  box-shadow: 0 12px 24px rgba(36,56,71,.24) !important;
+  filter: drop-shadow(0 12px 10px rgba(36,56,71,.3)) !important;
   -webkit-user-select: none !important;
   user-select: none !important;
   -webkit-touch-callout: none !important;
@@ -336,15 +341,27 @@ button:focus-visible { outline: 4px solid var(--sky); outline-offset: 4px; }
 }
 .mix-fill { position: absolute; inset: 22%; border-radius: 50%; background: #ffd785; transform: scale(.8); display: flex; align-items: center; justify-content: center; gap: 2%; }
 .mix-fill img { width: 30%; height: 30%; object-fit: contain; opacity: .85; }
-.mix-icon { position: relative; z-index: 2; width: 44%; height: 44%; object-fit: contain; transform-origin: 50% 70%; filter: drop-shadow(0 6px 3px rgba(36,56,71,.2)); }
+.mix-icon { position: relative; z-index: 2; width: 44%; height: 44%; object-fit: contain; transform-origin: 50% 70%; filter: drop-shadow(0 6px 3px rgba(36,56,71,.2)); transition: transform .25s ease; pointer-events: none; }
+.mix-tool.mixing .mix-icon { transition: none; }
+.mix-tool.mixing .touch-hint, .mix-tool:disabled .touch-hint { opacity: 0; }
+.mix-fill { transition: transform .12s linear, filter .2s; }
+.mix-tool.motion-spread .mix-fill { background: conic-gradient(#f9c74f calc(var(--spread) * 1%), #f8e6bd 0); }
 .touch-hint {
   position: absolute;
-  right: 16%;
-  bottom: 12%;
+  left: 50%;
+  top: 50%;
   z-index: 3;
-  font-size: 2.2rem;
+  font-size: 2.4rem;
+  margin: 8px 0 0 8px;
+  pointer-events: none;
+  transition: opacity .2s;
   filter: drop-shadow(0 3px 1px rgba(36,56,71,.18));
 }
+/* นิ้วสาธิตท่าลาก: วน / ไปมา */
+.mix-tool { touch-action: none; }
+.mix-tool.motion-stir .touch-hint { animation: hint-orbit 1.8s linear infinite; }
+.mix-tool.motion-whisk .touch-hint { animation: hint-swipe .55s ease-in-out infinite alternate; }
+.mix-tool.motion-roll .touch-hint, .mix-tool.motion-spread .touch-hint { animation: hint-swipe 1s ease-in-out infinite alternate; }
 .mix-tool.invite-tool:not(:disabled) { animation: invite-tool 1.15s ease-in-out infinite; }
 .mix-tool.tap-once { animation: tool-tap .34s ease-out; }
 .mix-tool.tap-once .mix-icon { animation: stir .34s ease-out; }
@@ -564,6 +581,8 @@ button:focus-visible { outline: 4px solid var(--sky); outline-offset: 4px; }
 @keyframes toast-pop { to { top: 0%; } }
 @keyframes serve-pop { from { transform: translate(-50%, -50%) scale(.5); opacity: 0; } to { transform: translate(-50%, -50%) scale(1); opacity: 1; } }
 @keyframes whisk { 25% { transform: rotate(-14deg); } 75% { transform: rotate(14deg); } }
+@keyframes hint-orbit { from { transform: rotate(0) translateX(2em) rotate(0); } to { transform: rotate(360deg) translateX(2em) rotate(-360deg); } }
+@keyframes hint-swipe { from { transform: translateX(-2em); } to { transform: translateX(2em); } }
 @keyframes roll { 50% { transform: translateX(-22%) rotate(-6deg); } }
 @keyframes spread { 30% { transform: translateX(-18%) rotate(-10deg); } 70% { transform: translateX(18%) rotate(10deg); } }
 @keyframes jiggle { 33% { transform: translateY(-14%) rotate(-8deg); } 66% { transform: translateY(6%) rotate(8deg); } }
@@ -577,14 +596,15 @@ button:focus-visible { outline: 4px solid var(--sky); outline-offset: 4px; }
   .language-btn { min-width: 72px; }
   .home { justify-content: flex-start; padding-top: 1vh; }
   .recipes { grid-template-columns: repeat(3, 1fr); gap: 8px; }
-  .recipe-card { min-height: 108px; padding: 6px; gap: 4px; }
+  .home { gap: 12px; }
+  .recipe-card { min-height: clamp(84px, 13vh, 108px); padding: 6px; gap: 4px; }
   .recipe-card b { font-size: .88rem; }
   .topbar-title { font-size: 1.2rem; }
   .brand h1 { font-size: 1.8rem; }
   .brand p { font-size: .9rem; }
-  .recipe-icon { width: 60px; }
+  .recipe-icon { width: clamp(44px, 7vh, 60px); }
   .prompt { font-size: 1rem; }
-  .friends-row { height: 78px; }
+  .friends-row { height: clamp(56px, 11vh, 78px); }
   .workbench { padding-inline: 8px; }
   .stage-zone { min-height: 190px; }
   .tray { min-height: 88px; gap: 7px; padding: 9px; }
