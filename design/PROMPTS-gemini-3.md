@@ -19,6 +19,95 @@
 
 ---
 
+# ⚡ โหมดประหยัดโควตา — 4 รอบจบ (ใช้แทนตาราง 9 รอบข้างบน)
+
+รอบก่อน Gemini วาดแผ่นเดียว 49 ชิ้นก็แยกได้ครบ เลยอัดชุดนี้เหลือ **4 รูป**: แผ่น 4×4 สองแผ่น + แผ่น 3×3 หนึ่งแผ่น + เครื่องปั่น 3 แบบในรูปเดียว
+ถ้าเครื่องมือที่ใช้เลือกความละเอียดได้ ให้ขอ **2K (2048×2048)** ชิ้นจะคมกว่า แต่ 1024 ก็ใช้ได้
+
+| ไฟล์ | ชิ้น | ตัดด้วย |
+|---|---|---|
+| `sheet-x1.jpg` | 16 (ชาม 5 · พิซซ่า · ไข่เจียว 2 · ตะกร้อ 3 · ทัพพี · ถ้วยคัพเค้ก 4) | `blobs.py --grow 9` |
+| `sheet-x2.jpg` | 16 (ถาดคุกกี้ · พิมพ์เค้ก · กล่องไอศกรีม · ที่ตัก · โคน · ขนมปัง · แยม · ที่ขูด · ชีสขูด) | `blobs.py --grow 9` |
+| `sheet-x3.jpg` | 9 (ของเล็กในครัว) | `blobs.py --grow 9` |
+| `sheet-x4-blender.jpg` | 3 (เครื่องปั่นเปิดฝา · มีสมูทตี · ฝาอย่างเดียว) | `blobs.py --grid 1x3` |
+
+วิธีเดิม: แนบ `assets/kitchen.jpg` + เพื่อน 3 ตัว (+ `assets/dishes/bowl.png` สำหรับ X1, + `assets/incoming/appliance-blender.jpg` สำหรับ X4) → วาง**บล็อกสไตล์กลาง** (ด้านล่าง) ต่อด้วย prompt ของแผ่น
+
+## X1 — `sheet-x1.jpg` (แนบ `assets/dishes/bowl.png` ด้วย)
+
+```text
+Create ONE square sheet containing exactly 16 separate objects arranged in a neat 4x4 grid, in exactly this reading order (left to right, then top to bottom). Every object is fully separated from the others by clear white space, none touching or overlapping, all drawn at a similar size, each centered in its own invisible cell. No labels, no numbers, no text, no grid lines, no boxes. Everything is seen from a three-quarter top-down angle so contents are clearly visible. Objects 1-4 are the SAME mint-green ceramic mixing bowl with a white stripe as the attached bowl image, each with different contents.
+1) the mint bowl holding smooth pale yellow beaten egg
+2) the mint bowl holding beaten egg with small green spring onion rings and little red tomato pieces floating in it
+3) the mint bowl holding smooth pale cream cake batter with a wooden spoon resting in it
+4) the mint bowl holding pale golden cookie dough dotted with dark chocolate chips
+5) a white ceramic bowl with a sky-blue rim holding cooked yellow noodles, green bok choy and three white fish balls with NO broth
+6) a round flat pizza dough base, pale beige, rolled out and plain with a slightly thicker rim, no sauce, no toppings
+7) raw beaten egg just poured out, ON ITS OWN with no pan: a round glossy pale yellow liquid disc with small green spring onion rings and red tomato bits, edges still wet
+8) a half-cooked omelet ON ITS OWN with no pan: round, the edges golden and set and starting to ruffle, the middle still slightly glossy and pale
+9) a Thai noodle-blanching basket: a round wire mesh basket with a long wooden handle, empty
+10) the same wire basket holding a nest of pale yellow noodles
+11) the same wire basket holding green bok choy leaves
+12) a silver soup ladle with a mint-green handle, filled with clear golden broth, tilted slightly as if about to pour
+13) a small light grey muffin tray with six empty pleated sky-blue paper cupcake liners
+14) the same muffin tray with the six sky-blue liners filled with pale cream batter
+15) the same muffin tray with six baked golden cupcakes rising out of the sky-blue liners, no frosting
+16) one baked golden cupcake in a pleated sky-blue paper liner, seen from a three-quarter front angle, completely plain with no frosting
+```
+ชื่อชิ้น (ตามลำดับ): `state-bowl-egg state-bowl-eggveg state-bowl-batter state-bowl-dough state-bowl-noodles-dry state-pizza-base state-omelet-raw state-omelet-half tool-basket state-basket-noodles state-basket-veg state-ladle-broth state-liners-empty state-liners-filled state-cupcakes-baked state-cupcake-plain`
+
+## X2 — `sheet-x2.jpg`
+
+```text
+Create ONE square sheet containing exactly 16 separate objects arranged in a neat 4x4 grid, in exactly this reading order (left to right, then top to bottom). Every object is fully separated from the others by clear white space, none touching or overlapping, all drawn at a similar size, each centered in its own invisible cell. No labels, no numbers, no text, no grid lines, no boxes. Trays, tins and tubs are seen from a three-quarter top-down angle so the inside is visible.
+1) an empty light grey rectangular baking tray with rounded corners, lined with a sheet of cream baking paper
+2) the same baking tray with six round golden chocolate-chip cookies baked on it
+3) one round ball of pale golden raw cookie dough dotted with dark chocolate chips
+4) an empty round light grey cake tin with straight sides
+5) the same round cake tin filled with smooth pale cream batter
+6) a baked round two-layer sponge cake, golden brown, completely plain with no frosting and no decorations, seen from a three-quarter front angle
+7) an empty pastel pink ice cream tub with rounded corners, lid off, inside visible
+8) the same pink tub filled with smooth liquid pink strawberry cream (not yet frozen), a few small strawberry pieces on top
+9) the same pink tub filled with frozen pale pink strawberry ice cream, its surface showing two round scoop marks and a light frosty sparkle
+10) a silver ice cream scoop with a mint-green handle, empty
+11) one round scoop-shaped ball of pale pink strawberry ice cream on its own
+12) an empty crisp golden waffle cone standing upright, seen from the front
+13) one thick square slice of golden toasted bread, plain with NO butter and no toppings
+14) a small glass jar of red strawberry jam with a wooden spoon in it, a few tiny seeds visible
+15) a silver box cheese grater with a mint-green handle, a few shreds of yellow cheese beside it
+16) a small pile of shredded yellow cheese
+```
+ชื่อชิ้น: `state-tray-empty state-cookies-tray state-dough-ball state-tin-empty state-tin-filled state-cake-plain state-tub-empty state-tub-liquid state-tub-frozen tool-scoop state-scoop-ball state-cone-empty state-toast-plain ing-jam tool-grater ing-cheese-shreds`
+
+## X3 — `sheet-x3.jpg`
+
+```text
+Create ONE square sheet containing exactly 9 separate objects arranged in a neat 3x3 grid, in exactly this reading order (left to right, then top to bottom). Every object is fully separated from the others by clear white space, none touching or overlapping, all drawn at a similar size, each centered in its own invisible cell. No labels, no numbers, no text, no grid lines, no boxes. Each object is small, chunky and simple.
+1) a small glass jar of red tomato sauce with a wooden spoon in it
+2) a small pile of golden fried garlic bits
+3) a small white cup of plain yogurt with a spoon
+4) a small clear bottle of golden cooking oil with a yellow cap
+5) a red ketchup squeeze bottle with a white cap, slightly tilted as if squeezing
+6) a small round mound of white steamed rice on a tiny white plate
+7) one striped pink-and-white drinking straw, bent at the top
+8) a small white squeeze bottle of mayonnaise with a red cap
+9) a small pile of golden toasted sesame seeds
+```
+ชื่อชิ้น: `ing-sauce top-garlic ing-yogurt ing-oil tool-ketchup top-rice top-straw tool-mayo top-sesame2`
+(ชิ้น 8–9 เป็นของแถม: ขวดมายองเนสใช้แทนโยเกิร์ตตอนบีบมายอง, งาคั่วเผื่อใช้)
+
+## X4 — `sheet-x4-blender.jpg` (แนบ `assets/incoming/appliance-blender.jpg` ด้วย)
+
+```text
+Use the attached blender image as the exact reference. Create ONE wide sheet showing exactly three objects side by side in one row, left to right, fully separated by clear white space, none touching, on a pure flat white background with no shadow, no text, no grid lines:
+1) the SAME mint-green blender, identical design, colors and size, with the white lid removed so the top of the clear glass jar is open and empty
+2) the SAME blender with the lid removed and the clear jar two-thirds full of smooth pale pink strawberry-banana smoothie
+3) ONLY the blender's round white lid on its own, the same lid with the small cap in the middle, seen from a three-quarter top angle, drawn at the same scale as the blender
+```
+ตัด: `python design/blobs.py --grid 1x3 assets/incoming/sheet-x4-blender.jpg appliance-blender-open appliance-blender-full tool-blender-lid`
+
+---
+
 ## บล็อกสไตล์กลาง (วางนำหน้าทุก prompt)
 
 ```text

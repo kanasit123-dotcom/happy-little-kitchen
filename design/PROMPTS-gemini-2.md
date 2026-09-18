@@ -112,6 +112,23 @@ Expression: stuffed and sleepy — round bulging tummy, leaning back, ears droop
 
 ลำดับช่องต้องเป๊ะ (เกมตัดตามช่อง): **บนซ้าย = love (ดีใจสุดๆ) · บนขวา = yum (อร่อย) · ล่างซ้าย = sneeze (จาม) · ล่างขวา = full (อิ่มแปล้)**
 
+## ⚡ แบบประหยัดโควตา: 2 ตัวต่อแผ่น (4 รอบแทน 8)
+
+แนบรูปเพื่อน **2 ตัว** ต่อแชต แล้วขอแผ่น **2 แถว × 4 ช่อง**: แถวบน = ตัวแรก 4 อารมณ์, แถวล่าง = ตัวที่สอง 4 อารมณ์ (ลำดับอารมณ์เหมือนเดิม: ดีใจสุดๆ · อร่อย · จาม · อิ่มแปล้)
+ใช้บล็อกสไตล์ B ด้านล่างแต่เปลี่ยนประโยคแรกเป็น:
+
+```text
+Use the TWO attached character images as the exact references. Create ONE wide sheet with 2 rows of 4 cells: the TOP row shows the first character four times, the BOTTOM row shows the second character four times — identical species, colors, outfit, proportions and art style as each reference — changing ONLY the facial expression and pose per cell. In each row the cell order is: overjoyed, happily eating, mid-sneeze, stuffed and sleepy. Each version is full body, centered in its cell, facing the viewer, with clear white space between all eight so none touch or overlap. Small hearts, sparkles, motion lines or "zzz" circles may float near a character. Background uniformly pure flat white (#FFFFFF). No cast shadow, no food, no text, no border, no grid lines.
+```
+แล้วต่อด้วย prompt "Character:" ของทั้งสองตัว (จาก B1–B8) ติดกัน โดยขึ้นต้นตัวแรกว่า `TOP ROW character:` และตัวที่สองว่า `BOTTOM ROW character:`
+
+| ไฟล์ | แถวบน | แถวล่าง | ตัด |
+|---|---|---|---|
+| `sheet-faces-cat-penguin.jpg` | แมว | เพนกวิน | `blobs.py --grid 2x4 … friend-cat-love friend-cat-yum friend-cat-sneeze friend-cat-full friend-penguin-love friend-penguin-yum friend-penguin-sneeze friend-penguin-full` |
+| `sheet-faces-fox-unicorn.jpg` | จิ้งจอก | ยูนิคอร์น | เหมือนกัน เปลี่ยนชื่อ |
+| `sheet-faces-dolphin-butterfly.jpg` | โลมา | ผีเสื้อ | เหมือนกัน |
+| `sheet-faces-octopus-squirrel.jpg` | หมึกยักษ์ | กระรอก | เหมือนกัน |
+
 ## บล็อกสไตล์สำหรับชุด B (วางนำหน้าทุก prompt ของ B)
 
 ```text
