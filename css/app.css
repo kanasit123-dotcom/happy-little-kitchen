@@ -352,19 +352,20 @@ button:focus-visible { outline: 4px solid var(--sky); outline-offset: 4px; }
 .pop { animation: pop-in .4s cubic-bezier(.2,1.4,.4,1) both; }
 img.pop { animation: serve-pop .45s cubic-bezier(.2,1.4,.4,1) both; }
 
-.pour-zone { display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: auto auto; align-items: end; justify-items: center; gap: 10px 0; width: min(560px, 100%); }
-.pour-source { position: relative; grid-area: 1 / 1; width: clamp(120px, 30vw, 200px); aspect-ratio: 1; border: 0; background: none; padding: 0; cursor: pointer; touch-action: none; align-self: start; margin-top: 6%; transform-origin: 90% 85%; transition: transform .3s ease; z-index: 2; }
+/* เท: ภาชนะอยู่เหนือเป้าหมายเยื้องซ้าย เอียงคว่ำลงมาให้ปากภาชนะอยู่ตรงกลางเป้าหมาย สายไหลลงตรงๆ */
+.pour-zone { display: grid; grid-template-columns: 1fr; justify-items: center; align-items: start; gap: 0; width: min(560px, 100%); }
+.pour-source { position: relative; grid-row: 1; width: clamp(110px, 26vw, 170px); aspect-ratio: 1; border: 0; background: none; padding: 0; cursor: pointer; touch-action: none; transform-origin: 0% 100%; transform: translateX(-60%); transition: transform .35s ease; z-index: 3; }
 .pour-source img { width: 100%; height: 100%; object-fit: contain; filter: drop-shadow(0 8px 5px rgba(36,56,71,.2)); pointer-events: none; }
-.pour-source.tilting { transform: rotate(-42deg) translate(6%, -6%); }
+.pour-source.tilting { transform: translateX(-60%) rotate(70deg); }
 .pour-source.empty img { opacity: .55; }
-.pour-source .stream { position: absolute; left: 88%; top: 78%; width: 14px; height: 0; border-radius: 8px; opacity: 0; transform-origin: top; transform: rotate(42deg); transition: height .25s ease, opacity .2s; }
-.pour-source.tilting .stream { height: 120px; opacity: .95; }
-.pour-source .hold-hint { right: -18px; bottom: -14px; }
-.pour-target { grid-area: 1 / 2; width: clamp(180px, 42vw, 300px); aspect-ratio: 1; position: relative; }
-.pour-target.appliance { width: clamp(200px, 46vw, 320px); }
+.pour-source .hold-hint { right: -22px; bottom: -8px; }
+.pour-source.holding .hold-hint, .pour-source.empty .hold-hint { opacity: 0; }
+.pour-target { grid-row: 2; width: clamp(200px, 48vw, 320px); aspect-ratio: 1; position: relative; margin-top: -8%; }
+.pour-target .stream { position: absolute; left: calc(50% - 7px); top: -2%; width: 14px; height: 0; border-radius: 8px; opacity: 0; transition: height .25s ease, opacity .2s; z-index: 2; }
+.pour-target.receiving .stream { height: 42%; opacity: .95; }
 .pour-target.receiving .target-art, .pour-target.receiving .machine { animation: receive .5s ease-in-out infinite alternate; }
 .appliance.pan.pour-target::after { content: ''; position: absolute; left: 30%; top: 30%; width: 40%; height: 16%; border-radius: 50%; background: rgba(255,225,120,.75); opacity: var(--sheen, 0); z-index: 3; pointer-events: none; }
-.pour-zone .meter { grid-area: 2 / 1 / 3 / 3; }
+.pour-zone .meter { grid-row: 3; margin-top: 10px; }
 
 .flip-food { transform-style: preserve-3d; }
 .flip-food.flipping { animation: flip .6s ease-in-out; }
@@ -858,8 +859,8 @@ img.pop { animation: serve-pop .45s cubic-bezier(.2,1.4,.4,1) both; }
   .serve-layout { flex-direction: column; gap: 10px; }
   .serve-layout .dish { width: 170px; height: 170px; }
   .customer-grid { margin-top: 30px; }
-  .pour-source { width: 34vw; }
-  .pour-target { width: 48vw; }
+  .pour-source { width: 30vw; }
+  .pour-target { width: 56vw; }
   .move-from, .move-to, .move-from.appliance.small { width: 40vw; }
   .carry { width: 26vw; }
   .friend-btn { width: clamp(64px, 20vw, 145px); height: clamp(84px, 25vw, 175px); }

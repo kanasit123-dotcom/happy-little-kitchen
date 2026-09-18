@@ -1565,13 +1565,14 @@ RENDERERS.cook = (current) => {
 RENDERERS.pour = (current) => {
   const prompt = local(current.say);
   const intoAppliance = current.into.startsWith('appliance:');
+  // สายที่เทอยู่ในเป้าหมาย (ตรงกลาง เหนือของที่รับ) ภาชนะที่เทเอียงจากด้านซ้ายบนลงมาหาสาย
+  const stream = `<span class="stream" style="background:${current.color}"></span>`;
   const targetHTML = intoAppliance
-    ? `<div class="appliance ${applianceKind(current.into.split(':')[1])} pour-target" id="pour-target"><img class="machine" src="${art(current.into)}" alt=""><img class="cooking-food pour-result" id="pour-result" src="" alt="" hidden></div>`
-    : `<div class="pour-target plain" id="pour-target"><img class="target-art" id="pour-result" src="${art(current.into)}" alt=""></div>`;
+    ? `<div class="appliance ${applianceKind(current.into.split(':')[1])} pour-target" id="pour-target">${stream}<img class="machine" src="${art(current.into)}" alt=""><img class="cooking-food pour-result" id="pour-result" src="" alt="" hidden></div>`
+    : `<div class="pour-target plain" id="pour-target">${stream}<img class="target-art" id="pour-result" src="${art(current.into)}" alt=""></div>`;
   screen(`<div class="stage-zone pour-zone">
       <button class="pour-source" id="pour-source" aria-label="${prompt}">
         <img src="${art(current.from)}" alt="">
-        <span class="stream" style="background:${current.color}"></span>
         ${holdHintHTML()}
       </button>
       ${targetHTML}
