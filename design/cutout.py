@@ -34,6 +34,7 @@ KINDS = {
     'tool': ('tools', 400),
     'top': ('toppings', 256),
     'friend': ('friends', 800),
+    'state': ('states', 512),
 }
 WHITE = 238         # ทุก channel >= ค่านี้ถือว่าเป็นพื้นขาว (JPEG มี noise นิดหน่อย)
 MARGIN = 0.04       # ขอบว่างรอบตัวละคร (สัดส่วนของด้าน)

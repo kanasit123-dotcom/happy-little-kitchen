@@ -60,7 +60,7 @@ const LEGACY_TOPPINGS = { '⭐': 'star', '🍓': 'strawberry', '🌈': 'rainbow'
 // ปากกาสำหรับขั้นทา/บีบ: art = รูปที่โชว์บนปุ่ม, color = สีที่ทาลงจาน
 const PENS = {
   ketchup: { art: 'tool:ketchup', color: '#e0332b', th: 'ซอสมะเขือเทศ', en: 'ketchup' },
-  mayo: { art: 'ing:yogurt', color: '#fff3d1', th: 'มายองเนส', en: 'mayonnaise' },
+  mayo: { art: 'tool:mayo', color: '#fff3d1', th: 'มายองเนส', en: 'mayonnaise' },
   jam: { art: 'ing:jam', color: '#c9313d', th: 'แยม', en: 'jam' },
   honey: { art: 'ing:honey', color: '#f2b134', th: 'น้ำผึ้ง', en: 'honey' },
   butter: { art: 'ing:butter-cut', color: '#f6d35b', th: 'เนย', en: 'butter' },
@@ -226,11 +226,7 @@ const FRIENDS = {
   squirrel: { name: { th: 'กระรอก', en: 'Squirrel' }, likes: ['cookie', 'toast', 'cake'], unlock: 30 }
 };
 // รูปหน้าตาที่วาดแล้ว: assets/friends/<id>-<อารมณ์>.png (ตัว/อารมณ์ที่ยังไม่มีใช้ท่า CSS + รูปปกติ)
-const FRIEND_ART = {
-  seal: ['love', 'yum', 'sneeze', 'full'],
-  turtle: ['love', 'yum', 'sneeze', 'full'],
-  rabbit: ['love', 'yum', 'sneeze', 'full']
-};
+const FRIEND_ART = Object.fromEntries(['seal', 'turtle', 'rabbit', 'cat', 'penguin', 'fox', 'unicorn', 'dolphin', 'butterfly', 'octopus', 'squirrel'].map((id) => [id, ['love', 'yum', 'sneeze', 'full']]));
 const FRIEND_MAX_ON_SCREEN = 4;
 // ปฏิกิริยาตอนกิน เรียงตามลำดับที่เช็ก: จาม (มีพริก) > อิ่มแปล้ (ท็อปปิ้ง 10+) > ชอบสุดๆ (เมนูโปรด/ตามสั่ง) > อร่อย
 const REACTIONS = {

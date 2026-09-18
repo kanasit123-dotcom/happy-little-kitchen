@@ -63,6 +63,39 @@ def find_blobs(im):
     return [b for row in rows for b in row]
 
 
+def drop_border_fragments(piece):
+    """โหมดตาราง: เศษของชิ้นข้างๆ ที่โผล่เข้ามาที่ขอบช่อง (ก้อนหมึกที่แตะขอบภาพและเล็กกว่า 20% ของหมึกทั้งหมด) ทาขาวทิ้ง"""
+    small = piece.convert('L').resize((max(1, piece.width // SCALE), max(1, piece.height // SCALE)), Image.BOX)
+    mask = small.point(lambda v: 255 if v < WHITE else 0)
+    w, h = mask.size
+    px = mask.load()
+    seen = bytearray(w * h)
+    total = sum(1 for y in range(h) for x in range(w) if px[x, y])
+    erase = Image.new('L', (w, h), 0)
+    ep = erase.load()
+    for y0 in range(h):
+        for x0 in range(w):
+            if seen[y0 * w + x0] or not px[x0, y0]:
+                continue
+            q = deque([(x0, y0)])
+            seen[y0 * w + x0] = 1
+            comp, touches = [], False
+            while q:
+                x, y = q.popleft()
+                comp.append((x, y))
+                if x == 0 or y == 0 or x == w - 1 or y == h - 1:
+                    touches = True
+                for nx, ny in ((x + 1, y), (x - 1, y), (x, y + 1), (x, y - 1)):
+                    if 0 <= nx < w and 0 <= ny < h and not seen[ny * w + nx] and px[nx, ny]:
+                        seen[ny * w + nx] = 1
+                        q.append((nx, ny))
+            if touches and len(comp) < total * .2:
+                for x, y in comp:
+                    ep[x, y] = 255
+    erase = erase.resize(piece.size, Image.NEAREST).filter(ImageFilter.MaxFilter(2 * SCALE + 1))
+    return Image.composite(Image.new('RGB', piece.size, (255, 255, 255)), piece, erase)
+
+
 if __name__ == '__main__':
     args = sys.argv[1:]
     grid = None
@@ -86,7 +119,9 @@ if __name__ == '__main__':
             box = (int(c * cw), int(r * ch), int((c + 1) * cw), int((r + 1) * ch))
             print(f'{i + 1:2}. ช่อง แถว {r + 1} คอลัมน์ {c + 1}' + (f' -> {name}' if name != '-' else ' (ข้าม)'))
             if name != '-':
-                im.crop(box).save(INCOMING / f'{name}.png')
+                piece = im.crop(box)
+                piece = drop_border_fragments(piece)
+                piece.save(INCOMING / f'{name}.png')
         sys.exit()
     blobs = find_blobs(im)
     for i, b in enumerate(blobs):
