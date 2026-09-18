@@ -403,7 +403,7 @@ const path = require('node:path');
     }
     await page.locator('#step[data-type="decorate"]').waitFor();
     // ผลลัพธ์เป็นอาหารจริง (เสมอกัน 2:2 → หวาน → แพนเค้ก) ไม่ใช่ไอคอนวัตถุดิบเรียงบนจาน; มีวัตถุดิบเล็กๆ เป็นหน้าไม่เกิน 3 ชิ้น
-    assert.ok((await page.locator('#dish .food-icon').getAttribute('src')).match(/fry-pancakes|omelet/), 'sweet pan result');
+    assert.ok((await page.locator('#dish .food-icon').getAttribute('src')).endsWith('states/fry-pancakes.png'), 'sweet pan result uses the real pancake picture');
     assert.equal(await page.locator('#dish .bit').count(), 3);
     assert.equal(await page.locator('#dish canvas.frosting').count(), 1);
     assert.equal(await page.locator('.swatch').count(), 5);
@@ -443,6 +443,7 @@ const path = require('node:path');
     }
     await page.locator('#step[data-type="decorate"]').waitFor();
     assert.equal(await page.locator('.dish.tint-burnt').count(), 1, 'burnt toast');
+    assert.ok((await page.locator('#dish .food-icon').getAttribute('src')).endsWith('states/toast-burnt.png'), 'burnt toast picture');
     await page.screenshot({ path: path.join(output, 'free-burnt-mobile.png'), fullPage: true });
     await page.locator('#done').click();
     await page.locator('.friend-btn').first().click();
@@ -500,7 +501,7 @@ const path = require('node:path');
     await page.locator('#back').click();
 
     await page.waitForFunction(() => navigator.serviceWorker.controller);
-    assert.ok((await page.evaluate(() => caches.keys())).includes('happy-little-kitchen-v18'));
+    assert.ok((await page.evaluate(() => caches.keys())).includes('happy-little-kitchen-v19'));
     await context.setOffline(true);
     await page.reload();
     await page.locator('.recipe-card').first().waitFor();

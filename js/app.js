@@ -234,7 +234,8 @@ const FREE_RESULT = {
   pot: ({ taste }) => (taste === 'savory' ? 'soup-savory' : 'soup-sweet'),
   freezer: ({ taste, color }) => (taste === 'savory' ? 'ice-block' : `pop-${color === 'white' ? 'yellow' : color}`)
 };
-const FREE_ART = [];   // ใส่ชื่อรูปชุดที่ 4 ที่มีแล้ว เช่น 'drink-pink'
+const FREE_ART = ['drink-pink', 'drink-yellow', 'drink-green', 'drink-brown', 'drink-white', 'toast-cheese', 'toast-burnt', 'bake-pie', 'bake-casserole', 'bake-burnt',
+  'fry-pancakes', 'fry-stirfry', 'fry-burnt', 'soup-savory', 'soup-sweet', 'pop-pink', 'pop-yellow', 'pop-green', 'pop-brown', 'ice-block'];   // รูปชุดที่ 4 ที่มีแล้ว
 const FREE_FALLBACK = { blender: 'dish:smoothie', toaster: 'dish:toast', oven: 'bake-pie', pan: 'dish:omelet', pot: 'dish:noodles', freezer: 'dish:icecream' };
 const FALLBACK_STATE = { 'bake-pie': 'dish:cookie', 'bake-casserole': 'dish:pizza', 'bake-burnt': 'dish:cookie', 'fry-pancakes': 'dish:omelet', 'fry-stirfry': 'dish:omelet', 'fry-burnt': 'dish:omelet',
   'soup-savory': 'dish:noodles', 'soup-sweet': 'dish:noodles', 'toast-cheese': 'dish:toast', 'toast-burnt': 'dish:toast', 'ice-block': 'dish:icecream' };
