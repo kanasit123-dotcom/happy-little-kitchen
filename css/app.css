@@ -249,31 +249,23 @@ button:focus-visible { outline: 4px solid var(--sky); outline-offset: 4px; }
 }
 
 .bowl {
-  width: clamp(190px, 44vw, 330px);
-  height: clamp(125px, 24vw, 190px);
-  border: 8px solid #fff;
-  border-top-width: 14px;
-  border-radius: 18px 18px 48% 48%;
-  background: var(--sky);
-  box-shadow: inset 0 -18px 0 rgba(36,56,71,.08), var(--shadow);
-  position: relative;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 4px;
-  font-size: 3rem;
+  width: clamp(220px, 50vw, 360px);
+  height: clamp(220px, 50vw, 360px);
+  border: 0;
+  background: none;
   padding: 0;
-  color: var(--ink);
-  font-family: inherit;
+  position: relative;
   cursor: pointer;
   touch-action: none;
-  transition: transform .16s ease, border-color .16s ease, box-shadow .16s ease, background-color .16s ease;
+  border-radius: 50%;
+  transition: transform .16s ease;
 }
+.bowl-art { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; pointer-events: none; filter: drop-shadow(0 10px 6px rgba(36,56,71,.18)); }
 .bowl.ready { animation: bounce-ready 1.2s ease-in-out infinite; }
-.bowl.ready::after {
+.bowl.ready::after, .appliance.target.ready::after {
   content: '↓';
   position: absolute;
-  top: -70px;
+  top: -20px;
   left: 50%;
   transform: translateX(-50%);
   width: 48px;
@@ -287,18 +279,90 @@ button:focus-visible { outline: 4px solid var(--sky); outline-offset: 4px; }
   box-shadow: 0 5px 0 rgba(36,56,71,.14);
   font-size: 1.8rem;
   font-weight: 900;
+  z-index: 6;
 }
-.bowl.drop-target {
-  animation: none;
-  transform: scale(1.1);
-  border-color: var(--yellow);
-  background: #8dd8f0;
-  box-shadow: inset 0 -18px 0 rgba(36,56,71,.08), 0 0 0 12px rgba(244,189,63,.34), var(--shadow);
-}
+.bowl.drop-target, .appliance.target.drop-target { animation: none; transform: scale(1.06); filter: drop-shadow(0 0 0 12px rgba(244,189,63,.34)); }
 .bowl.drop-target::after { content: '✓'; background: var(--mint); color: white; }
-.bowl.awaiting-drop { outline: 8px solid rgba(244,189,63,.55); outline-offset: 8px; }
-.bowl.drop-miss { animation: nudge .12s ease-in-out 3; }
-.bowl .in-bowl { width: 52px; height: 52px; object-fit: contain; animation: drop-in .35s ease-out both; }
+.bowl.awaiting-drop, .appliance.target.awaiting-drop, .move-to.awaiting-drop, .appliance.awaiting-drop { outline: 8px solid rgba(244,189,63,.55); outline-offset: 8px; border-radius: 24px; }
+.bowl.drop-miss, .appliance.target.drop-miss, .move-to.drop-miss { animation: nudge .12s ease-in-out 3; }
+.bowl .in-bowl { position: absolute; width: 22%; height: 22%; object-fit: contain; z-index: 3; animation: drop-in .35s ease-out both; pointer-events: none; }
+.appliance .in-bowl.sink { position: absolute; left: 50%; top: 22%; width: 24%; height: 24%; object-fit: contain; z-index: 3; transform: translate(-50%, -50%); animation: sink .9s ease-in forwards; pointer-events: none; }
+.appliance.blender .in-bowl.sink { top: 30%; }
+.appliance.target { cursor: pointer; }
+.appliance.target.ready { animation: bounce-ready 1.2s ease-in-out infinite; }
+
+/* ---- ขั้นตอนตามจริง: เท / พลิก / ตัก / ลวก / ทา / โรย / ปั้น / ปิดฝา / ตัด / เทียน */
+.plain { position: relative; display: grid; place-items: center; }
+.target-art { width: 100%; height: 100%; object-fit: contain; pointer-events: none; filter: drop-shadow(0 10px 6px rgba(36,56,71,.18)); }
+.pop { animation: pop-in .4s cubic-bezier(.2,1.4,.4,1) both; }
+img.pop { animation: serve-pop .45s cubic-bezier(.2,1.4,.4,1) both; }
+
+.pour-zone { display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: auto auto; align-items: end; justify-items: center; gap: 10px 0; width: min(560px, 100%); }
+.pour-source { position: relative; grid-area: 1 / 1; width: clamp(120px, 30vw, 200px); aspect-ratio: 1; border: 0; background: none; padding: 0; cursor: pointer; touch-action: none; align-self: start; margin-top: 6%; transform-origin: 90% 85%; transition: transform .3s ease; z-index: 2; }
+.pour-source img { width: 100%; height: 100%; object-fit: contain; filter: drop-shadow(0 8px 5px rgba(36,56,71,.2)); pointer-events: none; }
+.pour-source.tilting { transform: rotate(-42deg) translate(6%, -6%); }
+.pour-source.empty img { opacity: .55; }
+.pour-source .stream { position: absolute; left: 88%; top: 78%; width: 14px; height: 0; border-radius: 8px; opacity: 0; transform-origin: top; transform: rotate(42deg); transition: height .25s ease, opacity .2s; }
+.pour-source.tilting .stream { height: 120px; opacity: .95; }
+.pour-source .hold-hint { right: -18px; bottom: -14px; }
+.pour-target { grid-area: 1 / 2; width: clamp(180px, 42vw, 300px); aspect-ratio: 1; position: relative; }
+.pour-target.appliance { width: clamp(200px, 46vw, 320px); }
+.pour-target.receiving .target-art, .pour-target.receiving .machine { animation: receive .5s ease-in-out infinite alternate; }
+.appliance.pan.pour-target::after { content: ''; position: absolute; left: 30%; top: 30%; width: 40%; height: 16%; border-radius: 50%; background: rgba(255,225,120,.75); opacity: var(--sheen, 0); z-index: 3; pointer-events: none; }
+.pour-zone .meter { grid-area: 2 / 1 / 3 / 3; }
+
+.flip-food { transform-style: preserve-3d; }
+.flip-food.flipping { animation: flip .6s ease-in-out; }
+.touch-hint.flip { position: static; margin: 0; animation: hint-up .8s ease-in-out infinite; }
+
+.move-zone { display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: auto auto; align-items: center; justify-items: center; gap: 12px; width: min(600px, 100%); }
+.move-from { grid-area: 1 / 1; width: clamp(150px, 38vw, 260px); aspect-ratio: 1; }
+.move-from.appliance.small { width: clamp(150px, 38vw, 260px); }
+.move-to { grid-area: 1 / 2; width: clamp(150px, 38vw, 260px); aspect-ratio: 1; border-radius: 24px; transition: transform .16s; }
+.move-to.drop-target { transform: scale(1.06); }
+.move-to .piece { position: absolute; width: 40%; height: 40%; object-fit: contain; transform: translate(-50%, -50%); animation: drop-in .35s ease-out both; pointer-events: none; }
+.carry { grid-area: 2 / 1 / 3 / 3; position: relative; width: clamp(96px, 22vw, 150px); aspect-ratio: 1; border: 0; background: none; padding: 0; cursor: grab; touch-action: none; }
+.carry img { width: 100%; height: 100%; object-fit: contain; filter: drop-shadow(0 8px 5px rgba(36,56,71,.22)); pointer-events: none; }
+.carry:disabled, .carry.used { opacity: .3; pointer-events: none; }
+.carry .touch-hint { left: 60%; top: 55%; margin: 0; }
+.touch-hint.carry { animation: hint-swipe 1s ease-in-out infinite alternate; }
+.touch-hint.tap { animation: hint-tap .8s ease-in-out infinite; }
+.touch-hint.blow { animation: hint-swipe .5s ease-in-out infinite alternate; }
+.touch-hint.cut { animation: hint-swipe .7s ease-in-out infinite alternate; }
+.touch-hint.spread { animation: hint-orbit 1.6s linear infinite; position: static; margin: 0 0 0 6px; }
+.stage-zone > .touch-hint { position: absolute; left: 50%; top: 50%; margin: 10px 0 0 10px; pointer-events: none; z-index: 7; }
+
+.dip-basket { top: 12% !important; width: 46% !important; transition: top .35s ease; z-index: 3; }
+.dip-basket.down { top: 30% !important; }
+.dip-basket.lifted { animation: lift .5s ease-out both; }
+
+.shaker { position: relative; width: clamp(90px, 22vw, 130px); aspect-ratio: 1; border: 0; background: none; padding: 0; cursor: pointer; touch-action: none; animation: invite-tap 1.1s ease-in-out infinite; }
+.shaker img { width: 100%; height: 100%; object-fit: contain; filter: drop-shadow(0 8px 5px rgba(36,56,71,.22)); pointer-events: none; }
+.shaker.shake { animation: whisk .3s ease-in-out; }
+.shaker:disabled { animation: none; opacity: .4; }
+.shaker .touch-hint { left: 62%; top: 60%; margin: 0; }
+.bit { position: absolute; transform: translate(-50%, -50%); object-fit: contain; z-index: 4; pointer-events: none; animation: topping-pop .3s ease-out both; filter: drop-shadow(0 2px 1px rgba(36,56,71,.2)); }
+.count-badge { min-width: 110px; padding: 10px 18px; border-radius: 24px; background: white; border: 3px solid var(--edge); font-weight: 900; font-size: 1.2rem; text-align: center; }
+
+.tray-stage { border-radius: 16px; width: clamp(250px, 60vw, 420px); height: auto; aspect-ratio: 1.25; background: rgba(255,255,255,.7); }
+.tray-stage .food-icon { width: 92%; height: 92%; }
+.cooking-stage { position: absolute; left: 50%; top: 60%; width: 34%; aspect-ratio: 1; transform: translate(-50%, -50%); z-index: 3; pointer-events: none; }
+.cooking-stage .food-icon { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; }
+.cooking-stage .topping { width: 17%; height: 17%; }
+.appliance.oven .cooking-stage { top: 61%; width: 36%; }
+
+.slice-line { position: absolute; left: 50%; top: 50%; width: 84%; height: 6px; border-radius: 4px; background: rgba(255,255,255,.95); box-shadow: 0 0 6px 2px rgba(255,255,255,.7), 0 1px 0 rgba(36,56,71,.2); z-index: 5; pointer-events: none; animation: cut-flash-in .3s ease-out both; }
+
+.candle { position: absolute; width: 11%; height: 22%; transform: translate(-50%, -85%); z-index: 6; cursor: pointer; }
+.candle img { width: 100%; height: 100%; object-fit: contain; pointer-events: none; }
+.candle i { position: absolute; left: 50%; top: -6%; width: 46%; height: 34%; transform: translateX(-50%) scale(0); border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%; background: radial-gradient(ellipse at 50% 70%, #fff3a8, #ffb347 60%, rgba(255,120,40,0) 100%); box-shadow: 0 0 14px 6px rgba(255,190,80,.55); transition: transform .25s; pointer-events: none; }
+.candle.lit i { transform: translateX(-50%) scale(1); animation: flicker .35s ease-in-out infinite alternate; }
+.candle.out i { transform: translateX(-50%) scale(.6); background: radial-gradient(ellipse, rgba(200,200,200,.8), rgba(200,200,200,0) 70%); box-shadow: none; animation: smoke 1.2s ease-out forwards; }
+.dish[data-phase="light"] .candle { animation: invite-tap 1s ease-in-out infinite; }
+
+.lid-zone { display: flex; flex-direction: column; align-items: center; gap: 14px; }
+.lid-zone .appliance { width: clamp(220px, 50vw, 330px); }
+.carry.lid { width: clamp(110px, 28vw, 170px); }
 
 /* ขั้นเตรียม: เขียง + ของที่จะหั่น */
 .board-zone { position: relative; width: clamp(240px, 56vw, 380px); aspect-ratio: 1; display: grid; place-items: center; }
@@ -390,6 +454,8 @@ button:focus-visible { outline: 4px solid var(--sky); outline-offset: 4px; }
 }
 .mix-fill { position: absolute; inset: 22%; border-radius: 50%; background: #ffd785; transform: scale(.8); display: flex; align-items: center; justify-content: center; gap: 2%; }
 .mix-fill img { width: 30%; height: 30%; object-fit: contain; opacity: .85; }
+.mix-fill.art { background: none; }
+.mix-fill.art img.fill-art { width: 100%; height: 100%; opacity: 1; filter: drop-shadow(0 8px 5px rgba(36,56,71,.18)); }
 .mix-icon { position: relative; z-index: 2; width: 44%; height: 44%; object-fit: contain; transform-origin: 50% 70%; filter: drop-shadow(0 6px 3px rgba(36,56,71,.2)); transition: transform .25s ease; pointer-events: none; }
 .mix-tool.mixing .mix-icon { transition: none; }
 .mix-tool.mixing .touch-hint, .mix-tool:disabled .touch-hint { opacity: 0; }
@@ -560,7 +626,8 @@ button:focus-visible { outline: 4px solid var(--sky); outline-offset: 4px; }
 .swatch { width: 56px; height: 56px; border-radius: 50%; border: 5px solid white; box-shadow: 0 4px 0 rgba(36,56,71,.16); }
 .swatch.selected { outline: 5px solid var(--ink); outline-offset: 2px; }
 .topping-btn { width: 60px; height: 56px; border-radius: 8px; background: white; border: 3px solid var(--edge); box-shadow: 0 4px 0 rgba(36,56,71,.14); display: grid; place-items: center; }
-.frosting { position: absolute; inset: 0; width: 100%; height: 100%; border-radius: 50%; z-index: 4; pointer-events: none; }
+.frosting { position: absolute; inset: 0; width: 100%; height: 100%; border-radius: 50%; z-index: 4; pointer-events: none; -webkit-mask-image: radial-gradient(circle, #000 58%, transparent 70%); mask-image: radial-gradient(circle, #000 58%, transparent 70%); }
+.tray-stage .frosting { -webkit-mask-image: none; mask-image: none; }
 .dish.drawing { cursor: crosshair; }
 .topping-btn img { width: 78%; height: 78%; object-fit: contain; pointer-events: none; }
 .topping-btn.selected { outline: 5px solid var(--yellow); outline-offset: 2px; transform: translateY(-5px); }
@@ -656,6 +723,14 @@ button:focus-visible { outline: 4px solid var(--sky); outline-offset: 4px; }
 @keyframes wobble { 30% { transform: rotate(-6deg) scale(1.05); } 70% { transform: rotate(5deg) scale(.97); } }
 @keyframes cut-flash { from { opacity: 1; transform: rotate(-20deg) scaleX(.2); } to { opacity: 0; transform: rotate(-20deg) scaleX(1.1); } }
 @keyframes hint-tap { 50% { transform: translateY(-14px) scale(1.1); } }
+@keyframes hint-up { from { transform: translateY(14px); opacity: .6; } to { transform: translateY(-22px); opacity: 1; } }
+@keyframes sink { 60% { transform: translate(-50%, -50%) scale(1); opacity: 1; } to { transform: translate(-50%, 30%) scale(.5); opacity: 0; } }
+@keyframes receive { to { transform: translateY(-4px); } }
+@keyframes flip { 0% { transform: translate(-50%, -50%) rotateX(0); } 50% { transform: translate(-50%, -110%) rotateX(90deg); } 100% { transform: translate(-50%, -50%) rotateX(0); } }
+@keyframes lift { 30% { transform: translate(-50%, -70%) rotate(-6deg); } 100% { transform: translate(-50%, -50%); } }
+@keyframes cut-flash-in { from { opacity: 0; transform: translate(-50%, -50%) scaleX(.2) rotate(var(--r, 45deg)); } }
+@keyframes flicker { from { transform: translateX(-50%) scale(1) rotate(-4deg); } to { transform: translateX(-50%) scale(1.15) rotate(5deg); } }
+@keyframes smoke { to { transform: translate(-50%, -40px) scale(1.6); opacity: 0; } }
 @keyframes chomp { 50% { transform: scale(1.13) rotate(-4deg); } }
 @keyframes fall { to { transform: translateY(110vh) rotate(540deg); opacity: .8; } }
 
@@ -687,6 +762,10 @@ button:focus-visible { outline: 4px solid var(--sky); outline-offset: 4px; }
   .serve-layout { flex-direction: column; gap: 10px; }
   .serve-layout .dish { width: 170px; height: 170px; }
   .customer-grid { margin-top: 30px; }
+  .pour-source { width: 34vw; }
+  .pour-target { width: 48vw; }
+  .move-from, .move-to, .move-from.appliance.small { width: 40vw; }
+  .carry { width: 26vw; }
   .friend-btn { width: clamp(64px, 20vw, 145px); height: clamp(84px, 25vw, 175px); }
   .feed-bite { width: 72px; height: 72px; }
 }

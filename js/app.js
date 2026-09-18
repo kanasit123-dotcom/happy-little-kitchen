@@ -2,7 +2,7 @@ const STORE_KEY = 'happy-little-kitchen-v1';
 const LEGACY_STORE_KEY = 'lilly-playhouse-v1';
 
 // ชื่อ key ทุกตาราง = ชื่อไฟล์รูปใน assets/<กลุ่ม>/<key>.png
-// prep = ต้องเตรียมก่อนใส่ชาม: 'cut' ปาดนิ้วหั่น 3 ครั้ง, 'crack' แตะ 2 ครั้งให้แตก → รูปเปลี่ยนเป็น assets/ingredients/<key>-cut.png / egg-cracked.png
+// prep = ต้องเตรียมก่อนใส่: 'cut' ปาดนิ้วหั่น 3 ครั้ง, 'crack' แตะ 2 ครั้งให้แตก → รูปเปลี่ยนเป็น prepared
 const INGREDIENTS = {
   flour: { th: 'แป้ง', en: 'flour' },
   egg: { th: 'ไข่', en: 'egg', prep: 'crack', prepared: 'egg-cracked' },
@@ -20,11 +20,15 @@ const INGREDIENTS = {
   sugar: { th: 'น้ำตาล', en: 'sugar' },
   bread: { th: 'ขนมปัง', en: 'bread', prep: 'cut', prepared: 'bread-cut' },
   honey: { th: 'น้ำผึ้ง', en: 'honey' },
-  chocchips: { th: 'ช็อกโกแลตชิป', en: 'chocolate chips' }
+  chocchips: { th: 'ช็อกโกแลตชิป', en: 'chocolate chips' },
+  jam: { th: 'แยม', en: 'jam' },
+  'cheese-shreds': { th: 'ชีสขูด', en: 'shredded cheese' },
+  sauce: { th: 'ซอสมะเขือเทศ', en: 'tomato sauce' },
+  yogurt: { th: 'โยเกิร์ต', en: 'yogurt' },
+  oil: { th: 'น้ำมัน', en: 'oil' }
 };
 const CUT_SWIPES = 3;
 const CRACK_TAPS = 2;
-const STEPS = ['prep', 'add', 'mix', 'cook', 'decorate', 'serve'];
 
 // motion = ท่าลากตอนผสม: stir ลากวน, whisk ลากไปมาเร็วๆ, roll ลากซ้ายขวา, spread ลากให้ทั่ว
 const TOOLS = {
@@ -47,51 +51,165 @@ const APPLIANCES = {
   freezer: { cook: { th: 'กดตู้แช่แข็งค้างไว้จนแถบเต็ม', en: 'Press and hold the freezer until the bar is full' }, done: { th: 'เย็นเจี๊ยบแล้ว', en: 'Frozen and ready' }, tone: 620 },
   toaster: { cook: { th: 'กดเครื่องปิ้งค้างไว้จนแถบเต็ม', en: 'Press and hold the toaster until the bar is full' }, done: { th: 'กรอบกำลังดี', en: 'Toasted golden' }, tone: 500 }
 };
+// รูปเครื่องแบบอื่น (เช่น เครื่องปั่นเปิดฝา) ใช้เอฟเฟกต์/ตำแหน่งของเครื่องหลัก
+const APPLIANCE_BASE = { 'blender-open': 'blender', 'blender-full': 'blender' };
 
 // ท็อปปิ้ง = ชื่อไฟล์ใน assets/toppings/ (ผลงานเก่าเก็บเป็น emoji)
 const LEGACY_TOPPINGS = { '⭐': 'star', '🍓': 'strawberry', '🌈': 'rainbow', '🫐': 'blueberry', '🍒': 'cherry' };
 
-const RECIPES = {
-  cupcake: {
-    name: { th: 'คัพเค้ก', en: 'Cupcake' }, ingredients: ['flour', 'egg', 'milk'], tool: 'spoon', appliance: 'oven',
-    action: { th: 'คนให้เข้ากัน', en: 'Mix it together' }, toppings: ['star', 'strawberry', 'rainbow', 'blueberry', 'cherry', 'sprinkles', 'chocsauce', 'heart', 'marshmallow', 'kiwi']
-  },
-  pizza: {
-    name: { th: 'พิซซ่า', en: 'Pizza' }, ingredients: ['dough', 'tomato', 'cheese'], tool: 'spoon', appliance: 'oven',
-    action: { th: 'เกลี่ยซอสให้ทั่ว', en: 'Spread the sauce' }, toppings: ['mushroom', 'olive', 'corn', 'pineapple', 'pepper', 'tomatoslice', 'shrimp', 'chili', 'mint', 'sesame']
-  },
-  smoothie: {
-    name: { th: 'สมูทตี', en: 'Smoothie' }, ingredients: ['strawberry', 'banana', 'milk'], tool: 'spoon', appliance: 'blender',
-    action: { th: 'คนผลไม้กับนม', en: 'Stir the fruit and milk' }, toppings: ['cream', 'cherry', 'strawberry', 'banana', 'marshmallow', 'kiwi', 'orange', 'mint', 'sprinkles', 'chocsauce']
-  },
-  omelet: {
-    name: { th: 'ไข่เจียว', en: 'Omelet' }, ingredients: ['egg', 'springonion', 'tomato'], tool: 'whisk', appliance: 'pan',
-    action: { th: 'ตีไข่ให้ฟู', en: 'Whisk the eggs' }, toppings: ['ketchup', 'springonion', 'corn', 'carrot', 'peas', 'chili', 'tomatoslice', 'cucumber', 'shrimp', 'sesame']
-  },
-  noodles: {
-    name: { th: 'ก๋วยเตี๋ยว', en: 'Noodle soup' }, ingredients: ['noodles', 'bokchoy', 'fishball'], tool: 'ladle', appliance: 'pot',
-    action: { th: 'คนให้เข้ากัน', en: 'Stir it together' }, toppings: ['egg', 'springonion', 'coriander', 'corn', 'carrot', 'chili', 'lime', 'shrimp', 'seaweed', 'sesame']
-  },
-  cookie: {
-    name: { th: 'คุกกี้', en: 'Cookie' }, ingredients: ['flour', 'butter', 'chocchips'], tool: 'rollingpin', appliance: 'oven',
-    action: { th: 'คลึงแป้งให้แบน', en: 'Roll the dough flat' }, toppings: ['chocchip', 'star', 'heart', 'rainbow', 'marshmallow', 'sprinkles', 'chocsauce', 'honeydrizzle', 'starcookie', 'banana']
-  },
-  icecream: {
-    name: { th: 'ไอศกรีม', en: 'Ice cream' }, ingredients: ['milk', 'strawberry', 'sugar'], tool: 'whisk', appliance: 'freezer',
-    action: { th: 'ตีให้เนียน', en: 'Whisk until smooth' }, toppings: ['cherry', 'wafer', 'chocchip', 'star', 'banana', 'sprinkles', 'chocsauce', 'kiwi', 'orange', 'mint']
-  },
-  toast: {
-    name: { th: 'ขนมปังปิ้ง', en: 'Toast' }, ingredients: ['bread', 'butter', 'honey'], tool: 'knife', appliance: 'toaster',
-    action: { th: 'ทาเนยให้ทั่ว', en: 'Spread the butter' }, toppings: ['banana', 'strawberry', 'blueberry', 'chocchip', 'heart', 'honeydrizzle', 'chocsauce', 'kiwi', 'orange', 'sprinkles']
-  },
-  cake: {
-    name: { th: 'เค้กวันเกิด', en: 'Birthday cake' }, ingredients: ['flour', 'egg', 'sugar'], tool: 'whisk', appliance: 'oven',
-    action: { th: 'ตีให้ฟู', en: 'Whisk until fluffy' }, toppings: ['candle', 'cream', 'strawberry', 'star', 'heart', 'sprinkles', 'chocsauce', 'cherry', 'starcookie', 'blueberry']
-  }
+// ปากกาสำหรับขั้นทา/บีบ: art = รูปที่โชว์บนปุ่ม, color = สีที่ทาลงจาน
+const PENS = {
+  ketchup: { art: 'tool:ketchup', color: '#e0332b', th: 'ซอสมะเขือเทศ', en: 'ketchup' },
+  mayo: { art: 'ing:yogurt', color: '#fff3d1', th: 'มายองเนส', en: 'mayonnaise' },
+  jam: { art: 'ing:jam', color: '#c9313d', th: 'แยม', en: 'jam' },
+  honey: { art: 'ing:honey', color: '#f2b134', th: 'น้ำผึ้ง', en: 'honey' },
+  butter: { art: 'ing:butter-cut', color: '#f6d35b', th: 'เนย', en: 'butter' },
+  sauce: { art: 'ing:sauce', color: '#d9432f', th: 'ซอสมะเขือเทศ', en: 'tomato sauce' },
+  cream: { art: 'top:cream', color: '#f7b8c4', th: 'ครีม', en: 'frosting' }
 };
-
 const COLORS = ['#ef6f61', '#f4bd3f', '#54b99a', '#67bde3', '#9a78bd'];
 const POSITIONS = [[25,24], [68,28], [48,48], [28,66], [70,68], [48,20], [18,46], [78,48]];
+
+// ---- เมนู: แต่ละเมนูมีลำดับขั้นของตัวเองตามการทำอาหารจริง
+// ชนิดขั้น: prep, add, mix, cook, pour, flip, move, dip, spread, sprinkle, shape, lid, slice, candles, decorate, serve
+// รูปอ้างอิงในขั้น: 'state:x' (assets/states) — ถ้าไม่ใส่คำนำหน้าถือเป็น state, 'dish:x', 'ing:x', 'tool:x', 'appliance:x', 'top:x'
+const RECIPES = {
+  omelet: {
+    name: { th: 'ไข่เจียว', en: 'Omelet' }, ingredients: ['egg', 'egg', 'springonion', 'tomato', 'oil'],
+    toppings: ['ketchup', 'rice', 'springonion', 'corn', 'carrot', 'peas', 'chili', 'tomatoslice', 'cucumber', 'sesame'],
+    steps: [
+      { type: 'prep', items: ['egg', 'egg'] },
+      { type: 'add', items: ['egg', 'egg'], into: 'dish:bowl' },
+      { type: 'mix', tool: 'whisk', action: { th: 'ตีไข่ให้ฟู', en: 'Whisk the eggs' }, fill: 'bowl-egg' },
+      { type: 'prep', items: ['springonion', 'tomato'] },
+      { type: 'add', items: ['springonion', 'tomato'], into: 'bowl-egg', result: 'bowl-eggveg' },
+      { type: 'pour', from: 'ing:oil', into: 'appliance:pan', color: '#f6d35b', say: { th: 'กดขวดค้างไว้ เทน้ำมันลงกระทะ', en: 'Hold the bottle to pour oil into the pan' } },
+      { type: 'pour', from: 'bowl-eggveg', into: 'appliance:pan', result: 'omelet-raw', color: '#f5d76e', say: { th: 'กดชามค้างไว้ เทไข่ลงกระทะ', en: 'Hold the bowl to pour the egg into the pan' } },
+      { type: 'cook', appliance: 'pan', inside: 'omelet-raw', result: 'omelet-half', done: { th: 'ข้างล่างสุกแล้ว', en: 'The bottom is done' } },
+      { type: 'flip', appliance: 'pan', before: 'omelet-half', after: 'dish:omelet', say: { th: 'ปาดนิ้วขึ้น พลิกไข่เจียว', en: 'Swipe up to flip the omelet' } },
+      { type: 'move', from: 'appliance:pan', carry: 'dish:omelet', to: 'dish:plate', count: 1, result: 'dish:omelet', say: { th: 'ลากไข่เจียวใส่จาน', en: 'Drag the omelet onto the plate' } },
+      { type: 'decorate', pens: ['ketchup', 'mayo'] },
+      { type: 'serve' }
+    ]
+  },
+  pizza: {
+    name: { th: 'พิซซ่า', en: 'Pizza' }, ingredients: ['dough', 'sauce', 'cheese-shreds'],
+    toppings: ['mushroom', 'olive', 'corn', 'pineapple', 'pepper', 'tomatoslice', 'shrimp', 'chili', 'mint', 'sesame'],
+    steps: [
+      { type: 'mix', tool: 'rollingpin', action: { th: 'คลึงแป้งให้แบน', en: 'Roll the dough flat' }, fill: 'ing:dough', result: 'pizza-base' },
+      { type: 'spread', base: 'pizza-base', pens: ['sauce'], goal: .55, say: { th: 'ถูนิ้วทาซอสให้ทั่วแผ่น', en: 'Rub the sauce all over the base' } },
+      { type: 'sprinkle', item: 'ing:cheese-shreds', tool: 'tool:grater', count: 5, say: { th: 'แตะที่ขูดชีส โรยชีสให้ทั่ว', en: 'Tap the grater to sprinkle cheese' } },
+      { type: 'decorate', before: true, say: { th: 'วางหน้าพิซซ่าตามใจ แล้วแตะเสร็จแล้ว', en: 'Add toppings, then tap done' } },
+      { type: 'cook', appliance: 'oven', inside: 'stage', result: 'dish:pizza', keep: 'toppings' },
+      { type: 'slice', count: 2, say: { th: 'ปาดนิ้วตัดพิซซ่าเป็นชิ้น', en: 'Swipe to slice the pizza' } },
+      { type: 'serve' }
+    ]
+  },
+  noodles: {
+    name: { th: 'ก๋วยเตี๋ยว', en: 'Noodle soup' }, ingredients: ['noodles', 'bokchoy', 'fishball'],
+    toppings: ['garlic', 'egg', 'springonion', 'coriander', 'corn', 'chili', 'lime', 'shrimp', 'seaweed', 'sesame'],
+    steps: [
+      { type: 'cook', appliance: 'pot', seconds: 3, say: { th: 'กดหม้อค้างไว้ ต้มน้ำซุปให้เดือด', en: 'Hold the pot to boil the broth' }, done: { th: 'น้ำเดือดแล้ว', en: 'It is boiling' } },
+      { type: 'add', items: ['fishball'], into: 'appliance:pot', say: { th: 'ใส่ลูกชิ้นลงหม้อ', en: 'Put the fish balls in the pot' } },
+      { type: 'dip', appliance: 'pot', carry: 'basket-noodles', say: { th: 'กดค้างไว้ จุ่มเส้นลวกในหม้อ', en: 'Hold to dip the noodles in the pot' } },
+      { type: 'prep', items: ['bokchoy'] },
+      { type: 'dip', appliance: 'pot', carry: 'basket-veg', say: { th: 'กดค้างไว้ ลวกผัก', en: 'Hold to blanch the greens' } },
+      { type: 'move', from: 'appliance:pot', carry: 'ladle-broth', to: 'bowl-noodles-dry', count: 2, result: 'dish:noodles', say: { th: 'ตักน้ำซุปราดลงชาม 2 ทัพพี', en: 'Ladle broth into the bowl, two scoops' } },
+      { type: 'decorate' },
+      { type: 'serve' }
+    ]
+  },
+  cupcake: {
+    name: { th: 'คัพเค้ก', en: 'Cupcake' }, ingredients: ['butter', 'sugar', 'egg', 'flour', 'milk'],
+    toppings: ['star', 'strawberry', 'rainbow', 'blueberry', 'cherry', 'sprinkles', 'chocsauce', 'heart', 'marshmallow', 'kiwi'],
+    steps: [
+      { type: 'prep', items: ['butter'] },
+      { type: 'add', items: ['butter', 'sugar'], into: 'dish:bowl' },
+      { type: 'mix', tool: 'whisk', action: { th: 'ตีเนยกับน้ำตาล', en: 'Cream the butter and sugar' }, fill: 'bowl-batter' },
+      { type: 'prep', items: ['egg'] },
+      { type: 'add', items: ['egg', 'flour', 'milk'], into: 'bowl-batter' },
+      { type: 'mix', tool: 'spoon', action: { th: 'คนให้เข้ากัน', en: 'Stir it together' }, fill: 'bowl-batter' },
+      { type: 'pour', from: 'bowl-batter', into: 'liners-empty', result: 'liners-filled', color: '#f3e2b3', say: { th: 'กดชามค้างไว้ เทแป้งลงถ้วย', en: 'Hold the bowl to pour batter into the cups' } },
+      { type: 'cook', appliance: 'oven', inside: 'liners-filled', result: 'cupcakes-baked' },
+      { type: 'spread', base: 'cupcake-plain', pens: ['cream'], swatches: true, result: 'dish:cupcake', say: { th: 'เลือกสีครีม แล้วถูนิ้วทาให้ทั่ว', en: 'Pick a frosting colour and rub it all over' } },
+      { type: 'decorate' },
+      { type: 'serve' }
+    ]
+  },
+  cookie: {
+    name: { th: 'คุกกี้', en: 'Cookie' }, ingredients: ['butter', 'sugar', 'egg', 'flour', 'chocchips'],
+    toppings: ['chocchip', 'star', 'heart', 'rainbow', 'marshmallow', 'sprinkles', 'chocsauce', 'honeydrizzle', 'starcookie', 'banana'],
+    steps: [
+      { type: 'prep', items: ['butter'] },
+      { type: 'add', items: ['butter', 'sugar'], into: 'dish:bowl' },
+      { type: 'mix', tool: 'whisk', action: { th: 'ตีเนยกับน้ำตาล', en: 'Cream the butter and sugar' }, fill: 'bowl-batter' },
+      { type: 'prep', items: ['egg'] },
+      { type: 'add', items: ['egg', 'flour', 'chocchips'], into: 'bowl-batter', result: 'bowl-dough' },
+      { type: 'mix', tool: 'spoon', action: { th: 'คนให้เข้ากัน', en: 'Stir it together' }, fill: 'bowl-dough' },
+      { type: 'shape', tray: 'tray-empty', piece: 'dough-ball', count: 6, say: { th: 'แตะบนถาด ปั้นก้อนคุกกี้ 6 ก้อน', en: 'Tap the tray to make six cookie balls' } },
+      { type: 'cook', appliance: 'oven', inside: 'stage', result: 'cookies-tray' },
+      { type: 'decorate', base: 'dish:cookie' },
+      { type: 'serve' }
+    ]
+  },
+  cake: {
+    name: { th: 'เค้กวันเกิด', en: 'Birthday cake' }, ingredients: ['egg', 'egg', 'sugar', 'butter', 'flour', 'milk'],
+    toppings: ['cream', 'strawberry', 'star', 'heart', 'sprinkles', 'chocsauce', 'cherry', 'starcookie', 'blueberry', 'rainbow'],
+    steps: [
+      { type: 'prep', items: ['egg', 'egg'] },
+      { type: 'add', items: ['egg', 'egg', 'sugar'], into: 'dish:bowl' },
+      { type: 'mix', tool: 'whisk', action: { th: 'ตีไข่กับน้ำตาลให้ฟู', en: 'Whisk the eggs and sugar' }, fill: 'bowl-batter' },
+      { type: 'prep', items: ['butter'] },
+      { type: 'add', items: ['butter', 'flour', 'milk'], into: 'bowl-batter' },
+      { type: 'mix', tool: 'spoon', action: { th: 'คนให้เข้ากัน', en: 'Stir it together' }, fill: 'bowl-batter' },
+      { type: 'pour', from: 'bowl-batter', into: 'tin-empty', result: 'tin-filled', color: '#f3e2b3', say: { th: 'กดชามค้างไว้ เทแป้งลงพิมพ์', en: 'Hold the bowl to pour batter into the tin' } },
+      { type: 'cook', appliance: 'oven', inside: 'tin-filled', result: 'cake-plain' },
+      { type: 'spread', base: 'cake-plain', pens: ['cream'], swatches: true, result: 'dish:cake', say: { th: 'เลือกสีครีม แล้วถูนิ้วทาให้ทั่วก้อน', en: 'Pick a frosting colour and rub it all over the cake' } },
+      { type: 'decorate' },
+      { type: 'candles', count: 3 },
+      { type: 'serve' }
+    ]
+  },
+  icecream: {
+    name: { th: 'ไอศกรีม', en: 'Ice cream' }, ingredients: ['strawberry', 'milk', 'yogurt', 'sugar'],
+    toppings: ['cherry', 'wafer', 'chocchip', 'star', 'banana', 'sprinkles', 'chocsauce', 'kiwi', 'orange', 'mint'],
+    steps: [
+      { type: 'prep', items: ['strawberry'] },
+      { type: 'add', items: ['strawberry', 'milk', 'yogurt', 'sugar'], into: 'appliance:blender-open', say: { th: 'ใส่ทุกอย่างลงโถปั่น', en: 'Put everything into the blender' } },
+      { type: 'lid', lid: 'tool:blender-lid', target: 'appliance:blender-open', result: 'appliance:blender', say: { th: 'ลากฝามาปิดโถ', en: 'Drag the lid onto the jar' } },
+      { type: 'cook', appliance: 'blender', result: 'appliance:blender-full' },
+      { type: 'pour', from: 'appliance:blender-full', into: 'tub-empty', result: 'tub-liquid', color: '#f4a6b8', say: { th: 'กดโถค้างไว้ เทลงกล่อง', en: 'Hold the jar to pour into the tub' } },
+      { type: 'cook', appliance: 'freezer', inside: 'tub-liquid', result: 'tub-frozen' },
+      { type: 'move', from: 'tub-frozen', carry: 'scoop-ball', tool: 'tool:scoop', to: 'cone-empty', count: 2, result: 'dish:icecream', say: { th: 'ตักไอศกรีมใส่โคน 2 ลูก', en: 'Scoop ice cream onto the cone, two scoops' } },
+      { type: 'decorate' },
+      { type: 'serve' }
+    ]
+  },
+  toast: {
+    name: { th: 'ขนมปังปิ้ง', en: 'Toast' }, ingredients: ['bread', 'butter', 'jam', 'honey'],
+    toppings: ['banana', 'strawberry', 'blueberry', 'chocchip', 'heart', 'honeydrizzle', 'chocsauce', 'kiwi', 'orange', 'sprinkles'],
+    steps: [
+      { type: 'cook', appliance: 'toaster', inside: 'ing:bread', result: 'toast-plain' },
+      { type: 'spread', base: 'toast-plain', pens: ['butter'], goal: .45, result: 'dish:toast', say: { th: 'ถูนิ้วทาเนยให้ทั่ว', en: 'Rub butter all over the toast' } },
+      { type: 'spread', base: 'dish:toast', pens: ['jam', 'honey'], goal: .35, say: { th: 'เลือกแยมหรือน้ำผึ้ง แล้วทาให้ทั่ว', en: 'Pick jam or honey and spread it' } },
+      { type: 'decorate' },
+      { type: 'serve' }
+    ]
+  },
+  smoothie: {
+    name: { th: 'สมูทตี', en: 'Smoothie' }, ingredients: ['strawberry', 'banana', 'yogurt', 'milk', 'honey'],
+    toppings: ['straw', 'cream', 'cherry', 'strawberry', 'banana', 'kiwi', 'orange', 'mint', 'sprinkles', 'marshmallow'],
+    steps: [
+      { type: 'prep', items: ['strawberry', 'banana'] },
+      { type: 'add', items: ['strawberry', 'banana', 'yogurt', 'milk', 'honey'], into: 'appliance:blender-open', say: { th: 'ใส่ทุกอย่างลงโถปั่น', en: 'Put everything into the blender' } },
+      { type: 'lid', lid: 'tool:blender-lid', target: 'appliance:blender-open', result: 'appliance:blender', say: { th: 'ลากฝามาปิดโถ', en: 'Drag the lid onto the jar' } },
+      { type: 'cook', appliance: 'blender', result: 'appliance:blender-full' },
+      { type: 'pour', from: 'appliance:blender-full', into: 'dish:glass', result: 'dish:smoothie', color: '#f4a6b8', say: { th: 'กดโถค้างไว้ เทใส่แก้ว', en: 'Hold the jar to pour into the glass' } },
+      { type: 'decorate' },
+      { type: 'serve' }
+    ]
+  }
+};
 
 // likes = เมนูโปรด (กินแล้วดีใจสุดๆ) · unlock = จำนวนครั้งที่ป้อนเพื่อนสะสม ก่อนตัวนี้จะมาเล่นด้วย
 const FRIENDS = {
@@ -114,7 +232,7 @@ const FRIEND_ART = {
   rabbit: ['love', 'yum', 'sneeze', 'full']
 };
 const FRIEND_MAX_ON_SCREEN = 4;
-// ปฏิกิริยาตอนกิน เรียงตามลำดับที่เช็ก: จาม (มีพริกหวาน) > อิ่มแปล้ (ท็อปปิ้ง 10+) > ชอบสุดๆ (เมนูโปรด/ตามสั่ง) > อร่อย
+// ปฏิกิริยาตอนกิน เรียงตามลำดับที่เช็ก: จาม (มีพริก) > อิ่มแปล้ (ท็อปปิ้ง 10+) > ชอบสุดๆ (เมนูโปรด/ตามสั่ง) > อร่อย
 const REACTIONS = {
   sneeze: { th: 'ฮัดเช้ย! จี๊ดจ๊าดจัง', en: 'Achoo! So zingy!', tone: 300, particle: '💨' },
   full: { th: 'อิ่มแปล้เลย', en: 'So full!', tone: 380, particle: '💤' },
@@ -127,23 +245,27 @@ const FULL_TOPPINGS = 10;
 const COPY = {
   th: {
     title: 'ครัวจิ๋วแสนสนุก', subtitle: 'เลือกของอร่อย แล้วลงมือทำเลย', language: '🇹🇭 ไทย',
-    home: 'กลับหน้าครัว', listen: 'ฟังอีกครั้ง', add: 'ลากวัตถุดิบลงชาม หรือแตะของแล้วแตะชาม',
-    cut: 'ปาดนิ้วหั่น', crack: 'แตะให้แตก', cutDone: 'หั่นแล้ว', crackDone: 'แตกแล้ว', prepDone: 'เตรียมเสร็จแล้ว ไปใส่ชามกัน', draw: 'ลากนิ้วบนอาหารเพื่อวาดครีม',
+    home: 'กลับหน้าครัว', listen: 'ฟังอีกครั้ง', add: 'ลากของลงไป หรือแตะของแล้วแตะเป้าหมาย',
+    cut: 'ปาดนิ้วหั่น', crack: 'แตะให้แตก', cutDone: 'หั่นแล้ว', crackDone: 'แตกแล้ว', prepDone: 'เตรียมเสร็จแล้ว', draw: 'ลากนิ้วบนอาหารเพื่อวาดครีม',
     mixHint: { stir: 'ลากวนๆ ในชามจนแถบเต็ม', whisk: 'ลากไปมาเร็วๆ จนแถบเต็ม', roll: 'ลากซ้ายขวาจนแถบเต็ม', spread: 'ลากไปมาให้ทั่วจนแถบเต็ม' },
     start: 'เริ่มเลย', hold: 'กดค้าง', decorate: 'ตกแต่งได้ตามใจ',
     done: 'เสร็จแล้ว', serve: 'ลากอาหารไปหาเพื่อน ป้อนได้หลายคน', again: 'ทำอีกจาน', gallery: 'ผลงานของฉัน', place: 'แตะจุดบนอาหาร หรือลากไปวาง',
     praise: ['น่ากินมาก!', 'หอมจังเลย!', 'ทำเก่งมาก!'],
+    poured: 'เทเรียบร้อย', flipped: 'พลิกสวยเลย!', spreadDone: 'ทาทั่วแล้ว', sprinkled: 'โรยทั่วแล้ว', shaped: 'ครบแล้ว', lidOn: 'ปิดฝาแล้ว', sliced: 'ตัดเรียบร้อย', dipped: 'ลวกได้ที่แล้ว', moved: 'เรียบร้อย',
+    candlePlace: 'แตะบนเค้ก ปักเทียน', candleLight: 'แตะเทียนให้ติดไฟ', candleBlow: 'ปาดนิ้วผ่านเทียน เป่าเลย!', birthday: 'สุขสันต์วันเกิด!',
     ready: 'พร้อมแล้ว ไปตกแต่งกัน', wants: 'อยากกิน', orderDone: 'ตรงใจเลย ขอบคุณนะ!', newFriend: 'เพื่อนใหม่มาเล่นด้วย', nextFriend: 'เพื่อนคนต่อไป', ok: 'ตกลง',
     mixed: { stir: 'เข้ากันดีแล้ว', whisk: 'ฟูกำลังดี', roll: 'แบนสวยเลย', spread: 'ทาทั่วแล้ว' }
   },
   en: {
     title: 'Happy Little Kitchen', subtitle: 'Pick a treat and make it your way', language: '🇬🇧 ENG',
-    home: 'Back to the kitchen', listen: 'Listen again', add: 'Drag into the bowl, or tap an item then tap the bowl',
-    cut: 'Swipe to slice the', crack: 'Tap to crack the', cutDone: 'sliced', crackDone: 'cracked', prepDone: 'All prepped! Into the bowl', draw: 'Drag on the food to draw frosting',
+    home: 'Back to the kitchen', listen: 'Listen again', add: 'Drag it in, or tap an item then tap the target',
+    cut: 'Swipe to slice the', crack: 'Tap to crack the', cutDone: 'sliced', crackDone: 'cracked', prepDone: 'All prepped', draw: 'Drag on the food to draw frosting',
     mixHint: { stir: 'Drag in circles until the bar is full', whisk: 'Drag back and forth until the bar is full', roll: 'Drag left and right until the bar is full', spread: 'Drag all over until the bar is full' },
     start: 'Start', hold: 'Hold', decorate: 'Decorate it your way',
     done: 'All done', serve: 'Drag food to friends. You can feed more than one', again: 'Make another', gallery: 'My creations', place: 'Tap the food or drag to place it',
     praise: ['That looks delicious!', 'It smells wonderful!', 'Great cooking!'],
+    poured: 'All poured', flipped: 'Perfect flip!', spreadDone: 'All covered', sprinkled: 'Nicely sprinkled', shaped: 'All done', lidOn: 'Lid is on', sliced: 'Sliced up', dipped: 'Cooked just right', moved: 'Done',
+    candlePlace: 'Tap the cake to add candles', candleLight: 'Tap the candles to light them', candleBlow: 'Swipe across the candles to blow!', birthday: 'Happy birthday!',
     ready: 'Ready! Let us decorate it', wants: 'wants to eat', orderDone: 'Just what I wanted! Thank you!', newFriend: 'A new friend came to play', nextFriend: 'Next friend', ok: 'OK',
     mixed: { stir: 'Perfectly mixed', whisk: 'Nice and fluffy', roll: 'Rolled out nicely', spread: 'All spread out' }
   }
@@ -155,18 +277,26 @@ saveState(); // เขียนกลับทันที ผลงานเก
 let activeRecipe = null;
 let step = 0;
 let creation = null;
+let stage = null;        // ของบนเวทีระหว่างทำ: { base, bits, slices, candles }
+let paint = null;        // canvas เก็บสี/ครีมที่เด็กทาไว้ (ใช้ซ้ำทุกขั้น)
 let currentPrompt = '';
 let audioCtx = null;
 let speechQueue = Promise.resolve();
 let speechGeneration = 0;
 
-const dishSrc = (id) => `assets/dishes/${id}.png`;
-const ingredientSrc = (id) => `assets/ingredients/${id}.png`;
-const toolSrc = (id) => `assets/tools/${id}.png`;
-const applianceSrc = (id) => `assets/appliances/${id}.png`;
-const toppingSrc = (id) => `assets/toppings/${id}.png`;
-const preparedSrc = (id) => INGREDIENTS[id].prepared ? `assets/ingredients/${INGREDIENTS[id].prepared}.png` : ingredientSrc(id);
-const prepList = (recipe) => recipe.ingredients.filter((id) => INGREDIENTS[id].prep);
+const FOLDERS = { state: 'states', dish: 'dishes', ing: 'ingredients', tool: 'tools', appliance: 'appliances', top: 'toppings', friend: 'friends' };
+// แปลง 'kind:key' (ไม่มีคำนำหน้า = state) เป็นที่อยู่รูป
+function art(ref) {
+  if (!ref) return '';
+  const [kind, key] = ref.includes(':') ? ref.split(':') : ['state', ref];
+  return `assets/${FOLDERS[kind]}/${key}.png`;
+}
+const dishSrc = (id) => art(`dish:${id}`);
+const ingredientSrc = (id) => art(`ing:${id}`);
+const toolSrc = (id) => art(`tool:${id}`);
+const toppingSrc = (id) => art(`top:${id}`);
+const preparedSrc = (id) => INGREDIENTS[id].prepared ? art(`ing:${INGREDIENTS[id].prepared}`) : ingredientSrc(id);
+const applianceKind = (key) => APPLIANCE_BASE[key] || key;
 
 function normalizeTopping(top, index) {
   const fallback = POSITIONS[index % POSITIONS.length];
@@ -201,6 +331,7 @@ const unlockedFriends = () => Object.keys(FRIENDS).filter((id) => FRIENDS[id].un
 const nextLockedFriend = () => Object.keys(FRIENDS).find((id) => FRIENDS[id].unlock > state.served) || null;
 const todayKey = () => new Date().toISOString().slice(0, 10);
 const pick = (list) => list[Math.floor(Math.random() * list.length)];
+const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 // เพื่อนคนหนึ่งขออาหาร 1 เมนู (จากเมนูโปรดของตัวเอง) เปลี่ยนเมื่อทำสำเร็จหรือขึ้นวันใหม่
 function ensureOrder() {
@@ -367,21 +498,30 @@ function showHome() {
 function startRecipe(id) {
   activeRecipe = id;
   step = 0;
-  creation = { recipe: id, color: '#ef6f61', toppings: [], strokes: [], friend: null, at: Date.now() };
+  creation = { recipe: id, color: '#ef6f61', toppings: [], friend: null, at: Date.now() };
+  stage = { base: dishSrc(id), bits: [], slices: 0, candles: [] };
+  paint = document.createElement('canvas');
+  paint.width = paint.height = 512;
   renderStep();
 }
 
+function currentSteps() { return RECIPES[activeRecipe].steps; }
+function currentStep() { return currentSteps()[step]; }
+function next() { step++; renderStep(); }
+
 function dots() {
-  return `<div class="progress-dots">${STEPS.map((_, i) => `<i class="${i < step ? 'done' : i === step ? 'now' : ''}"></i>`).join('')}</div>`;
+  const total = currentSteps().length;
+  return `<div class="progress-dots" aria-hidden="true">${Array.from({ length: total }, (_, i) => `<i class="${i < step ? 'done' : i === step ? 'now' : ''}"></i>`).join('')}</div>`;
 }
 
 function screen(content, prompt) {
   const recipe = RECIPES[activeRecipe];
+  const current = currentStep();
   app.innerHTML = `<div class="app-shell play-screen">
     ${topbar(`<img class="title-icon" src="${dishSrc(activeRecipe)}" alt=""> ${local(recipe.name)}`, true)}
     ${dots()}
     <div class="prompt" id="prompt">${prompt}</div>
-    <section class="workbench">${content}</section>
+    <section class="workbench" id="step" data-type="${current?.type || ''}" data-index="${step}">${content}</section>
   </div>`;
   bindTopbar(showHome);
   const sound = app.querySelector('#sound');
@@ -394,126 +534,15 @@ function screen(content, prompt) {
   if (state.sound) speak(prompt);
 }
 
+const RENDERERS = {};
 function renderStep() {
   if (!activeRecipe) return showHome();
-  const name = STEPS[step];
-  if (name === 'prep') renderPrep();
-  else if (name === 'add') renderIngredients();
-  else if (name === 'mix') renderMix();
-  else if (name === 'cook') renderCook();
-  else if (name === 'decorate') renderDecorate();
-  else renderServe();
+  const current = currentStep();
+  if (!current) return showHome();
+  RENDERERS[current.type](current);
 }
 
-// ขั้นเตรียม: วัตถุดิบที่ต้องหั่น/ตอกทีละอย่างบนเขียง ปาดนิ้วหั่น หรือแตะให้ไข่แตก
-function renderPrep() {
-  const recipe = RECIPES[activeRecipe];
-  const queue = prepList(recipe);
-  if (!queue.length) { step++; return renderStep(); }
-  let index = 0;
-  const promptFor = (id) => `${t(INGREDIENTS[id].prep)} ${local(INGREDIENTS[id])}`;
-  screen(`<div class="stage-zone">
-      <div class="board-zone">
-        <img class="board" src="${toolSrc('board')}" alt="">
-        <button class="prep-item" id="prep-item" data-action="${INGREDIENTS[queue[0]].prep}" aria-label="${promptFor(queue[0])}">
-          <img src="${ingredientSrc(queue[0])}" alt="">
-          <span class="cut-line" aria-hidden="true"></span>
-        </button>
-        <span class="touch-hint prep-hint" aria-hidden="true">☝</span>
-      </div>
-    </div>
-    <div class="tray prep-queue" aria-hidden="true">
-      ${queue.map((id, i) => `<span class="queue-item ${i === 0 ? 'now' : ''}" data-queue="${id}"><img src="${ingredientSrc(id)}" alt=""></span>`).join('')}
-    </div>`, promptFor(queue[0]));
-  const item = app.querySelector('#prep-item');
-  const img = item.querySelector('img');
-  const promptElement = app.querySelector('#prompt');
-  const hint = app.querySelector('.prep-hint');
-  let hits = 0;
-  let busy = false;
-  let pointerId = null;
-  let start = null;
-  let swiped = false;
-
-  const setHint = () => {
-    const action = INGREDIENTS[queue[index]].prep;
-    item.dataset.action = action;
-    hint.className = `touch-hint prep-hint ${action}`;
-  };
-  const hit = () => {
-    hits++;
-    item.classList.remove('hit');
-    requestAnimationFrame(() => item.classList.add('hit'));
-    tone(560 + hits * 90, .1);
-  };
-  const finishItem = async () => {
-    busy = true;
-    const id = queue[index];
-    img.src = preparedSrc(id);
-    item.classList.add('prepared');
-    app.querySelector(`[data-queue="${id}"]`)?.classList.add('done');
-    tone(900, .2);
-    await speak(`${local(INGREDIENTS[id])} ${t(`${INGREDIENTS[id].prep}Done`)}`);
-    index++;
-    if (index >= queue.length) {
-      await speak(t('prepDone'));
-      step++;
-      return renderStep();
-    }
-    hits = 0;
-    const next = queue[index];
-    img.src = ingredientSrc(next);
-    item.classList.remove('prepared');
-    item.setAttribute('aria-label', promptFor(next));
-    app.querySelectorAll('.queue-item').forEach((element) => element.classList.toggle('now', element.dataset.queue === next));
-    setHint();
-    promptElement.textContent = promptFor(next);
-    speak(promptFor(next));
-    busy = false;
-  };
-  const progress = () => {
-    if (busy) return;
-    hit();
-    const goal = INGREDIENTS[queue[index]].prep === 'crack' ? CRACK_TAPS : CUT_SWIPES;
-    if (hits >= goal) finishItem();
-  };
-
-  setHint();
-  item.addEventListener('pointerdown', (event) => {
-    if (busy || (event.button !== undefined && event.button !== 0)) return;
-    event.preventDefault();
-    pointerId = event.pointerId;
-    start = { x: event.clientX, y: event.clientY };
-    swiped = false;
-    try { item.setPointerCapture?.(pointerId); } catch {}
-  });
-  item.addEventListener('pointermove', (event) => {
-    if (!start || event.pointerId !== pointerId || swiped) return;
-    event.preventDefault();
-    if (INGREDIENTS[queue[index]].prep !== 'cut') return;
-    if (Math.hypot(event.clientX - start.x, event.clientY - start.y) >= 40) {
-      swiped = true;
-      progress();
-    }
-  });
-  const release = (event) => {
-    if (event.pointerId !== pointerId) return;
-    pointerId = null;
-    start = null;
-  };
-  item.addEventListener('pointerup', release);
-  item.addEventListener('pointercancel', release);
-  item.addEventListener('click', () => {
-    if (INGREDIENTS[queue[index]].prep === 'crack') progress();
-    else if (!swiped) {
-      // แตะเฉยๆ ตอนต้องหั่น: เขย่าบอกว่าให้ปาด
-      item.classList.remove('nudge');
-      requestAnimationFrame(() => item.classList.add('nudge'));
-      tone(300, .1);
-    }
-  });
-}
-
+// ---------------------------------------------------------------- ท่าพื้นฐาน: ลาก/แตะของไปวาง
 function bindDragChoice(button, options) {
   let active = null;
   let ignoreClick = false;
@@ -548,7 +577,7 @@ function bindDragChoice(button, options) {
       if (!active.moved && distance >= 8) {
         active.moved = true;
         // ตัวที่ลอยตามนิ้ว = รูปอย่างเดียว (ไม่เอากรอบขาวของปุ่ม) ขนาดเท่าของจริงบนจอ
-        const source = button.querySelector('img') || button;
+        const source = options.ghostSource?.() || button.querySelector('img') || button;
         const rect = source.getBoundingClientRect();
         const ghost = source.cloneNode(true);
         ghost.className = 'drag-ghost';
@@ -597,29 +626,307 @@ function bindDragChoice(button, options) {
   });
 }
 
-function renderIngredients() {
-  const recipe = RECIPES[activeRecipe];
-  const prompt = t('add');
-  screen(`<div class="stage-zone"><button class="bowl ready" id="bowl" aria-label="bowl"></button></div>
+const within = (element, x, y, padding = 20) => {
+  const rect = element.getBoundingClientRect();
+  return x >= rect.left - padding && x <= rect.right + padding && y >= rect.top - padding && y <= rect.bottom + padding;
+};
+const flash = (element, className, ms = 400) => {
+  element.classList.add(className);
+  setTimeout(() => element.isConnected && element.classList.remove(className), ms);
+};
+// กดค้าง: คืน promise เมื่อแถบเต็ม (ปล่อยแล้วแถบหยุด)
+function holdMeter(element, meter, { seconds = 5, tone: freq = 430, onStart, onStop, onTick } = {}) {
+  return new Promise((resolve) => {
+    let progress = 0;
+    let timer = null;
+    let finished = false;
+    let nextChime = 20;
+    const stop = () => {
+      window.removeEventListener('pointerup', stop);
+      window.removeEventListener('pointercancel', stop);
+      if (finished) return;
+      clearInterval(timer);
+      timer = null;
+      element.classList.remove('running', 'holding');
+      onStop?.();
+    };
+    const start = (event) => {
+      if (finished || timer) return;
+      event?.preventDefault();
+      element.classList.add('running', 'holding');
+      tone(freq, .18);
+      onStart?.();
+      window.addEventListener('pointerup', stop, { once: true });
+      window.addEventListener('pointercancel', stop, { once: true });
+      timer = setInterval(() => {
+        progress = Math.min(100, progress + 100 / (seconds * 10));
+        meter.style.width = `${progress}%`;
+        onTick?.(progress);
+        if (progress >= nextChime && progress < 100) {
+          tone(400 + progress * 2, .08);
+          nextChime += 20;
+        }
+        if (progress >= 100) {
+          finished = true;
+          clearInterval(timer);
+          window.removeEventListener('pointerup', stop);
+          window.removeEventListener('pointercancel', stop);
+          resolve();
+        }
+      }, 100);
+    };
+    element.addEventListener('pointerdown', start);
+    element.addEventListener('keydown', (event) => {
+      if ((event.key === 'Enter' || event.key === ' ') && !event.repeat) start(event);
+    });
+    element.addEventListener('keyup', (event) => {
+      if (event.key === 'Enter' || event.key === ' ') stop();
+    });
+  });
+}
+const meterHTML = () => '<div class="meter"><div class="meter-fill" id="meter"></div></div>';
+const hintHTML = (motion = '') => `<span class="touch-hint ${motion}" aria-hidden="true">☝</span>`;
+const holdHintHTML = () => `<span class="hold-hint" aria-hidden="true"><b>☝</b><span>${t('hold')}</span></span>`;
+
+// ---------------------------------------------------------------- เวที (จาน/ถาด/ของที่กำลังทำ)
+function toppingHTML(item) {
+  return `<img class="topping" src="${toppingSrc(item.key)}" alt="" style="left:${item.x}%;top:${item.y}%">`;
+}
+function bitHTML(bit) {
+  return `<img class="bit" src="${art(bit.art)}" alt="" style="left:${bit.x}%;top:${bit.y}%;width:${bit.size || 14}%">`;
+}
+// เวที: รูปฐาน + สีที่ทา + ของโรย + ท็อปปิ้ง + รอยตัด + เทียน
+function stageHTML({ base = stage.base, plate = false, id = 'dish', className = 'dish' } = {}) {
+  return `<div class="${className}" id="${id}">
+    ${plate ? `<span class="food-color" id="food-color" style="background:${creation.color}"></span>` : ''}
+    <img class="food-icon" src="${base}" alt="">
+    <canvas class="frosting" aria-hidden="true"></canvas>
+    ${stage.bits.map(bitHTML).join('')}
+    ${creation.toppings.map(toppingHTML).join('')}
+    ${Array.from({ length: stage.slices }, (_, i) => `<i class="slice-line" style="transform:translate(-50%,-50%) rotate(${i * 90 + 45}deg)"></i>`).join('')}
+    ${stage.candles.map((candle) => `<span class="candle ${candle.lit ? 'lit' : ''} ${candle.out ? 'out' : ''}" data-candle style="left:${candle.x}%;top:${candle.y}%"><img src="${toppingSrc('candle')}" alt=""><i></i></span>`).join('')}
+  </div>`;
+}
+// วาดสีที่ทาไว้ลง canvas ของเวทีที่เพิ่ง render (ขนาดตามจอ)
+function syncPaint(element) {
+  const canvas = element.querySelector('canvas.frosting');
+  if (!canvas) return null;
+  const rect = element.getBoundingClientRect();
+  const scale = Math.min(3, window.devicePixelRatio || 1);
+  canvas.width = Math.max(1, Math.round(rect.width * scale));
+  canvas.height = Math.max(1, Math.round(rect.height * scale));
+  const ctx = canvas.getContext('2d');
+  ctx.drawImage(paint, 0, 0, canvas.width, canvas.height);
+  return { canvas, ctx };
+}
+function clearPaint() {
+  paint.getContext('2d').clearRect(0, 0, paint.width, paint.height);
+}
+const toStage = (element, event) => {
+  const rect = element.getBoundingClientRect();
+  return [((event.clientX - rect.left) / rect.width) * 100, ((event.clientY - rect.top) / rect.height) * 100];
+};
+// ครีม/ซอสที่ลากด้วยนิ้ว: วาดลง paint (512) แล้วสะท้อนลง canvas บนจอ
+function strokeTo(view, color, from, to, widthPct = 5.5) {
+  const draw = (ctx, size) => {
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    ctx.strokeStyle = color;
+    ctx.lineWidth = size * widthPct / 100;
+    ctx.beginPath();
+    ctx.moveTo(from[0] / 100 * size, from[1] / 100 * size);
+    ctx.lineTo(to[0] / 100 * size, to[1] / 100 * size);
+    ctx.stroke();
+  };
+  draw(paint.getContext('2d'), paint.width);
+  if (view && view.canvas.isConnected) draw(view.ctx, view.canvas.width);
+}
+// ให้เด็กลากนิ้วบนเวทีเพื่อวาด/ทา; คืนฟังก์ชันที่บอกว่า click ล่าสุดเป็นปลายทางของการลากหรือไม่
+function bindPainting(element, { color, onMove, onEnd, width }) {
+  let stroke = null;
+  let pointerId = null;
+  let ignoreClick = false;
+  let view = syncPaint(element);
+  element.addEventListener('pointerdown', (event) => {
+    if (event.button !== undefined && event.button !== 0) return;
+    pointerId = event.pointerId;
+    stroke = { last: toStage(element, event), moved: false, startX: event.clientX, startY: event.clientY };
+    try { element.setPointerCapture?.(pointerId); } catch {}
+  });
+  element.addEventListener('pointermove', (event) => {
+    if (!stroke || event.pointerId !== pointerId) return;
+    event.preventDefault();
+    if (!stroke.moved && Math.hypot(event.clientX - stroke.startX, event.clientY - stroke.startY) < 6) return;
+    if (!stroke.moved) {
+      stroke.moved = true;
+      element.classList.add('drawing');
+      if (!view || !view.canvas.isConnected) view = syncPaint(element);
+    }
+    const point = toStage(element, event);
+    strokeTo(view, typeof color === 'function' ? color() : color, stroke.last, point, width);
+    onMove?.(stroke.last, point);
+    stroke.last = point;
+  });
+  const end = (event) => {
+    if (!stroke || event.pointerId !== pointerId) return;
+    if (stroke.moved) {
+      element.classList.remove('drawing');
+      ignoreClick = true;
+      setTimeout(() => { ignoreClick = false; }, 0);
+      onEnd?.();
+    }
+    stroke = null;
+    pointerId = null;
+  };
+  element.addEventListener('pointerup', end);
+  element.addEventListener('pointercancel', end);
+  return () => ignoreClick;
+}
+// สัดส่วนพื้นที่วงกลมกลางเวทีที่ถูกทาแล้ว (เช็กจาก paint แบบหยาบ)
+function coverage() {
+  const ctx = paint.getContext('2d');
+  const size = 32;
+  const data = ctx.getImageData(0, 0, paint.width, paint.height).data;
+  const cell = paint.width / size;
+  let inside = 0;
+  let painted = 0;
+  for (let gy = 0; gy < size; gy++) {
+    for (let gx = 0; gx < size; gx++) {
+      const dx = gx + .5 - size / 2;
+      const dy = gy + .5 - size / 2;
+      if (Math.hypot(dx, dy) > size * .32) continue;
+      inside++;
+      const index = ((Math.floor((gy + .5) * cell) * paint.width) + Math.floor((gx + .5) * cell)) * 4 + 3;
+      if (data[index] > 40) painted++;
+    }
+  }
+  return inside ? painted / inside : 0;
+}
+
+// ---------------------------------------------------------------- ขั้น: เตรียม (หั่น / ตอก)
+RENDERERS.prep = (current) => {
+  const queue = current.items;
+  let index = 0;
+  const promptFor = (id) => `${t(INGREDIENTS[id].prep)} ${local(INGREDIENTS[id])}`;
+  screen(`<div class="stage-zone">
+      <div class="board-zone">
+        <img class="board" src="${toolSrc('board')}" alt="">
+        <button class="prep-item" id="prep-item" data-action="${INGREDIENTS[queue[0]].prep}" aria-label="${promptFor(queue[0])}">
+          <img src="${ingredientSrc(queue[0])}" alt="">
+          <span class="cut-line" aria-hidden="true"></span>
+        </button>
+        <span class="touch-hint prep-hint" aria-hidden="true">☝</span>
+      </div>
+    </div>
+    <div class="tray prep-queue" aria-hidden="true">
+      ${queue.map((id, i) => `<span class="queue-item ${i === 0 ? 'now' : ''}" data-queue="${id}" data-index="${i}"><img src="${ingredientSrc(id)}" alt=""></span>`).join('')}
+    </div>`, promptFor(queue[0]));
+  const item = app.querySelector('#prep-item');
+  const img = item.querySelector('img');
+  const promptElement = app.querySelector('#prompt');
+  const hint = app.querySelector('.prep-hint');
+  let hits = 0;
+  let busy = false;
+  let pointerId = null;
+  let start = null;
+  let swiped = false;
+
+  const setHint = () => {
+    const action = INGREDIENTS[queue[index]].prep;
+    item.dataset.action = action;
+    hint.className = `touch-hint prep-hint ${action}`;
+  };
+  const hit = () => {
+    hits++;
+    item.classList.remove('hit');
+    requestAnimationFrame(() => item.classList.add('hit'));
+    tone(560 + hits * 90, .1);
+  };
+  const finishItem = async () => {
+    busy = true;
+    const id = queue[index];
+    img.src = preparedSrc(id);
+    item.classList.add('prepared');
+    app.querySelector(`.queue-item[data-index="${index}"]`)?.classList.add('done');
+    tone(900, .2);
+    await speak(`${local(INGREDIENTS[id])} ${t(`${INGREDIENTS[id].prep}Done`)}`);
+    index++;
+    if (index >= queue.length) return next();
+    hits = 0;
+    const nextId = queue[index];
+    img.src = ingredientSrc(nextId);
+    item.classList.remove('prepared');
+    item.setAttribute('aria-label', promptFor(nextId));
+    app.querySelectorAll('.queue-item').forEach((element) => element.classList.toggle('now', Number(element.dataset.index) === index));
+    setHint();
+    promptElement.textContent = promptFor(nextId);
+    speak(promptFor(nextId));
+    busy = false;
+  };
+  const progress = () => {
+    if (busy) return;
+    hit();
+    const goal = INGREDIENTS[queue[index]].prep === 'crack' ? CRACK_TAPS : CUT_SWIPES;
+    if (hits >= goal) finishItem();
+  };
+
+  setHint();
+  item.addEventListener('pointerdown', (event) => {
+    if (busy || (event.button !== undefined && event.button !== 0)) return;
+    event.preventDefault();
+    pointerId = event.pointerId;
+    start = { x: event.clientX, y: event.clientY };
+    swiped = false;
+    try { item.setPointerCapture?.(pointerId); } catch {}
+  });
+  item.addEventListener('pointermove', (event) => {
+    if (!start || event.pointerId !== pointerId || swiped) return;
+    event.preventDefault();
+    if (INGREDIENTS[queue[index]].prep !== 'cut') return;
+    if (Math.hypot(event.clientX - start.x, event.clientY - start.y) >= 40) {
+      swiped = true;
+      progress();
+    }
+  });
+  const release = (event) => {
+    if (event.pointerId !== pointerId) return;
+    pointerId = null;
+    start = null;
+  };
+  item.addEventListener('pointerup', release);
+  item.addEventListener('pointercancel', release);
+  item.addEventListener('click', () => {
+    if (INGREDIENTS[queue[index]].prep === 'crack') progress();
+    else if (!swiped) {
+      // แตะเฉยๆ ตอนต้องหั่น: เขย่าบอกว่าให้ปาด
+      flash(item, 'nudge');
+      tone(300, .1);
+    }
+  });
+};
+
+// ---------------------------------------------------------------- ขั้น: ใส่ของ (ลงชาม / หม้อ / โถปั่น)
+RENDERERS.add = (current) => {
+  const intoAppliance = current.into.startsWith('appliance:');
+  const applianceKey = intoAppliance ? current.into.split(':')[1] : null;
+  const prompt = current.say ? local(current.say) : t('add');
+  const targetHTML = intoAppliance
+    ? `<div class="appliance ${applianceKind(applianceKey)} target" id="target" role="button" aria-label="${prompt}"><img class="machine" src="${art(current.into)}" alt=""></div>`
+    : `<button class="bowl ready" id="target" aria-label="bowl"><img class="bowl-art" src="${art(current.into)}" alt=""></button>`;
+  screen(`<div class="stage-zone">${targetHTML}</div>
     <div class="tray" id="ingredients">
-      ${recipe.ingredients.map((id, index) => `<button class="ingredient" data-index="${index}" aria-label="${local(INGREDIENTS[id])}"><img src="${preparedSrc(id)}" alt=""></button>`).join('')}
+      ${current.items.map((id, index) => `<button class="ingredient" data-index="${index}" aria-label="${local(INGREDIENTS[id])}"><img src="${preparedSrc(id)}" alt=""></button>`).join('')}
     </div>`, prompt);
 
-  const bowl = app.querySelector('#bowl');
+  const target = app.querySelector('#target');
   let added = 0;
   let selected = null;
-  const isOverBowl = (x, y) => {
-    const rect = bowl.getBoundingClientRect();
-    const padding = 54;
-    return x >= rect.left - padding && x <= rect.right + padding
-      && y >= rect.top - padding && y <= rect.bottom + padding;
-  };
   const selectIngredient = (button) => {
     if (button.classList.contains('used')) return;
     selected?.classList.remove('selected');
     selected = button;
     selected.classList.add('selected');
-    bowl.classList.add('awaiting-drop');
+    target.classList.add('awaiting-drop');
     tone(470);
   };
   const useIngredient = async (button) => {
@@ -627,52 +934,48 @@ function renderIngredients() {
     button.classList.add('used');
     button.classList.remove('selected');
     if (selected === button) selected = null;
-    bowl.classList.remove('awaiting-drop');
-    bowl.classList.add('drop-target');
-    setTimeout(() => bowl.isConnected && bowl.classList.remove('drop-target'), 420);
-    const id = recipe.ingredients[Number(button.dataset.index)];
-    bowl.insertAdjacentHTML('beforeend', `<img class="in-bowl" src="${preparedSrc(id)}" alt="">`);
+    target.classList.remove('awaiting-drop');
+    flash(target, 'drop-target', 420);
+    const id = current.items[Number(button.dataset.index)];
+    const spot = intoAppliance ? '' : `style="left:${34 + (added % 3) * 16}%;top:${34 + Math.floor(added / 3) * 14}%"`;
+    target.insertAdjacentHTML('beforeend', `<img class="in-bowl ${intoAppliance ? 'sink' : ''}" src="${preparedSrc(id)}" alt="" ${spot}>`);
     tone(520 + added * 80);
     added++;
-    const isLast = added === recipe.ingredients.length;
+    const isLast = added === current.items.length;
     await speak(local(INGREDIENTS[id]));
     if (isLast) {
-      bowl.classList.remove('ready');
-      await speak(t('ready'));
-      step++;
-      renderStep();
+      target.classList.remove('ready');
+      if (current.result) stage.base = art(current.result);
+      await wait(300);
+      next();
     }
   };
-
   app.querySelectorAll('.ingredient').forEach((button) => {
     bindDragChoice(button, {
       onTap: () => selectIngredient(button),
-      isOverTarget: isOverBowl,
-      onHover: (over) => bowl.classList.toggle('drop-target', over),
+      isOverTarget: (x, y) => within(target, x, y, 54),
+      onHover: (over) => target.classList.toggle('drop-target', over),
       onDrop: () => useIngredient(button),
-      onMiss: () => {
-        bowl.classList.add('drop-miss');
-        setTimeout(() => bowl.isConnected && bowl.classList.remove('drop-miss'), 380);
-      }
+      onMiss: () => flash(target, 'drop-miss', 380)
     });
   });
-  bowl.addEventListener('click', () => {
+  target.addEventListener('click', () => {
     if (selected) useIngredient(selected);
   });
-}
+};
 
-function renderMix() {
-  const recipe = RECIPES[activeRecipe];
-  const tool = TOOLS[recipe.tool];
+// ---------------------------------------------------------------- ขั้น: ผสม (ลากตามท่าของเครื่องมือ)
+RENDERERS.mix = (current) => {
+  const tool = TOOLS[current.tool];
   const motion = tool.motion;
-  const prompt = `${local(recipe.action)} · ${t('mixHint')[motion]}`;
+  const prompt = `${local(current.action)} · ${t('mixHint')[motion]}`;
   screen(`<div class="stage-zone" style="display:flex;flex-direction:column;gap:16px">
-      <button class="mix-tool invite-tool motion-${motion}" id="mix" data-motion="${motion}" aria-label="${local(recipe.action)}" style="--spread:0">
-        <span class="mix-fill" id="mix-fill">${recipe.ingredients.map((id) => `<img src="${preparedSrc(id)}" alt="">`).join('')}</span>
-        <img class="mix-icon" id="mix-icon" src="${toolSrc(recipe.tool)}" alt="${local(tool)}">
-        <span class="touch-hint" aria-hidden="true">☝</span>
+      <button class="mix-tool invite-tool motion-${motion}" id="mix" data-motion="${motion}" aria-label="${local(current.action)}">
+        <span class="mix-fill art" id="mix-fill"><img class="fill-art" src="${art(current.fill)}" alt=""></span>
+        <img class="mix-icon" id="mix-icon" src="${toolSrc(current.tool)}" alt="${local(tool)}">
+        ${hintHTML()}
       </button>
-      <div class="meter"><div class="meter-fill" id="meter"></div></div>
+      ${meterHTML()}
     </div>`, prompt);
   const button = app.querySelector('#mix');
   const fill = app.querySelector('#mix-fill');
@@ -684,7 +987,7 @@ function renderMix() {
   let pointerId = null;
   let center = null;
   let last = null;
-  let turned = 0;   // มุมสะสมตอนลากวน (เรเดียน)
+  let turned = 0;
   let moved = false;
   let ignoreClick = false;
 
@@ -694,17 +997,20 @@ function renderMix() {
     button.classList.remove('mixing');
     icon.style.transform = '';
     tone(760, .22);
-    await new Promise((resolve) => setTimeout(resolve, 700));
+    if (current.result) {
+      stage.base = art(current.result);
+      fill.querySelector('.fill-art').src = stage.base;
+      fill.style.transform = 'scale(1)';
+    }
+    await wait(700);
     await speak(t('mixed')[motion]);
-    step++;
-    renderStep();
+    next();
   };
   const setProgress = (value) => {
     if (finished) return;
     progress = Math.min(100, value);
     meter.style.width = `${progress}%`;
     if (motion === 'roll') fill.style.transform = `scale(${.8 + progress / 100 * .35}, ${.8 - progress / 100 * .3})`;
-    if (motion === 'spread') button.style.setProperty('--spread', progress);
     if (motion === 'whisk') fill.style.filter = `brightness(${1 + progress / 100 * .18})`;
     if (progress >= nextChime && progress < 100) {
       tone(430 + progress * 2, .07);
@@ -746,7 +1052,6 @@ function renderMix() {
       if (delta > Math.PI) delta -= Math.PI * 2;
       if (delta < -Math.PI) delta += Math.PI * 2;
       const fromCenter = Math.hypot(event.clientX - center.x, event.clientY - center.y);
-      // วนใกล้กลางเกินไปมุมจะเปลี่ยนเร็วผิดปกติ ให้นับเป็นระยะแทน
       gain = fromCenter > 24 ? Math.abs(delta) / (Math.PI * 2 * MIX_GOAL.stir) * 100 : distance / MIX_GOAL.whisk * 100;
       if (fromCenter > 24) turned += delta;
       fill.style.transform = `scale(.8) rotate(${turned}rad)`;
@@ -775,7 +1080,6 @@ function renderMix() {
   };
   button.addEventListener('pointerup', release);
   button.addEventListener('pointercancel', release);
-  // แตะเฉยๆ ก็ยังคืบหน้า แค่ช้ากว่าลาก (เด็กที่ยังลากไม่คล่องยังเล่นจบได้)
   button.addEventListener('click', () => {
     if (ignoreClick || finished) return;
     button.classList.remove('tap-once');
@@ -783,185 +1087,482 @@ function renderMix() {
     setTimeout(() => button.classList.remove('tap-once'), 360);
     setProgress(progress + MIX_TAP_GAIN);
   });
-}
+};
 
-function renderCook() {
-  const recipe = RECIPES[activeRecipe];
-  const appliance = APPLIANCES[recipe.appliance];
-  const prompt = local(appliance.cook);
-  // ของที่โชว์ระหว่างปรุง: ส่วนใหญ่โชว์จานเสร็จ, เครื่องปั่นโชว์ผลไม้หมุนในโถ
-  const inside = recipe.appliance === 'blender'
-    ? `<span class="jar-fruit">${recipe.ingredients.slice(0, 2).map((id) => `<img src="${ingredientSrc(id)}" alt="">`).join('')}</span>`
-    : `<img class="cooking-food" src="${dishSrc(activeRecipe)}" alt="">`;
+// ---------------------------------------------------------------- ขั้น: ปรุง (กดเครื่องค้าง)
+function applianceHTML(current, inner = '') {
+  const kind = applianceKind(current.appliance);
+  return `<div class="appliance ${kind}" id="appliance" data-appliance="${current.appliance}" role="button" tabindex="0" aria-label="${local(current.say || APPLIANCES[kind].cook)}">
+      ${inner}
+      <img class="machine" src="${art(`appliance:${current.appliance}`)}" alt="">
+      <span class="fx fx-glow"></span>
+      <span class="fx fx-steam"><i></i><i></i><i></i></span>
+      <span class="fx fx-snow"><i></i><i></i><i></i><i></i><i></i><i></i></span>
+      <span class="fx fx-sparks"><i></i><i></i><i></i><i></i></span>
+      ${holdHintHTML()}
+    </div>`;
+}
+RENDERERS.cook = (current) => {
+  const kind = applianceKind(current.appliance);
+  const prompt = local(current.say || APPLIANCES[kind].cook);
+  let inner = '';
+  if (current.inside === 'stage') inner = stageHTML({ id: 'cooking-stage', className: 'cooking-food cooking-stage' });
+  else if (current.inside) inner = `<img class="cooking-food" src="${art(current.inside)}" alt="">`;
   screen(`<div class="stage-zone" style="display:flex;flex-direction:column;gap:18px">
-      <div class="appliance ${recipe.appliance}" id="appliance" data-appliance="${recipe.appliance}" role="button" tabindex="0" aria-label="${prompt}">
-        ${inside}
-        <img class="machine" src="${applianceSrc(recipe.appliance)}" alt="">
-        <span class="fx fx-glow"></span>
-        <span class="fx fx-steam"><i></i><i></i><i></i></span>
-        <span class="fx fx-snow"><i></i><i></i><i></i><i></i><i></i><i></i></span>
-        <span class="fx fx-sparks"><i></i><i></i><i></i><i></i></span>
-        <span class="hold-hint" aria-hidden="true"><b>☝</b><span>${t('hold')}</span></span>
-      </div>
-      <div class="meter"><div class="meter-fill" id="meter"></div></div>
+      ${applianceHTML(current, inner)}
+      ${meterHTML()}
     </div>`, prompt);
   const element = app.querySelector('#appliance');
-  const meter = app.querySelector('#meter');
-  let progress = 0;
-  let finished = false;
-  let holdTimer = null;
-  let nextChime = 20;
-  const finishCooking = async () => {
-    if (finished) return;
-    finished = true;
-    clearInterval(holdTimer);
+  const cookingStage = app.querySelector('#cooking-stage');
+  if (cookingStage) syncPaint(cookingStage);
+  holdMeter(element, app.querySelector('#meter'), { seconds: current.seconds || 5, tone: APPLIANCES[kind].tone }).then(async () => {
     element.removeAttribute('tabindex');
-    element.classList.add('running');
-    await new Promise((resolve) => setTimeout(resolve, 900));
+    await wait(900);
     element.classList.remove('running', 'holding');
     element.classList.add('finished');
     tone(820, .25);
-    await new Promise((resolve) => setTimeout(resolve, 500));
-    await speak(local(appliance.done));
-    step++;
-    renderStep();
-  };
-  const startHold = (event) => {
-    if (finished || holdTimer) return;
-    event?.preventDefault();
-    element.classList.add('running', 'holding');
-    tone(appliance.tone, .18);
-    window.addEventListener('pointerup', stopHold, { once: true });
-    window.addEventListener('pointercancel', stopHold, { once: true });
-    holdTimer = setInterval(() => {
-      progress = Math.min(100, progress + 2);
-      meter.style.width = `${progress}%`;
-      if (progress >= nextChime && progress < 100) {
-        tone(400 + progress * 2, .08);
-        nextChime += 20;
+    if (current.result) {
+      const resultSrc = art(current.result);
+      if (current.result.startsWith('appliance:')) {
+        element.querySelector('.machine').src = resultSrc;
+      } else {
+        stage.base = resultSrc;
+        if (current.keep !== 'toppings') creation.toppings = [];
+        stage.bits = [];
+        clearPaint();
+        const food = element.querySelector('.cooking-food');
+        const img = document.createElement('img');
+        img.className = 'cooking-food';
+        img.src = resultSrc;
+        img.alt = '';
+        if (food) food.replaceWith(img); else element.prepend(img);
       }
-      if (progress >= 100) finishCooking();
-    }, 100);
+    }
+    await wait(500);
+    await speak(local(current.done || APPLIANCES[kind].done));
+    next();
+  });
+};
+
+// ---------------------------------------------------------------- ขั้น: เท (กดค้างให้ภาชนะเอียง)
+RENDERERS.pour = (current) => {
+  const prompt = local(current.say);
+  const intoAppliance = current.into.startsWith('appliance:');
+  const targetHTML = intoAppliance
+    ? `<div class="appliance ${applianceKind(current.into.split(':')[1])} pour-target" id="pour-target"><img class="machine" src="${art(current.into)}" alt=""><img class="cooking-food pour-result" id="pour-result" src="" alt="" hidden></div>`
+    : `<div class="pour-target plain" id="pour-target"><img class="target-art" id="pour-result" src="${art(current.into)}" alt=""></div>`;
+  screen(`<div class="stage-zone pour-zone">
+      <button class="pour-source" id="pour-source" aria-label="${prompt}">
+        <img src="${art(current.from)}" alt="">
+        <span class="stream" style="background:${current.color}"></span>
+        ${holdHintHTML()}
+      </button>
+      ${targetHTML}
+      ${meterHTML()}
+    </div>`, prompt);
+  const source = app.querySelector('#pour-source');
+  const target = app.querySelector('#pour-target');
+  const oilSheen = current.from === 'ing:oil';
+  holdMeter(source, app.querySelector('#meter'), {
+    seconds: current.seconds || 3, tone: 520,
+    onStart: () => { source.classList.add('tilting'); target.classList.add('receiving'); },
+    onStop: () => { source.classList.remove('tilting'); target.classList.remove('receiving'); },
+    onTick: (progress) => { if (oilSheen) target.style.setProperty('--sheen', progress / 100); }
+  }).then(async () => {
+    source.classList.remove('tilting');
+    source.classList.add('empty');
+    target.classList.remove('receiving');
+    tone(760, .22);
+    if (current.result) {
+      const result = app.querySelector('#pour-result');
+      result.src = art(current.result);
+      result.hidden = false;
+      result.classList.add('pop');
+      stage.base = art(current.result);
+    }
+    await wait(500);
+    await speak(t('poured'));
+    next();
+  });
+};
+
+// ---------------------------------------------------------------- ขั้น: พลิก (ปาดนิ้วขึ้น)
+RENDERERS.flip = (current) => {
+  const prompt = local(current.say);
+  screen(`<div class="stage-zone" style="display:flex;flex-direction:column;gap:18px">
+      ${applianceHTML(current, `<img class="cooking-food flip-food" id="flip-food" src="${art(current.before)}" alt="">`)}
+      ${hintHTML('flip')}
+    </div>`, prompt);
+  const element = app.querySelector('#appliance');
+  element.querySelector('.hold-hint')?.remove();
+  const food = app.querySelector('#flip-food');
+  let start = null;
+  let done = false;
+  element.addEventListener('pointerdown', (event) => {
+    if (done) return;
+    event.preventDefault();
+    start = { id: event.pointerId, x: event.clientX, y: event.clientY };
+    try { element.setPointerCapture?.(start.id); } catch {}
+  });
+  element.addEventListener('pointermove', async (event) => {
+    if (done || !start || event.pointerId !== start.id) return;
+    event.preventDefault();
+    if (start.y - event.clientY >= 60) {
+      done = true;
+      food.classList.add('flipping');
+      tone(600, .15);
+      await wait(260);
+      food.src = art(current.after);
+      stage.base = art(current.after);
+      await wait(320);
+      tone(880, .2);
+      await speak(t('flipped'));
+      next();
+    }
+  });
+  const release = () => { start = null; };
+  element.addEventListener('pointerup', release);
+  element.addEventListener('pointercancel', release);
+  element.addEventListener('click', () => { if (!done) { flash(food, 'nudge'); tone(300, .1); } });
+};
+
+// ---------------------------------------------------------------- ขั้น: ตัก/ย้าย (ลากจาก → ไป N ครั้ง)
+RENDERERS.move = (current) => {
+  const prompt = local(current.say);
+  const fromAppliance = current.from.startsWith('appliance:');
+  const fromHTML = fromAppliance
+    ? `<div class="appliance ${applianceKind(current.from.split(':')[1])} small move-from" id="move-from"><img class="machine" src="${art(current.from)}" alt=""></div>`
+    : `<div class="move-from plain" id="move-from"><img class="target-art" src="${art(current.from)}" alt=""></div>`;
+  screen(`<div class="stage-zone move-zone">
+      ${fromHTML}
+      <button class="carry" id="carry" aria-label="${prompt}"><img src="${art(current.tool || current.carry)}" alt="">${hintHTML('carry')}</button>
+      <div class="move-to plain" id="move-to"><img class="target-art" id="move-to-art" src="${art(current.to)}" alt=""></div>
+    </div>`, prompt);
+  const carry = app.querySelector('#carry');
+  const to = app.querySelector('#move-to');
+  let count = 0;
+  const stack = [[50, 40], [50, 22], [50, 6]];
+  const drop = async () => {
+    count++;
+    tone(600 + count * 80, .15);
+    flash(to, 'drop-target', 420);
+    if (count < current.count) {
+      const [x, y] = stack[count - 1] || [50, 30];
+      to.insertAdjacentHTML('beforeend', `<img class="piece" src="${art(current.carry)}" alt="" style="left:${x}%;top:${y}%">`);
+      return;
+    }
+    carry.disabled = true;
+    to.querySelectorAll('.piece').forEach((piece) => piece.remove());
+    app.querySelector('#move-to-art').src = art(current.result);
+    to.classList.add('pop');
+    stage.base = art(current.result);
+    tone(880, .25);
+    await wait(500);
+    await speak(t('moved'));
+    next();
   };
-  const stopHold = () => {
-    window.removeEventListener('pointerup', stopHold);
-    window.removeEventListener('pointercancel', stopHold);
-    if (finished) return;
-    clearInterval(holdTimer);
-    holdTimer = null;
+  bindDragChoice(carry, {
+    onTap: () => { to.classList.add('awaiting-drop'); tone(470); },
+    isOverTarget: (x, y) => within(to, x, y, 30),
+    onHover: (over) => to.classList.toggle('drop-target', over),
+    onDrop: () => { to.classList.remove('awaiting-drop'); drop(); },
+    onMiss: () => flash(to, 'drop-miss', 380)
+  });
+  to.addEventListener('click', () => {
+    if (to.classList.contains('awaiting-drop') && !carry.disabled) { to.classList.remove('awaiting-drop'); drop(); }
+  });
+};
+
+// ---------------------------------------------------------------- ขั้น: ลวก (กดค้าง ตะกร้อจุ่มลงหม้อ)
+RENDERERS.dip = (current) => {
+  const prompt = local(current.say);
+  screen(`<div class="stage-zone" style="display:flex;flex-direction:column;gap:18px">
+      ${applianceHTML(current, `<img class="cooking-food dip-basket" id="dip-basket" src="${art(current.carry)}" alt="">`)}
+      ${meterHTML()}
+    </div>`, prompt);
+  const element = app.querySelector('#appliance');
+  const basket = app.querySelector('#dip-basket');
+  holdMeter(element, app.querySelector('#meter'), {
+    seconds: current.seconds || 3, tone: 300,
+    onStart: () => basket.classList.add('down'),
+    onStop: () => basket.classList.remove('down')
+  }).then(async () => {
     element.classList.remove('running', 'holding');
-  };
-  element.addEventListener('pointerdown', startHold);
-  element.addEventListener('keydown', (event) => {
-    if ((event.key === 'Enter' || event.key === ' ') && !event.repeat) startHold(event);
+    basket.classList.remove('down');
+    basket.classList.add('lifted');
+    tone(820, .25);
+    await wait(500);
+    await speak(t('dipped'));
+    next();
   });
-  element.addEventListener('keyup', (event) => {
-    if (event.key === 'Enter' || event.key === ' ') stopHold();
-  });
-}
+};
 
-function toppingHTML(item) {
-  return `<img class="topping" src="${toppingSrc(item.key)}" alt="" style="left:${item.x}%;top:${item.y}%">`;
-}
-
-function dishHTML() {
-  const recipe = RECIPES[activeRecipe];
-  return `<div class="dish" id="dish">
-    <span class="food-color" id="food-color" style="background:${creation.color}"></span>
-    <img class="food-icon" src="${dishSrc(activeRecipe)}" alt="${local(recipe.name)}">
-    <canvas class="frosting" id="frosting" aria-hidden="true"></canvas>
-    ${creation.toppings.map(toppingHTML).join('')}
-  </div>`;
-}
-
-// ครีมที่วาดด้วยนิ้ว เก็บเป็น % ของจาน วาดใหม่ทุกครั้งที่จานถูก render
-function paintStrokes(dish) {
-  const canvas = dish.querySelector('#frosting');
-  if (!canvas) return null;
-  const rect = dish.getBoundingClientRect();
-  const scale = Math.min(3, window.devicePixelRatio || 1);
-  canvas.width = Math.round(rect.width * scale);
-  canvas.height = Math.round(rect.height * scale);
-  const ctx = canvas.getContext('2d');
-  ctx.lineCap = 'round';
-  ctx.lineJoin = 'round';
-  ctx.lineWidth = canvas.width * .055;
-  const drawStroke = (stroke) => {
-    if (stroke.points.length < 2) return;
-    ctx.strokeStyle = stroke.color;
-    ctx.beginPath();
-    stroke.points.forEach(([x, y], i) => {
-      const px = x / 100 * canvas.width;
-      const py = y / 100 * canvas.height;
-      if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
-    });
-    ctx.stroke();
-  };
-  (creation.strokes || []).forEach(drawStroke);
-  return { ctx, canvas, drawStroke };
-}
-
-function renderDecorate() {
-  const recipe = RECIPES[activeRecipe];
-  const prompt = `${t('decorate')} · ${t('draw')}`;
-  screen(`<div class="stage-zone">${dishHTML()}</div>
+// ---------------------------------------------------------------- ขั้น: ทา (ถูนิ้วให้ทั่ว)
+RENDERERS.spread = (current) => {
+  const prompt = local(current.say);
+  stage.base = art(current.base);
+  let pen = current.pens[0];
+  let color = current.swatches ? creation.color : PENS[pen].color;
+  const showPens = current.pens.length > 1 || !current.swatches;
+  screen(`<div class="stage-zone">${stageHTML()}</div>
     <div class="tray decorate-controls">
-      ${COLORS.map((color) => `<button class="swatch ${color === creation.color ? 'selected' : ''}" data-color="${color}" style="background:${color}" aria-label="color"></button>`).join('')}
+      ${current.swatches ? COLORS.map((swatch) => `<button class="swatch ${swatch === creation.color ? 'selected' : ''}" data-color="${swatch}" style="background:${swatch}" aria-label="color"></button>`).join('') : ''}
+      ${showPens ? current.pens.map((key, i) => `<button class="topping-btn pen-btn ${i === 0 ? 'selected' : ''}" data-pen="${key}" aria-label="${local(PENS[key])}"><img src="${art(PENS[key].art)}" alt=""></button>`).join('') : ''}
+      ${hintHTML('spread')}
+    </div>`, prompt);
+  const dish = app.querySelector('#dish');
+  let done = false;
+  const finish = async () => {
+    done = true;
+    tone(760, .22);
+    if (current.result) {
+      stage.base = art(current.result);
+      dish.querySelector('.food-icon').src = stage.base;
+      clearPaint();
+      syncPaint(dish);
+      dish.classList.add('pop');
+    }
+    await wait(500);
+    await speak(t('spreadDone'));
+    next();
+  };
+  bindPainting(dish, {
+    color: () => color,
+    width: 9,
+    onMove: () => { if (!done && coverage() >= (current.goal || .5)) finish(); }
+  });
+  app.querySelectorAll('.swatch').forEach((button) => {
+    button.onclick = () => {
+      creation.color = button.dataset.color;
+      color = creation.color;
+      tone(580);
+      app.querySelectorAll('.swatch').forEach((swatch) => swatch.classList.toggle('selected', swatch === button));
+    };
+  });
+  app.querySelectorAll('.pen-btn').forEach((button) => {
+    button.onclick = () => {
+      pen = button.dataset.pen;
+      color = PENS[pen].color;
+      tone(560);
+      app.querySelectorAll('.pen-btn').forEach((item) => item.classList.toggle('selected', item === button));
+      speak(local(PENS[pen]));
+    };
+  });
+};
+
+// ---------------------------------------------------------------- ขั้น: โรย (แตะที่ขูด/ขวดโรยของลงเวที)
+RENDERERS.sprinkle = (current) => {
+  const prompt = local(current.say);
+  screen(`<div class="stage-zone">${stageHTML()}</div>
+    <div class="tray">
+      <button class="shaker" id="shaker" aria-label="${prompt}"><img src="${art(current.tool)}" alt="">${hintHTML('tap')}</button>
+    </div>`, prompt);
+  const dish = app.querySelector('#dish');
+  syncPaint(dish);
+  const shaker = app.querySelector('#shaker');
+  let taps = 0;
+  shaker.onclick = async () => {
+    if (shaker.disabled) return;
+    taps++;
+    flash(shaker, 'shake', 300);
+    tone(500 + taps * 60, .1);
+    for (let i = 0; i < 5; i++) {
+      const angle = Math.random() * Math.PI * 2;
+      const radius = Math.random() * 28;
+      const bit = { art: current.item, x: 50 + Math.cos(angle) * radius, y: 50 + Math.sin(angle) * radius, size: 12 + Math.random() * 6 };
+      stage.bits.push(bit);
+      dish.insertAdjacentHTML('beforeend', bitHTML(bit));
+    }
+    if (taps >= current.count) {
+      shaker.disabled = true;
+      await wait(400);
+      await speak(t('sprinkled'));
+      next();
+    }
+  };
+};
+
+// ---------------------------------------------------------------- ขั้น: ปั้นวางถาด (แตะบนถาด N ครั้ง)
+RENDERERS.shape = (current) => {
+  const prompt = local(current.say);
+  stage.base = art(current.tray);
+  stage.bits = [];
+  screen(`<div class="stage-zone">${stageHTML({ className: 'dish tray-stage' })}${hintHTML('tap')}</div>
+    <div class="tray"><span class="count-badge" id="count">0 / ${current.count}</span></div>`, prompt);
+  const dish = app.querySelector('#dish');
+  const badge = app.querySelector('#count');
+  dish.addEventListener('click', async (event) => {
+    if (stage.bits.length >= current.count) return;
+    const [x, y] = toStage(dish, event);
+    const bit = { art: current.piece, x: Math.max(14, Math.min(86, x)), y: Math.max(18, Math.min(82, y)), size: 22 };
+    stage.bits.push(bit);
+    dish.insertAdjacentHTML('beforeend', bitHTML(bit));
+    tone(560 + stage.bits.length * 60, .12);
+    badge.textContent = `${stage.bits.length} / ${current.count}`;
+    if (stage.bits.length >= current.count) {
+      await wait(400);
+      await speak(t('shaped'));
+      next();
+    }
+  });
+};
+
+// ---------------------------------------------------------------- ขั้น: ปิดฝา (ลากฝาไปวางบนโถ)
+RENDERERS.lid = (current) => {
+  const prompt = local(current.say);
+  const kind = applianceKind(current.target.split(':')[1]);
+  screen(`<div class="stage-zone lid-zone">
+      <div class="appliance ${kind}" id="lid-target"><img class="machine" src="${art(current.target)}" alt=""></div>
+      <button class="carry lid" id="lid" aria-label="${prompt}"><img src="${art(current.lid)}" alt="">${hintHTML('carry')}</button>
+    </div>`, prompt);
+  const lid = app.querySelector('#lid');
+  const target = app.querySelector('#lid-target');
+  let done = false;
+  const place = async () => {
+    if (done) return;
+    done = true;
+    lid.disabled = true;
+    lid.classList.add('used');
+    target.querySelector('.machine').src = art(current.result);
+    flash(target, 'pop', 500);
+    tone(720, .2);
+    await wait(400);
+    await speak(t('lidOn'));
+    next();
+  };
+  bindDragChoice(lid, {
+    onTap: () => { target.classList.add('awaiting-drop'); tone(470); },
+    isOverTarget: (x, y) => within(target, x, y, 40),
+    onHover: (over) => target.classList.toggle('drop-target', over),
+    onDrop: place,
+    onMiss: () => flash(target, 'drop-miss', 380)
+  });
+  target.addEventListener('click', () => { if (target.classList.contains('awaiting-drop')) place(); });
+};
+
+// ---------------------------------------------------------------- ขั้น: ตัด (ปาดนิ้วผ่านเวที)
+RENDERERS.slice = (current) => {
+  const prompt = local(current.say);
+  screen(`<div class="stage-zone">${stageHTML()}${hintHTML('cut')}</div>`, prompt);
+  const dish = app.querySelector('#dish');
+  syncPaint(dish);
+  let start = null;
+  let done = false;
+  dish.addEventListener('pointerdown', (event) => {
+    if (done) return;
+    event.preventDefault();
+    start = { id: event.pointerId, x: event.clientX, y: event.clientY, cut: false };
+    try { dish.setPointerCapture?.(start.id); } catch {}
+  });
+  dish.addEventListener('pointermove', async (event) => {
+    if (done || !start || start.cut || event.pointerId !== start.id) return;
+    event.preventDefault();
+    if (Math.hypot(event.clientX - start.x, event.clientY - start.y) >= 70) {
+      start.cut = true;
+      stage.slices++;
+      dish.insertAdjacentHTML('beforeend', `<i class="slice-line" style="transform:translate(-50%,-50%) rotate(${(stage.slices - 1) * 90 + 45}deg)"></i>`);
+      tone(640 + stage.slices * 80, .12);
+      if (stage.slices >= current.count) {
+        done = true;
+        await wait(400);
+        await speak(t('sliced'));
+        next();
+      }
+    }
+  });
+  const release = () => { start = null; };
+  dish.addEventListener('pointerup', release);
+  dish.addEventListener('pointercancel', release);
+};
+
+// ---------------------------------------------------------------- ขั้น: เทียน (ปัก → จุด → เป่า)
+RENDERERS.candles = (current) => {
+  stage.candles = [];
+  screen(`<div class="stage-zone">${stageHTML({ plate: true })}${hintHTML('tap')}</div>
+    <div class="tray"><span class="count-badge" id="count">🕯️ 0 / ${current.count}</span></div>`, t('candlePlace'));
+  const dish = app.querySelector('#dish');
+  syncPaint(dish);
+  const badge = app.querySelector('#count');
+  const promptElement = app.querySelector('#prompt');
+  const hint = app.querySelector('.touch-hint');
+  let phase = 'place';
+  let start = null;
+  const setPhase = (name, text) => {
+    phase = name;
+    dish.dataset.phase = name;
+    promptElement.textContent = text;
+    speak(text);
+  };
+  dish.dataset.phase = phase;
+  dish.addEventListener('click', async (event) => {
+    if (phase === 'place') {
+      if (event.target.closest('[data-candle]')) return;
+      const [x, y] = toStage(dish, event);
+      const candle = { x: Math.max(22, Math.min(78, x)), y: Math.max(18, Math.min(60, y)), lit: false };
+      stage.candles.push(candle);
+      dish.insertAdjacentHTML('beforeend', `<span class="candle" data-candle data-index="${stage.candles.length - 1}" style="left:${candle.x}%;top:${candle.y}%"><img src="${toppingSrc('candle')}" alt=""><i></i></span>`);
+      tone(600 + stage.candles.length * 70, .12);
+      badge.textContent = `🕯️ ${stage.candles.length} / ${current.count}`;
+      if (stage.candles.length >= current.count) {
+        await wait(300);
+        hint.className = 'touch-hint tap';
+        setPhase('light', t('candleLight'));
+      }
+    } else if (phase === 'light') {
+      const element = event.target.closest('[data-candle]');
+      if (!element || element.classList.contains('lit')) return;
+      element.classList.add('lit');
+      stage.candles[Number(element.dataset.index)].lit = true;
+      tone(900, .15);
+      if (stage.candles.every((candle) => candle.lit)) {
+        await wait(300);
+        hint.className = 'touch-hint blow';
+        setPhase('blow', t('candleBlow'));
+      }
+    }
+  });
+  dish.addEventListener('pointerdown', (event) => {
+    if (phase !== 'blow') return;
+    start = { id: event.pointerId, x: event.clientX, y: event.clientY };
+    try { dish.setPointerCapture?.(start.id); } catch {}
+  });
+  dish.addEventListener('pointermove', async (event) => {
+    if (phase !== 'blow' || !start || event.pointerId !== start.id) return;
+    event.preventDefault();
+    if (Math.hypot(event.clientX - start.x, event.clientY - start.y) >= 70) {
+      phase = 'done';
+      dish.dataset.phase = phase;
+      dish.querySelectorAll('[data-candle]').forEach((element) => { element.classList.remove('lit'); element.classList.add('out'); });
+      stage.candles.forEach((candle) => { candle.lit = false; candle.out = true; });
+      tone(300, .3);
+      confetti();
+      await speak(t('birthday'));
+      next();
+    }
+  });
+  const release = () => { start = null; };
+  dish.addEventListener('pointerup', release);
+  dish.addEventListener('pointercancel', release);
+};
+
+// ---------------------------------------------------------------- ขั้น: ตกแต่ง (ท็อปปิ้ง + วาดครีม/บีบซอส)
+RENDERERS.decorate = (current) => {
+  const recipe = RECIPES[activeRecipe];
+  if (current.base) stage.base = art(current.base);
+  const pens = current.pens || [];
+  const prompt = current.say ? local(current.say) : `${t('decorate')} · ${t('draw')}`;
+  let pen = pens[0] || null;
+  screen(`<div class="stage-zone">${stageHTML({ plate: !current.before })}</div>
+    <div class="tray decorate-controls">
+      ${pens.length ? pens.map((key, i) => `<button class="topping-btn pen-btn ${i === 0 ? 'selected' : ''}" data-pen="${key}" aria-label="${local(PENS[key])}"><img src="${art(PENS[key].art)}" alt=""></button>`).join('')
+        : current.before ? '' : COLORS.map((color) => `<button class="swatch ${color === creation.color ? 'selected' : ''}" data-color="${color}" style="background:${color}" aria-label="color"></button>`).join('')}
       ${recipe.toppings.map((key) => `<button class="topping-btn" data-top="${key}" aria-label="topping"><img src="${toppingSrc(key)}" alt=""></button>`).join('')}
       <button class="action-btn primary" id="done">✓ ${t('done')}</button>
     </div>`, prompt);
   const dish = app.querySelector('#dish');
   const promptElement = app.querySelector('#prompt');
   let selectedTop = null;
-  const painter = paintStrokes(dish);
-  // วาดครีม: ลากนิ้วบนจาน (แตะเฉยๆ = วางท็อปปิ้งที่เลือกไว้)
-  let stroke = null;
-  let strokePointer = null;
-  let ignoreDishClick = false;
-  const toDish = (event) => {
-    const rect = dish.getBoundingClientRect();
-    return [((event.clientX - rect.left) / rect.width) * 100, ((event.clientY - rect.top) / rect.height) * 100];
-  };
-  dish.addEventListener('pointerdown', (event) => {
-    if (event.button !== undefined && event.button !== 0) return;
-    strokePointer = event.pointerId;
-    stroke = { color: creation.color, points: [toDish(event)], moved: false, startX: event.clientX, startY: event.clientY };
-    try { dish.setPointerCapture?.(strokePointer); } catch {}
-  });
-  dish.addEventListener('pointermove', (event) => {
-    if (!stroke || event.pointerId !== strokePointer) return;
-    event.preventDefault();
-    if (!stroke.moved && Math.hypot(event.clientX - stroke.startX, event.clientY - stroke.startY) < 6) return;
-    if (!stroke.moved) {
-      stroke.moved = true;
-      creation.strokes ||= [];
-      if (creation.strokes.length >= 40) creation.strokes.shift();
-      creation.strokes.push(stroke);
-      dish.classList.add('drawing');
-    }
-    stroke.points.push(toDish(event));
-    if (stroke.points.length % 3 === 0) tone(700 + (stroke.points.length % 12) * 20, .04);
-    painter?.drawStroke(stroke);
-  });
-  const endStroke = (event) => {
-    if (!stroke || event.pointerId !== strokePointer) return;
-    if (stroke.moved) {
-      delete stroke.moved; delete stroke.startX; delete stroke.startY;
-      dish.classList.remove('drawing');
-      ignoreDishClick = true;
-      setTimeout(() => { ignoreDishClick = false; }, 0);
-    }
-    stroke = null;
-    strokePointer = null;
-  };
-  dish.addEventListener('pointerup', endStroke);
-  dish.addEventListener('pointercancel', endStroke);
-  const isOverDish = (x, y) => {
-    const rect = dish.getBoundingClientRect();
-    const padding = 20;
-    return x >= rect.left - padding && x <= rect.right + padding
-      && y >= rect.top - padding && y <= rect.bottom + padding;
-  };
+  const isDrawing = current.before ? (() => { syncPaint(dish); return () => false; })() : bindPainting(dish, { color: () => (pen ? PENS[pen].color : creation.color), width: 5.5 });
   const selectTopping = (button) => {
     selectedTop = button.dataset.top;
     app.querySelectorAll('.topping-btn').forEach((item) => item.classList.toggle('selected', item === button));
@@ -971,7 +1572,6 @@ function renderDecorate() {
   };
   const placeTopping = (key, clientX, clientY) => {
     if (creation.toppings.length >= MAX_TOPPINGS) {
-      // เต็มแล้วเอาชิ้นเก่าสุดออก จะได้วางต่อได้เรื่อยๆ ไม่มีตัน
       creation.toppings.shift();
       dish.querySelector('.topping')?.remove();
     }
@@ -987,33 +1587,39 @@ function renderDecorate() {
     button.onclick = () => {
       creation.color = button.dataset.color;
       tone(580);
-      app.querySelector('#food-color').style.background = creation.color;
+      const plate = app.querySelector('#food-color');
+      if (plate) plate.style.background = creation.color;
       app.querySelectorAll('.swatch').forEach((swatch) => swatch.classList.toggle('selected', swatch === button));
     };
   });
-  app.querySelectorAll('.topping-btn').forEach((button) => {
+  app.querySelectorAll('.pen-btn').forEach((button) => {
+    button.onclick = () => {
+      pen = button.dataset.pen;
+      tone(560);
+      app.querySelectorAll('.pen-btn').forEach((item) => item.classList.toggle('selected', item === button));
+      speak(local(PENS[pen]));
+    };
+  });
+  app.querySelectorAll('.topping-btn:not(.pen-btn)').forEach((button) => {
     bindDragChoice(button, {
       onTap: () => selectTopping(button),
-      isOverTarget: isOverDish,
+      isOverTarget: (x, y) => within(dish, x, y, 20),
       onHover: (over) => dish.classList.toggle('drop-target', over),
       onDrop: (x, y) => placeTopping(button.dataset.top, x, y),
-      onMiss: () => {
-        dish.classList.add('drop-miss');
-        setTimeout(() => dish.isConnected && dish.classList.remove('drop-miss'), 380);
-      }
+      onMiss: () => flash(dish, 'drop-miss', 380)
     });
   });
   dish.addEventListener('click', (event) => {
-    if (ignoreDishClick) return;
+    if (isDrawing()) return;
     if (selectedTop) placeTopping(selectedTop, event.clientX, event.clientY);
   });
   app.querySelector('#done').onclick = async () => {
     await speak(COPY[state.lang].praise[Math.floor(Math.random() * COPY[state.lang].praise.length)]);
-    step++;
-    renderStep();
+    next();
   };
-}
+};
 
+// ---------------------------------------------------------------- เสิร์ฟ
 // เพื่อนที่มารอกินจานนี้: คนที่สั่งมาก่อน แล้วสุ่มคนอื่นที่มาแล้วจนครบ 4
 function pickDiners() {
   const order = ensureOrder();
@@ -1053,12 +1659,12 @@ function popup(html, spoken) {
   });
 }
 
-function renderServe() {
+RENDERERS.serve = () => {
   const prompt = t('serve');
   const order = ensureOrder();
   const diners = pickDiners();
   screen(`<div class="stage-zone">
-      <div class="serve-layout">${dishHTML()}<div class="customer-grid">
+      <div class="serve-layout">${stageHTML({ plate: true })}<div class="customer-grid">
         ${diners.map((id) => `<button class="friend-btn" data-friend="${id}" aria-label="${local(FRIENDS[id].name)}">
           <img class="portrait" src="${friendSrc(id)}" alt="${local(FRIENDS[id].name)}">${id === order.friend ? orderBubbleHTML(order) : ''}
         </button>`).join('')}
@@ -1069,7 +1675,7 @@ function renderServe() {
       <button class="action-btn" id="home">⌂ ${t('home')}</button>
     </div>`, prompt);
   const dish = app.querySelector('#dish');
-  paintStrokes(dish);
+  syncPaint(dish);
   const food = dish.querySelector('.food-icon');
   const friendButtons = [...app.querySelectorAll('.friend-btn')];
   let feeding = false;
@@ -1082,13 +1688,7 @@ function renderServe() {
   food.setAttribute('draggable', 'false');
 
   const friendAt = (x, y) => {
-    hoveredFriend = friendButtons.find((button) => {
-      if (button.classList.contains('fed')) return false;
-      const rect = button.getBoundingClientRect();
-      const padding = 20;
-      return x >= rect.left - padding && x <= rect.right + padding
-        && y >= rect.top - padding && y <= rect.bottom + padding;
-    }) || null;
+    hoveredFriend = friendButtons.find((button) => !button.classList.contains('fed') && within(button, x, y, 20)) || null;
     return Boolean(hoveredFriend);
   };
 
@@ -1106,7 +1706,7 @@ function renderServe() {
     requestAnimationFrame(() => {
       bite.style.transform = `translate(-50%, -50%) translate(${target.left + target.width / 2 - start.left - start.width / 2}px, ${target.top + target.height / 2 - start.top - start.height / 2}px) scale(.38) rotate(14deg)`;
     });
-    await new Promise((resolve) => setTimeout(resolve, 720));
+    await wait(720);
     bite.remove();
     friendButton.classList.remove('feeding');
   };
@@ -1125,7 +1725,7 @@ function renderServe() {
     button.appendChild(burst);
     tone(info.tone, .35);
     await speak(local(info));
-    await new Promise((resolve) => setTimeout(resolve, 400));
+    await wait(400);
     burst.remove();
     button.classList.remove('reacting', `react-${reaction}`);
     img.src = friendSrc(id);
@@ -1143,7 +1743,7 @@ function renderServe() {
     creation.friend ||= friendId;
     button.classList.add('fed');
     if (!gallerySaved) {
-      state.gallery.unshift({ ...creation, friends: [...creation.friends], strokes: (creation.strokes || []).map((item) => ({ color: item.color, points: item.points })) });
+      state.gallery.unshift({ ...creation, friends: [...creation.friends] });
       gallerySaved = true;
     } else {
       state.gallery[0] = { ...creation, friends: [...creation.friends] };
@@ -1185,10 +1785,7 @@ function renderServe() {
     onHover: (over) => friendButtons.forEach((button) => button.classList.toggle('feed-target', over && button === hoveredFriend)),
     getDropData: () => hoveredFriend,
     onDrop: (x, y, friend) => friend && feedFriend(friend),
-    onMiss: () => {
-      dish.classList.add('drop-miss');
-      setTimeout(() => dish.isConnected && dish.classList.remove('drop-miss'), 380);
-    }
+    onMiss: () => flash(dish, 'drop-miss', 380)
   });
   food.addEventListener('keydown', (event) => {
     if (event.key === 'Enter' || event.key === ' ') {
@@ -1199,7 +1796,7 @@ function renderServe() {
   friendButtons.forEach((button) => {
     button.onclick = () => feedFriend(button);
   });
-}
+};
 
 function confetti() {
   const layer = document.createElement('div');
