@@ -407,7 +407,7 @@ const path = require('node:path');
     await page.locator('#step[data-type="decorate"]').waitFor();
     // ผลลัพธ์เป็นอาหารจริง (เสมอกัน 2:2 → หวาน → แพนเค้ก) ไม่ใช่ไอคอนวัตถุดิบเรียงบนจาน; มีวัตถุดิบเล็กๆ เป็นหน้าไม่เกิน 3 ชิ้น
     assert.ok((await page.locator('#dish .food-icon').getAttribute('src')).endsWith('states/fry-pancakes.png'), 'sweet pan result uses the real pancake picture');
-    assert.equal(await page.locator('#dish .bit').count(), 3);
+    assert.equal(await page.locator('#dish .bit').count(), 0, 'no ingredient icons on the finished food');
     assert.equal(await page.locator('#dish canvas.frosting').count(), 1);
     assert.equal(await page.locator('.swatch').count(), 5);
     assert.equal(await page.locator('.pen-btn').count(), 0, 'no cream pens in the free kitchen');
@@ -532,7 +532,7 @@ const path = require('node:path');
     await page.locator('#back').click();
 
     await page.waitForFunction(() => navigator.serviceWorker.controller);
-    assert.ok((await page.evaluate(() => caches.keys())).includes('happy-little-kitchen-v20'));
+    assert.ok((await page.evaluate(() => caches.keys())).includes('happy-little-kitchen-v21'));
     await context.setOffline(true);
     await page.reload();
     await page.locator('.recipe-card').first().waitFor();

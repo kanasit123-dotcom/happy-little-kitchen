@@ -2045,12 +2045,11 @@ RENDERERS.freecook = (current) => {
         element.classList.remove('running', 'holding');
         element.classList.add('finished');
         if (burnt) { element.classList.add('burnt'); SFX.achoo(); } else SFX.ding();
-        // จานลึกลับ: อาหารจริงตามเครื่อง × หวาน/คาว × สี + วัตถุดิบเล็กๆ 2-3 ชิ้นเป็นหน้า
+        // จานลึกลับ: อาหารจริงตามเครื่อง × หวาน/คาว × สี (ไม่วางวัตถุดิบบนอาหาร — เด็กไปแต่งหน้าเองในขั้นถัดไป)
         const traits = { ...freeTraits(stage.free), burnt };
         stage.base = art(freeResultArt(kind, traits));
         stage.tint = burnt ? 'burnt' : null;
-        const garnish = [...new Set(stage.free)].slice(0, 3);
-        stage.bits = garnish.map((id, i) => ({ art: `ing:${INGREDIENTS[id].prepared || id}`, x: 36 + i * 14, y: 36 + (i % 2) * 6, size: 15 }));
+        stage.bits = [];
         creation.free = { items: [...stage.free], machine: kind, taste: traits.taste, color: traits.color, burnt };
         await wait(400);
         confetti();
