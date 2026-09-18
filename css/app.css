@@ -27,10 +27,10 @@
   -webkit-touch-callout: none;
 }
 *::selection { background: transparent; color: inherit; }
-html, body { width: 100%; height: 100%; margin: 0; }
+html, body { width: 100%; height: 100%; margin: 0; touch-action: manipulation; -webkit-text-size-adjust: 100%; }
 /* body ตรึงกับจอ กัน iOS Safari ยืดหน้าเด้งขึ้นลง; ถ้าเนื้อหาสูงกว่าจอค่อยเลื่อนใน #app */
 body { position: fixed; inset: 0; overflow: hidden; overscroll-behavior: none; touch-action: manipulation; }
-#app { width: 100%; height: 100%; overflow-x: hidden; overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; }
+#app { width: 100%; height: 100%; overflow-x: hidden; overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; touch-action: pan-y; }
 img { -webkit-user-drag: none; user-drag: none; }
 button { font: inherit; letter-spacing: 0; -webkit-tap-highlight-color: transparent; }
 button:focus-visible { outline: 4px solid var(--sky); outline-offset: 4px; }

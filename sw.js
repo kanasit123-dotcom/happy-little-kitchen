@@ -1,11 +1,11 @@
-const CACHE = 'happy-little-kitchen-v22';
+const CACHE = 'happy-little-kitchen-v23';
 
 const FILES = [
   './',
   'index.html',
   'manifest.webmanifest',
-  'css/app.css?v=22',
-  'js/app.js?v=22',
+  'css/app.css?v=23',
+  'js/app.js?v=23',
   'assets/kitchen.jpg',
   'assets/friends/butterfly-full.png',
   'assets/friends/butterfly-love.png',

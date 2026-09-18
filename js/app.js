@@ -2215,8 +2215,20 @@ RENDERERS.serve = () => {
   food.setAttribute('tabindex', '0');
   food.setAttribute('draggable', 'false');
 
+  // ปล่อยใกล้ๆ เพื่อนคนไหน (ยังไม่ได้กิน) ก็นับให้คนนั้น — ไม่ต้องวางตรงเป๊ะ
   const friendAt = (x, y) => {
-    hoveredFriend = friendButtons.find((button) => !button.classList.contains('fed') && within(button, x, y, 20)) || null;
+    const free = friendButtons.filter((button) => !button.classList.contains('fed'));
+    hoveredFriend = free.find((button) => within(button, x, y, 40)) || null;
+    if (!hoveredFriend) {
+      const grid = app.querySelector('.customer-grid');
+      if (grid && within(grid, x, y, 30) && free.length) {
+        hoveredFriend = free.reduce((best, button) => {
+          const r = button.getBoundingClientRect();
+          const d = Math.hypot(r.left + r.width / 2 - x, r.top + r.height / 2 - y);
+          return !best || d < best.d ? { button, d } : best;
+        }, null).button;
+      }
+    }
     return Boolean(hoveredFriend);
   };
 
@@ -2306,7 +2318,8 @@ RENDERERS.serve = () => {
     feeding = false;
   };
 
-  bindDragChoice(food, {
+  bindDragChoice(dish, {
+    ghostSource: () => food,
     onTap: () => {
       dish.classList.add('awaiting-drop');
       tone(520);
@@ -2341,12 +2354,21 @@ document.addEventListener('pointerdown', unlockAudio, { once: true });
 document.addEventListener('contextmenu', (event) => event.preventDefault());
 document.addEventListener('dragstart', (event) => event.preventDefault());
 document.addEventListener('selectstart', (event) => event.preventDefault());
-document.addEventListener('gesturestart', (event) => event.preventDefault(), { passive: false });
+// กันซูม: pinch สองนิ้ว (gesture* + touch ที่มีมากกว่า 1 นิ้ว) — เด็กเล่นแล้วจอไม่ขยายเอง
+['gesturestart', 'gesturechange', 'gestureend'].forEach((name) => document.addEventListener(name, (event) => event.preventDefault(), { passive: false }));
+document.addEventListener('touchstart', (event) => {
+  if (event.touches.length > 1) event.preventDefault();
+}, { passive: false });
 // iOS Safari เด้งหน้าขึ้นลงตอนลาก (rubber band) — กันไว้ ยกเว้นตอนเนื้อหาล้นจอจริงๆ ให้เลื่อนได้
 document.addEventListener('touchmove', (event) => {
+  if (event.touches.length > 1) { event.preventDefault(); return; }
   if (event.target.closest?.('.scroll-x')) return;
   if (app.scrollHeight <= app.clientHeight + 1) event.preventDefault();
 }, { passive: false });
+// ถ้าเผลอซูมไปแล้ว ดึงกลับเป็น 1 เท่าเมื่อปล่อยนิ้ว (Safari ให้ตั้ง scale ผ่าน visualViewport ไม่ได้ตรงๆ เลยรีเซ็ตด้วยการโฟกัสหน้า)
+window.visualViewport?.addEventListener('resize', () => {
+  if (window.visualViewport.scale > 1.02) document.documentElement.classList.add('zoomed'); else document.documentElement.classList.remove('zoomed');
+});
 document.addEventListener('selectionchange', () => {
   const selection = window.getSelection();
   if (selection && !selection.isCollapsed) selection.removeAllRanges();
