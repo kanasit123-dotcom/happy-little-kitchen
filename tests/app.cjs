@@ -380,10 +380,12 @@ const path = require('node:path');
     assert.equal(await page.locator('#done').isDisabled(), true);
     for (const id of ['egg', 'fishball', 'strawberry', 'chocchips']) {
       await page.locator(`.ingredient[data-id="${id}"]`).scrollIntoViewIfNeeded();
-      await page.locator(`.ingredient[data-id="${id}"]`).click();
-      await page.locator('#target').click();
+      await page.locator(`.ingredient[data-id="${id}"]`).click();   // แตะ = ลอยลงชาม ไม่ต้องลาก (ถาดเลื่อนได้)
     }
-    assert.equal(await page.locator('#target .in-bowl').count(), 4);
+    await page.waitForFunction(() => document.querySelectorAll('#target .in-bowl').length === 4);
+    assert.equal(await page.locator('.tray.free-tray').evaluate((tray) => getComputedStyle(tray.querySelector('.ingredient')).touchAction), 'pan-x', 'free tray items let the tray scroll');
+    assert.equal(await page.locator('.tray.free-tray').evaluate((tray) => tray.scrollWidth > tray.clientWidth), true, 'free tray scrolls');
+    await page.locator('#done').waitFor();
     await page.screenshot({ path: path.join(output, 'free-add-mobile.png'), fullPage: true });
     await page.locator('#done').click();
     await page.locator('#step[data-type="freecook"]').waitFor();
@@ -400,8 +402,12 @@ const path = require('node:path');
       await page.mouse.up();
     }
     await page.locator('#step[data-type="decorate"]').waitFor();
-    assert.equal(await page.locator('.dish.tint-pan').count(), 1);
-    assert.equal(await page.locator('#dish .bit').count(), 4);
+    // ผลลัพธ์เป็นอาหารจริง (เสมอกัน 2:2 → หวาน → แพนเค้ก) ไม่ใช่ไอคอนวัตถุดิบเรียงบนจาน; มีวัตถุดิบเล็กๆ เป็นหน้าไม่เกิน 3 ชิ้น
+    assert.ok((await page.locator('#dish .food-icon').getAttribute('src')).match(/fry-pancakes|omelet/), 'sweet pan result');
+    assert.equal(await page.locator('#dish .bit').count(), 3);
+    assert.equal(await page.locator('#dish canvas.frosting').count(), 1);
+    assert.equal(await page.locator('.swatch').count(), 5);
+    assert.equal(await page.locator('.pen-btn').count(), 0, 'no cream pens in the free kitchen');
     assert.equal(await page.locator('.topping-scroll .topping-btn').count(), 40);
     assert.equal(await page.evaluate(() => document.querySelector('#app').scrollWidth > innerWidth), false, 'free decorate fits');
     await page.locator('.topping-btn[data-top="shrimp"]').scrollIntoViewIfNeeded();
@@ -417,7 +423,34 @@ const path = require('node:path');
     await page.locator('.recipe-card').first().waitFor();
     const withFree = await page.evaluate(() => JSON.parse(localStorage.getItem('happy-little-kitchen-v1')));
     assert.equal(withFree.gallery[0].recipe, 'free');
-    assert.deepEqual(withFree.gallery[0].free, { items: ['egg', 'fishball', 'strawberry', 'chocchips'], machine: 'pan' });
+    assert.deepEqual(withFree.gallery[0].free, { items: ['egg', 'fishball', 'strawberry', 'chocchips'], machine: 'pan', taste: 'sweet', color: 'pink', burnt: false });
+    // ปิ้งนานไป = ไหม้: ครัวอิสระอีกรอบ ใส่ขนมปัง เลือกเครื่องปิ้ง กดค้างเกินแถบเต็ม
+    await page.locator('[data-recipe="free"]').click();
+    await page.locator('#step[data-type="freeadd"]').waitFor();
+    await page.locator('.ingredient[data-id="bread"]').click();
+    await page.waitForFunction(() => document.querySelectorAll('#target .in-bowl').length === 1);
+    await page.locator('#done').click();
+    await page.locator('.machine-btn[data-kind="toaster"]').click();
+    await page.locator('#appliance').waitFor();
+    {
+      const { x, y } = await center(page.locator('#appliance'));
+      await page.mouse.move(x, y);
+      await page.mouse.down();
+      await page.waitForTimeout(4300);
+      assert.equal(await page.locator('.meter.over').count(), 1, 'meter warns while over-holding');
+      await page.waitForTimeout(3200);
+      await page.mouse.up();
+    }
+    await page.locator('#step[data-type="decorate"]').waitFor();
+    assert.equal(await page.locator('.dish.tint-burnt').count(), 1, 'burnt toast');
+    await page.screenshot({ path: path.join(output, 'free-burnt-mobile.png'), fullPage: true });
+    await page.locator('#done').click();
+    await page.locator('.friend-btn').first().click();
+    await page.locator('#finish-actions:not([hidden])').waitFor();
+    assert.equal(await page.locator('.friend-btn[data-reaction="sneeze"]').count(), 1, 'burnt food makes the friend cough');
+    await dismissPopup();
+    await page.locator('#home').click();
+    await page.locator('.recipe-card').first().waitFor();
     assert.ok(withFree.gallery[0].photo.startsWith('data:image/jpeg'));
 
     // เพื่อนครบ 11 ตัว: แถวเพื่อนบนหน้าครัวต้องโชว์ทุกตัว เลื่อนซ้ายขวาได้ ไม่ล้นจอ
@@ -467,7 +500,7 @@ const path = require('node:path');
     await page.locator('#back').click();
 
     await page.waitForFunction(() => navigator.serviceWorker.controller);
-    assert.ok((await page.evaluate(() => caches.keys())).includes('happy-little-kitchen-v17'));
+    assert.ok((await page.evaluate(() => caches.keys())).includes('happy-little-kitchen-v18'));
     await context.setOffline(true);
     await page.reload();
     await page.locator('.recipe-card').first().waitFor();

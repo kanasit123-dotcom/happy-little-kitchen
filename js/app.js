@@ -217,14 +217,47 @@ const RECIPES = {
 const ALL_TOPPINGS = ['star', 'strawberry', 'rainbow', 'blueberry', 'cherry', 'chocchip', 'cream', 'candle', 'marshmallow', 'banana', 'wafer', 'heart', 'sprinkles', 'chocsauce', 'honeydrizzle', 'kiwi', 'orange', 'mint', 'starcookie',
   'mushroom', 'olive', 'corn', 'pineapple', 'pepper', 'ketchup', 'springonion', 'carrot', 'peas', 'egg', 'coriander', 'chili', 'lime', 'cucumber', 'shrimp', 'seaweed', 'sesame', 'tomatoslice', 'garlic', 'rice', 'straw'];
 const FREE_INGREDIENTS = ['egg', 'milk', 'flour', 'sugar', 'butter', 'tomato', 'cheese', 'strawberry', 'banana', 'springonion', 'noodles', 'bokchoy', 'fishball', 'bread', 'honey', 'chocchips', 'dough', 'yogurt', 'jam'];
-// ภาชนะที่จานลึกลับออกมา ตามเครื่องที่เลือก
-const FREE_CONTAINER = { oven: 'dish:plate', pan: 'dish:plate', toaster: 'dish:plate', pot: 'dish:bowl', freezer: 'dish:bowl', blender: 'dish:glass' };
+// สี/รสของวัตถุดิบ ใช้เลือกว่าจานลึกลับออกมาเป็นอะไร
+const INGREDIENT_TRAITS = {
+  egg: { color: 'yellow', taste: 'savory' }, milk: { color: 'white', taste: 'sweet' }, flour: { color: 'white', taste: 'sweet' }, sugar: { color: 'white', taste: 'sweet' },
+  butter: { color: 'yellow', taste: 'sweet' }, tomato: { color: 'pink', taste: 'savory' }, cheese: { color: 'yellow', taste: 'savory' }, strawberry: { color: 'pink', taste: 'sweet' },
+  banana: { color: 'yellow', taste: 'sweet' }, springonion: { color: 'green', taste: 'savory' }, noodles: { color: 'yellow', taste: 'savory' }, bokchoy: { color: 'green', taste: 'savory' },
+  fishball: { color: 'white', taste: 'savory' }, bread: { color: 'brown', taste: 'sweet' }, honey: { color: 'yellow', taste: 'sweet' }, chocchips: { color: 'brown', taste: 'sweet' },
+  dough: { color: 'white', taste: 'savory' }, yogurt: { color: 'white', taste: 'sweet' }, jam: { color: 'pink', taste: 'sweet' }
+};
+// อาหารสำเร็จตามเครื่อง (รูปใน assets/states/ — ชุดที่ 4) · ยังไม่มีรูปไหน ใช้ FREE_FALLBACK แทน
+const FREE_RESULT = {
+  blender: ({ color }) => `drink-${color}`,
+  toaster: ({ taste, burnt }) => (burnt ? 'toast-burnt' : taste === 'savory' ? 'toast-cheese' : 'dish:toast'),
+  oven: ({ taste, burnt }) => (burnt ? 'bake-burnt' : taste === 'savory' ? 'bake-casserole' : 'bake-pie'),
+  pan: ({ taste, burnt }) => (burnt ? 'fry-burnt' : taste === 'savory' ? 'fry-stirfry' : 'fry-pancakes'),
+  pot: ({ taste }) => (taste === 'savory' ? 'soup-savory' : 'soup-sweet'),
+  freezer: ({ taste, color }) => (taste === 'savory' ? 'ice-block' : `pop-${color === 'white' ? 'yellow' : color}`)
+};
+const FREE_ART = [];   // ใส่ชื่อรูปชุดที่ 4 ที่มีแล้ว เช่น 'drink-pink'
+const FREE_FALLBACK = { blender: 'dish:smoothie', toaster: 'dish:toast', oven: 'bake-pie', pan: 'dish:omelet', pot: 'dish:noodles', freezer: 'dish:icecream' };
+const FALLBACK_STATE = { 'bake-pie': 'dish:cookie', 'bake-casserole': 'dish:pizza', 'bake-burnt': 'dish:cookie', 'fry-pancakes': 'dish:omelet', 'fry-stirfry': 'dish:omelet', 'fry-burnt': 'dish:omelet',
+  'soup-savory': 'dish:noodles', 'soup-sweet': 'dish:noodles', 'toast-cheese': 'dish:toast', 'toast-burnt': 'dish:toast', 'ice-block': 'dish:icecream' };
+function freeResultArt(kind, traits) {
+  const key = FREE_RESULT[kind](traits);
+  if (key.includes(':')) return key;
+  if (FREE_ART.includes(key)) return key;
+  if (key.startsWith('drink-')) return 'dish:smoothie';
+  if (key.startsWith('pop-')) return 'dish:icecream';
+  return FALLBACK_STATE[key] || FREE_FALLBACK[kind];
+}
+// สรุปว่าของที่ใส่หวานหรือคาว และสีไหนเยอะสุด
+function freeTraits(items) {
+  const count = (field) => items.reduce((acc, id) => { const v = INGREDIENT_TRAITS[id]?.[field] || 'white'; acc[v] = (acc[v] || 0) + 1; return acc; }, {});
+  const top = (map, order) => order.reduce((best, key) => ((map[key] || 0) > (map[best] || 0) ? key : best), order[0]);
+  return { taste: top(count('taste'), ['sweet', 'savory']), color: top(count('color'), ['pink', 'yellow', 'green', 'brown', 'white']) };
+}
 RECIPES.free = {
   name: { th: 'ครัวอิสระ', en: 'Free kitchen' }, ingredients: [], toppings: ALL_TOPPINGS, free: true,
   steps: [
-    { type: 'freeadd', say: { th: 'ใส่อะไรก็ได้ที่อยากลอง แล้วแตะเสร็จแล้ว', en: 'Put in anything you like, then tap done' } },
+    { type: 'freeadd', say: { th: 'แตะของที่อยากใส่ลงชาม กี่อย่างก็ได้ แล้วแตะเสร็จแล้ว', en: 'Tap anything you want to put in the bowl, then tap done' } },
     { type: 'freecook', say: { th: 'เลือกเครื่องที่อยากใช้', en: 'Pick a machine to cook with' } },
-    { type: 'decorate', scroll: true },
+    { type: 'decorate', scroll: true, nodraw: true },
     { type: 'serve' }
   ]
 };
@@ -270,7 +303,7 @@ const COPY = {
     candlePlace: 'แตะบนเค้ก ปักเทียน', candleLight: 'แตะเทียนให้ติดไฟ', candleBlow: 'ปาดนิ้วผ่านเทียน เป่าเลย!', birthday: 'สุขสันต์วันเกิด!',
     ready: 'พร้อมแล้ว ไปตกแต่งกัน', wants: 'อยากกิน', orderDone: 'ตรงใจเลย ขอบคุณนะ!', newFriend: 'เพื่อนใหม่มาเล่นด้วย', nextFriend: 'เพื่อนคนต่อไป', ok: 'ตกลง',
     mixed: { stir: 'เข้ากันดีแล้ว', whisk: 'ฟูกำลังดี', roll: 'แบนสวยเลย', spread: 'ทาทั่วแล้ว' },
-    freeTitle: 'ครัวอิสระ ✨ ทำอะไรก็ได้', mystery: 'ได้จานลึกลับแล้ว!', pickMachine: 'กดค้างให้เครื่องทำงาน'
+    freeTitle: 'ครัวอิสระ ✨ ทำอะไรก็ได้', mystery: 'ได้จานลึกลับแล้ว!', pickMachine: 'กดค้างให้เครื่องทำงาน ปล่อยเมื่อแถบเต็ม', burnt: 'โอ๊ะ ไหม้แล้ว! ก็ยังกินได้นะ', freeAdd: 'แตะของที่อยากใส่ ลงชามได้เลย'
   },
   en: {
     title: 'Happy Little Kitchen', subtitle: 'Pick a treat and make it your way', language: '🇬🇧 ENG',
@@ -285,7 +318,7 @@ const COPY = {
     candlePlace: 'Tap the cake to add candles', candleLight: 'Tap the candles to light them', candleBlow: 'Swipe across the candles to blow!', birthday: 'Happy birthday!',
     ready: 'Ready! Let us decorate it', wants: 'wants to eat', orderDone: 'Just what I wanted! Thank you!', newFriend: 'A new friend came to play', nextFriend: 'Next friend', ok: 'OK',
     mixed: { stir: 'Perfectly mixed', whisk: 'Nice and fluffy', roll: 'Rolled out nicely', spread: 'All spread out' },
-    freeTitle: 'Free kitchen ✨ make anything', mystery: 'A mystery dish!', pickMachine: 'Hold to run the machine'
+    freeTitle: 'Free kitchen ✨ make anything', mystery: 'A mystery dish!', pickMachine: 'Hold to run the machine, let go when the bar is full', burnt: 'Oops, it burned! Still tasty', freeAdd: 'Tap anything you want to put in the bowl'
   }
 };
 
@@ -924,19 +957,30 @@ const flash = (element, className, ms = 400) => {
   setTimeout(() => element.isConnected && element.classList.remove(className), ms);
 };
 // กดค้าง: คืน promise เมื่อแถบเต็ม (ปล่อยแล้วแถบหยุด)
-function holdMeter(element, meter, { seconds = 5, tone: freq = 430, loop = null, onStart, onStop, onTick } = {}) {
+function holdMeter(element, meter, { seconds = 5, tone: freq = 430, loop = null, overhold = 0, onStart, onStop, onTick } = {}) {
   return new Promise((resolve) => {
     let progress = 0;
     let timer = null;
     let finished = false;
     let nextChime = 20;
     let stopLoop = () => {};
+    let extra = 0;   // วินาทีที่ยังกดค้างหลังแถบเต็ม (ครัวอิสระ: นานไป = ไหม้)
+    const done = (burnt) => {
+      finished = true;
+      clearInterval(timer);
+      timer = null;
+      window.removeEventListener('pointerup', stop);
+      window.removeEventListener('pointercancel', stop);
+      setTimeout(() => { stopLoop(); stopLoop = () => {}; }, 700);
+      resolve({ burnt });
+    };
     const stop = () => {
       window.removeEventListener('pointerup', stop);
       window.removeEventListener('pointercancel', stop);
+      if (finished) return;
+      if (progress >= 100) return done(false);
       stopLoop();
       stopLoop = () => {};
-      if (finished) return;
       clearInterval(timer);
       timer = null;
       element.classList.remove('running', 'holding');
@@ -960,12 +1004,11 @@ function holdMeter(element, meter, { seconds = 5, tone: freq = 430, loop = null,
           nextChime += 20;
         }
         if (progress >= 100) {
-          finished = true;
-          clearInterval(timer);
-          window.removeEventListener('pointerup', stop);
-          window.removeEventListener('pointercancel', stop);
-          setTimeout(() => { stopLoop(); stopLoop = () => {}; }, 700);
-          resolve();
+          if (!overhold) return done(false);
+          // แถบเต็มแล้วยังกดอยู่: ไหม้ถ้ากดต่ออีก overhold วินาที
+          extra += .1;
+          meter.parentElement.classList.add('over');
+          if (extra >= overhold) done(true);
         }
       }, 100);
     };
@@ -1849,39 +1892,45 @@ RENDERERS.candles = (current) => {
 RENDERERS.freeadd = (current) => {
   const prompt = local(current.say);
   stage.free = [];
-  screen(`<div class="stage-zone"><button class="bowl ready" id="target" aria-label="bowl"><img class="bowl-art" src="${art('dish:bowl')}" alt=""></button></div>
+  screen(`<div class="stage-zone"><div class="bowl ready" id="target" aria-hidden="true"><img class="bowl-art" src="${art('dish:bowl')}" alt=""></div></div>
     <div class="tray scroll-x free-tray" id="ingredients">
-      ${FREE_INGREDIENTS.map((id) => `<button class="ingredient" data-id="${id}" aria-label="${local(INGREDIENTS[id])}"><img src="${preparedSrc(id)}" alt=""></button>`).join('')}
+      ${FREE_INGREDIENTS.map((id) => `<button class="ingredient tap-only" data-id="${id}" aria-label="${local(INGREDIENTS[id])}"><img src="${preparedSrc(id)}" alt=""></button>`).join('')}
     </div>
     <div class="finish-actions"><button class="action-btn primary" id="done" disabled>✓ ${t('done')}</button></div>`, prompt);
   const target = app.querySelector('#target');
   const done = app.querySelector('#done');
-  let selected = null;
-  const add = (button) => {
-    const id = button.dataset.id;
-    stage.free.push(id);
-    flash(target, 'drop-target', 420);
-    target.classList.remove('awaiting-drop');
-    selected?.classList.remove('selected');
-    selected = null;
-    const n = stage.free.length - 1;
-    target.insertAdjacentHTML('beforeend', `<img class="in-bowl" src="${preparedSrc(id)}" alt="" style="left:${30 + (n % 4) * 13}%;top:${30 + Math.floor(n / 4) % 3 * 12}%">`);
-    SFX.plip();
-    tone(520 + (n % 6) * 60);
-    speak(local(INGREDIENTS[id]));
-    done.disabled = false;
-    if (stage.free.length >= 3) target.classList.remove('ready');
-  };
+  // แตะ = ของลอยจากถาดลงชาม (ไม่ต้องลาก ถาดจะได้เลื่อนดูของได้)
   app.querySelectorAll('.ingredient').forEach((button) => {
-    bindDragChoice(button, {
-      onTap: () => { selected?.classList.remove('selected'); selected = button; button.classList.add('selected'); target.classList.add('awaiting-drop'); tone(470); },
-      isOverTarget: (x, y) => within(target, x, y, 54),
-      onHover: (over) => target.classList.toggle('drop-target', over),
-      onDrop: () => add(button),
-      onMiss: () => flash(target, 'drop-miss', 380)
-    });
+    button.onclick = () => {
+      const id = button.dataset.id;
+      const from = button.querySelector('img').getBoundingClientRect();
+      const to = target.getBoundingClientRect();
+      const flyer = document.createElement('img');
+      flyer.className = 'flyer';
+      flyer.src = preparedSrc(id);
+      flyer.style.left = `${from.left + from.width / 2}px`;
+      flyer.style.top = `${from.top + from.height / 2}px`;
+      flyer.style.width = `${from.width}px`;
+      document.body.appendChild(flyer);
+      requestAnimationFrame(() => {
+        flyer.style.transform = `translate(-50%, -50%) translate(${to.left + to.width / 2 - from.left - from.width / 2}px, ${to.top + to.height * .45 - from.top - from.height / 2}px) scale(.9)`;
+      });
+      flash(button, 'tapped', 300);
+      SFX.swish();
+      setTimeout(() => {
+        flyer.remove();
+        stage.free.push(id);
+        flash(target, 'drop-target', 420);
+        const n = stage.free.length - 1;
+        target.insertAdjacentHTML('beforeend', `<img class="in-bowl" src="${preparedSrc(id)}" alt="" style="left:${30 + (n % 4) * 13}%;top:${30 + Math.floor(n / 4) % 3 * 12}%">`);
+        SFX.plip();
+        tone(520 + (n % 6) * 60);
+        speak(local(INGREDIENTS[id]));
+        done.disabled = false;
+        if (stage.free.length >= 3) target.classList.remove('ready');
+      }, 420);
+    };
   });
-  target.addEventListener('click', () => { if (selected) add(selected); });
   done.onclick = () => { if (stage.free.length) next(); };
 };
 
@@ -1905,25 +1954,23 @@ RENDERERS.freecook = (current) => {
       app.querySelector('#prompt').textContent = t('pickMachine');
       speak(t('pickMachine'));
       const element = app.querySelector('#appliance');
-      holdMeter(element, app.querySelector('#meter'), { seconds: 4, tone: APPLIANCES[kind].tone, loop: APPLIANCE_LOOP[kind] }).then(async () => {
+      const canBurn = ['oven', 'pan', 'toaster'].includes(kind);
+      holdMeter(element, app.querySelector('#meter'), { seconds: 4, tone: APPLIANCES[kind].tone, loop: APPLIANCE_LOOP[kind], overhold: canBurn ? 2.5 : 0 }).then(async ({ burnt }) => {
         element.removeAttribute('tabindex');
-        await wait(900);
+        await wait(600);
         element.classList.remove('running', 'holding');
         element.classList.add('finished');
-        SFX.ding();
-        // จานลึกลับ: ภาชนะตามเครื่อง + ของที่ใส่เรียงกลางจาน + สีตามวิธีปรุง
-        stage.base = art(FREE_CONTAINER[kind]);
-        stage.tint = kind;
-        const n = stage.free.length;
-        stage.bits = stage.free.map((id, i) => {
-          const angle = (i / n) * Math.PI * 2 - Math.PI / 2;
-          const radius = n === 1 ? 0 : 11 + Math.min(n, 8) * 1.2;
-          return { art: `ing:${INGREDIENTS[id].prepared || id}`, x: 50 + Math.cos(angle) * radius, y: 50 + Math.sin(angle) * radius * .8, size: n <= 3 ? 26 : 20 };
-        });
-        creation.free = { items: [...stage.free], machine: kind };
+        if (burnt) { element.classList.add('burnt'); SFX.achoo(); } else SFX.ding();
+        // จานลึกลับ: อาหารจริงตามเครื่อง × หวาน/คาว × สี + วัตถุดิบเล็กๆ 2-3 ชิ้นเป็นหน้า
+        const traits = { ...freeTraits(stage.free), burnt };
+        stage.base = art(freeResultArt(kind, traits));
+        stage.tint = burnt ? 'burnt' : null;
+        const garnish = [...new Set(stage.free)].slice(0, 3);
+        stage.bits = garnish.map((id, i) => ({ art: `ing:${INGREDIENTS[id].prepared || id}`, x: 36 + i * 14, y: 36 + (i % 2) * 6, size: 15 }));
+        creation.free = { items: [...stage.free], machine: kind, taste: traits.taste, color: traits.color, burnt };
         await wait(400);
         confetti();
-        await speak(t('mystery'));
+        await speak(burnt ? t('burnt') : t('mystery'));
         next();
       });
     };
@@ -1935,7 +1982,7 @@ RENDERERS.decorate = (current) => {
   const recipe = RECIPES[activeRecipe];
   if (current.base) stage.base = art(current.base);
   const pens = current.pens || [];
-  const prompt = current.say ? local(current.say) : `${t('decorate')} · ${t('draw')}`;
+  const prompt = current.say ? local(current.say) : current.nodraw ? t('decorate') : `${t('decorate')} · ${t('draw')}`;
   let pen = pens[0] || null;
   const swatchesHTML = pens.length ? pens.map((key, i) => `<button class="topping-btn pen-btn ${i === 0 ? 'selected' : ''}" data-pen="${key}" aria-label="${local(PENS[key])}"><img src="${art(PENS[key].art)}" alt=""></button>`).join('')
     : current.before ? '' : COLORS.map((color) => `<button class="swatch ${color === creation.color ? 'selected' : ''}" data-color="${color}" style="background:${color}" aria-label="color"></button>`).join('');
@@ -1948,7 +1995,7 @@ RENDERERS.decorate = (current) => {
   const dish = app.querySelector('#dish');
   const promptElement = app.querySelector('#prompt');
   let selectedTop = null;
-  const isDrawing = current.before ? (() => { syncPaint(dish); return () => false; })() : bindPainting(dish, { color: () => (pen ? PENS[pen].color : creation.color), width: 5.5 });
+  const isDrawing = (current.before || current.nodraw) ? (() => { syncPaint(dish); return () => false; })() : bindPainting(dish, { color: () => (pen ? PENS[pen].color : creation.color), width: 5.5 });
   const selectTopping = (button) => {
     selectedTop = button.dataset.top;
     app.querySelectorAll('.topping-btn').forEach((item) => item.classList.toggle('selected', item === button));
@@ -1987,6 +2034,10 @@ RENDERERS.decorate = (current) => {
     };
   });
   app.querySelectorAll('.topping-btn:not(.pen-btn)').forEach((button) => {
+    if (current.scroll) {
+      button.onclick = () => selectTopping(button);
+      return;
+    }
     bindDragChoice(button, {
       onTap: () => selectTopping(button),
       isOverTarget: (x, y) => within(dish, x, y, 20),
@@ -2020,6 +2071,7 @@ function pickDiners() {
 function reactionFor(friendId) {
   const keys = creation.toppings.map((item) => item.key);
   if (keys.some((key) => SNEEZE_TOPPINGS.includes(key))) return 'sneeze';
+  if (creation.free?.burnt) return 'sneeze';
   if (keys.length + (creation.free?.items.length || 0) >= FULL_TOPPINGS) return 'full';
   if (creation.free) return pick(['yum', 'yum', 'love']);
   if (FRIENDS[friendId].likes.includes(activeRecipe)) return 'love';

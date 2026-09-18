@@ -156,8 +156,16 @@ button:focus-visible { outline: 4px solid var(--sky); outline-offset: 4px; }
 .free-card:active { transform: translateY(4px); box-shadow: 0 2px 0 rgba(36,56,71,.18); }
 .tray.free-tray, .tray.topping-scroll { display: grid; grid-auto-flow: column; grid-template-rows: repeat(2, auto); gap: 8px; justify-content: start; overflow-x: auto; overflow-y: hidden; scrollbar-width: none; -webkit-overflow-scrolling: touch; overscroll-behavior-x: contain; touch-action: pan-x; }
 .tray.free-tray::-webkit-scrollbar, .tray.topping-scroll::-webkit-scrollbar { display: none; }
-.free-tray .ingredient { width: 82px; height: 74px; touch-action: none; }
-.topping-scroll .topping-btn { touch-action: none; }
+.free-tray .ingredient { width: 82px; height: 74px; touch-action: pan-x; }
+.topping-scroll .topping-btn { touch-action: pan-x; }
+.ingredient.tapped { transform: scale(.9); }
+.flyer { position: fixed; z-index: 100; transform: translate(-50%, -50%); transition: transform .42s cubic-bezier(.3,.7,.4,1); pointer-events: none; filter: drop-shadow(0 8px 6px rgba(36,56,71,.25)); }
+.meter-fill { transition: width .1s linear, background .3s; }
+.meter.over .meter-fill { background: var(--coral); animation: blink .3s ease-in-out infinite alternate; }
+.appliance.burnt .machine { filter: drop-shadow(0 10px 6px rgba(36,56,71,.18)) brightness(.9); }
+.appliance.burnt::after { content: ''; position: absolute; left: 35%; top: 10%; width: 30%; height: 30%; border-radius: 50%; background: radial-gradient(circle, rgba(120,120,120,.7), rgba(120,120,120,0) 70%); animation: steam 1.4s ease-out infinite; z-index: 5; }
+.dish.tint-burnt .food-icon { filter: brightness(.55) sepia(.6) contrast(1.2); }
+.dish.tint-burnt::after { content: ''; position: absolute; left: 40%; top: 8%; width: 20%; height: 20%; border-radius: 50%; background: radial-gradient(circle, rgba(140,140,140,.7), rgba(140,140,140,0) 70%); animation: steam 1.6s ease-out infinite; z-index: 5; pointer-events: none; }
 .tray.machine-tray { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
 .machine-btn { border: 3px solid var(--edge); border-radius: 12px; background: white; padding: 8px; cursor: pointer; box-shadow: 0 5px 0 rgba(36,56,71,.14); }
 .machine-btn img { width: 100%; aspect-ratio: 1; object-fit: contain; pointer-events: none; }
@@ -168,14 +176,6 @@ button:focus-visible { outline: 4px solid var(--sky); outline-offset: 4px; }
 .appliance.pot .free-inside, .appliance.freezer .free-inside { opacity: 0; }
 .appliance.toaster .free-inside { top: 30%; z-index: 1; }
 .free-inside img { position: absolute; width: 40%; height: 40%; object-fit: contain; transform: translate(-50%, -50%); }
-/* จานลึกลับ: สีตามวิธีปรุง */
-.dish.tint-oven .bit { filter: sepia(.4) saturate(1.1) drop-shadow(0 2px 1px rgba(36,56,71,.2)); }
-.dish.tint-pan .bit { filter: sepia(.5) contrast(1.1) drop-shadow(0 2px 1px rgba(36,56,71,.2)); }
-.dish.tint-toaster .bit { filter: sepia(.6) brightness(.95) drop-shadow(0 2px 1px rgba(36,56,71,.2)); }
-.dish.tint-pot .bit { filter: saturate(.85) brightness(1.05) drop-shadow(0 2px 1px rgba(36,56,71,.2)); }
-.dish.tint-freezer .bit { filter: hue-rotate(-20deg) brightness(1.15) saturate(.8) drop-shadow(0 0 6px rgba(190,230,255,.9)); }
-.dish.tint-blender .bit { filter: blur(1.2px) saturate(1.4) opacity(.85); }
-.dish.tint-blender::after { content: ''; position: absolute; left: 34%; top: 40%; width: 32%; height: 34%; border-radius: 10% 10% 30% 30%; background: linear-gradient(rgba(247,166,184,.55), rgba(247,166,184,.85)); z-index: 4; pointer-events: none; }
 
 .friends-row {
   width: 100%;
