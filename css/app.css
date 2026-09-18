@@ -300,6 +300,27 @@ button:focus-visible { outline: 4px solid var(--sky); outline-offset: 4px; }
 .bowl.drop-miss { animation: nudge .12s ease-in-out 3; }
 .bowl .in-bowl { width: 52px; height: 52px; object-fit: contain; animation: drop-in .35s ease-out both; }
 
+/* ขั้นเตรียม: เขียง + ของที่จะหั่น */
+.board-zone { position: relative; width: clamp(240px, 56vw, 380px); aspect-ratio: 1; display: grid; place-items: center; }
+.board { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; filter: drop-shadow(0 10px 6px rgba(36,56,71,.18)); pointer-events: none; }
+.prep-item { position: relative; z-index: 2; width: 52%; height: 52%; border: 0; background: none; padding: 0; cursor: pointer; touch-action: none; display: grid; place-items: center; }
+.prep-item img { width: 100%; height: 100%; object-fit: contain; filter: drop-shadow(0 6px 3px rgba(36,56,71,.2)); pointer-events: none; }
+.prep-item.hit img { animation: wobble .3s ease-out; }
+.prep-item.nudge { animation: nudge .12s ease-in-out 3; }
+.prep-item.prepared img { animation: serve-pop .4s cubic-bezier(.2,1.4,.4,1) both; transform: none; }
+.prep-item.prepared { animation: none; }
+.cut-line { position: absolute; left: 10%; right: 10%; top: 50%; height: 6px; border-radius: 4px; background: white; box-shadow: 0 0 8px 2px rgba(255,255,255,.9); opacity: 0; transform: rotate(-20deg); pointer-events: none; }
+.prep-item[data-action="cut"].hit .cut-line { animation: cut-flash .3s ease-out; }
+.prep-hint { z-index: 3; left: 50%; top: 50%; margin: 14px 0 0 14px; }
+.prep-hint.cut { animation: hint-swipe .7s ease-in-out infinite alternate; }
+.prep-hint.crack { animation: hint-tap .8s ease-in-out infinite; }
+.prep-queue { gap: 10px; }
+.queue-item { width: 60px; height: 60px; border-radius: 8px; background: white; border: 3px solid var(--edge); display: grid; place-items: center; opacity: .45; transition: opacity .2s, transform .2s; }
+.queue-item img { width: 76%; height: 76%; object-fit: contain; }
+.queue-item.now { opacity: 1; transform: translateY(-4px); border-color: var(--yellow); box-shadow: 0 4px 0 rgba(36,56,71,.14); }
+.queue-item.done { opacity: 1; border-color: var(--mint); }
+.queue-item.done::after { content: '✓'; position: absolute; margin: -44px 0 0 40px; width: 22px; height: 22px; border-radius: 50%; background: var(--mint); color: white; font-size: .9rem; font-weight: 900; display: grid; place-items: center; border: 2px solid white; }
+
 .tray {
   width: min(850px, 100%);
   min-height: 102px;
@@ -538,7 +559,9 @@ button:focus-visible { outline: 4px solid var(--sky); outline-offset: 4px; }
 .decorate-controls { flex-wrap: wrap; }
 .swatch { width: 56px; height: 56px; border-radius: 50%; border: 5px solid white; box-shadow: 0 4px 0 rgba(36,56,71,.16); }
 .swatch.selected { outline: 5px solid var(--ink); outline-offset: 2px; }
-.topping-btn { width: 66px; height: 60px; border-radius: 8px; background: white; border: 3px solid var(--edge); box-shadow: 0 4px 0 rgba(36,56,71,.14); display: grid; place-items: center; }
+.topping-btn { width: 60px; height: 56px; border-radius: 8px; background: white; border: 3px solid var(--edge); box-shadow: 0 4px 0 rgba(36,56,71,.14); display: grid; place-items: center; }
+.frosting { position: absolute; inset: 0; width: 100%; height: 100%; border-radius: 50%; z-index: 4; pointer-events: none; }
+.dish.drawing { cursor: crosshair; }
 .topping-btn img { width: 78%; height: 78%; object-fit: contain; pointer-events: none; }
 .topping-btn.selected { outline: 5px solid var(--yellow); outline-offset: 2px; transform: translateY(-5px); }
 
@@ -630,6 +653,9 @@ button:focus-visible { outline: 4px solid var(--sky); outline-offset: 4px; }
 @keyframes full { 50% { transform: scale(1.12, .94) translateY(4px); } }
 @keyframes float-up { from { transform: translateY(0) scale(.6); opacity: 0; } 30% { opacity: 1; } to { transform: translateY(-70px) scale(1.2); opacity: 0; } }
 @keyframes pop-in { from { transform: scale(.6); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+@keyframes wobble { 30% { transform: rotate(-6deg) scale(1.05); } 70% { transform: rotate(5deg) scale(.97); } }
+@keyframes cut-flash { from { opacity: 1; transform: rotate(-20deg) scaleX(.2); } to { opacity: 0; transform: rotate(-20deg) scaleX(1.1); } }
+@keyframes hint-tap { 50% { transform: translateY(-14px) scale(1.1); } }
 @keyframes chomp { 50% { transform: scale(1.13) rotate(-4deg); } }
 @keyframes fall { to { transform: translateY(110vh) rotate(540deg); opacity: .8; } }
 
@@ -653,6 +679,11 @@ button:focus-visible { outline: 4px solid var(--sky); outline-offset: 4px; }
   .tray { min-height: 88px; gap: 7px; padding: 9px; }
   .ingredient { width: min(27vw, 100px); height: 76px; }
   .bowl .in-bowl { width: 42px; height: 42px; }
+  .decorate-controls { gap: 6px; padding: 8px; }
+  .swatch { width: 44px; height: 44px; }
+  .topping-btn { width: 50px; height: 46px; }
+  .queue-item { width: 50px; height: 50px; }
+  .queue-item.done::after { margin: -36px 0 0 32px; }
   .serve-layout { flex-direction: column; gap: 10px; }
   .serve-layout .dish { width: 170px; height: 170px; }
   .customer-grid { margin-top: 30px; }

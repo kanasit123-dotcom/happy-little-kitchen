@@ -2,25 +2,29 @@ const STORE_KEY = 'happy-little-kitchen-v1';
 const LEGACY_STORE_KEY = 'lilly-playhouse-v1';
 
 // ชื่อ key ทุกตาราง = ชื่อไฟล์รูปใน assets/<กลุ่ม>/<key>.png
+// prep = ต้องเตรียมก่อนใส่ชาม: 'cut' ปาดนิ้วหั่น 3 ครั้ง, 'crack' แตะ 2 ครั้งให้แตก → รูปเปลี่ยนเป็น assets/ingredients/<key>-cut.png / egg-cracked.png
 const INGREDIENTS = {
   flour: { th: 'แป้ง', en: 'flour' },
-  egg: { th: 'ไข่', en: 'egg' },
+  egg: { th: 'ไข่', en: 'egg', prep: 'crack', prepared: 'egg-cracked' },
   milk: { th: 'นม', en: 'milk' },
   dough: { th: 'แป้งโด', en: 'dough' },
-  tomato: { th: 'มะเขือเทศ', en: 'tomato' },
+  tomato: { th: 'มะเขือเทศ', en: 'tomato', prep: 'cut', prepared: 'tomato-cut' },
   cheese: { th: 'ชีส', en: 'cheese' },
-  strawberry: { th: 'สตรอว์เบอร์รี', en: 'strawberry' },
-  banana: { th: 'กล้วย', en: 'banana' },
-  springonion: { th: 'ต้นหอม', en: 'spring onion' },
+  strawberry: { th: 'สตรอว์เบอร์รี', en: 'strawberry', prep: 'cut', prepared: 'strawberry-cut' },
+  banana: { th: 'กล้วย', en: 'banana', prep: 'cut', prepared: 'banana-cut' },
+  springonion: { th: 'ต้นหอม', en: 'spring onion', prep: 'cut', prepared: 'springonion-cut' },
   noodles: { th: 'เส้นก๋วยเตี๋ยว', en: 'noodles' },
-  bokchoy: { th: 'ผักกวางตุ้ง', en: 'bok choy' },
+  bokchoy: { th: 'ผักกวางตุ้ง', en: 'bok choy', prep: 'cut', prepared: 'bokchoy-cut' },
   fishball: { th: 'ลูกชิ้นปลา', en: 'fish balls' },
-  butter: { th: 'เนย', en: 'butter' },
+  butter: { th: 'เนย', en: 'butter', prep: 'cut', prepared: 'butter-cut' },
   sugar: { th: 'น้ำตาล', en: 'sugar' },
-  bread: { th: 'ขนมปัง', en: 'bread' },
+  bread: { th: 'ขนมปัง', en: 'bread', prep: 'cut', prepared: 'bread-cut' },
   honey: { th: 'น้ำผึ้ง', en: 'honey' },
   chocchips: { th: 'ช็อกโกแลตชิป', en: 'chocolate chips' }
 };
+const CUT_SWIPES = 3;
+const CRACK_TAPS = 2;
+const STEPS = ['prep', 'add', 'mix', 'cook', 'decorate', 'serve'];
 
 // motion = ท่าลากตอนผสม: stir ลากวน, whisk ลากไปมาเร็วๆ, roll ลากซ้ายขวา, spread ลากให้ทั่ว
 const TOOLS = {
@@ -50,39 +54,39 @@ const LEGACY_TOPPINGS = { '⭐': 'star', '🍓': 'strawberry', '🌈': 'rainbow'
 const RECIPES = {
   cupcake: {
     name: { th: 'คัพเค้ก', en: 'Cupcake' }, ingredients: ['flour', 'egg', 'milk'], tool: 'spoon', appliance: 'oven',
-    action: { th: 'คนให้เข้ากัน', en: 'Mix it together' }, toppings: ['star', 'strawberry', 'rainbow', 'blueberry', 'cherry']
+    action: { th: 'คนให้เข้ากัน', en: 'Mix it together' }, toppings: ['star', 'strawberry', 'rainbow', 'blueberry', 'cherry', 'sprinkles', 'chocsauce', 'heart', 'marshmallow', 'kiwi']
   },
   pizza: {
     name: { th: 'พิซซ่า', en: 'Pizza' }, ingredients: ['dough', 'tomato', 'cheese'], tool: 'spoon', appliance: 'oven',
-    action: { th: 'เกลี่ยซอสให้ทั่ว', en: 'Spread the sauce' }, toppings: ['mushroom', 'olive', 'corn', 'pineapple', 'pepper']
+    action: { th: 'เกลี่ยซอสให้ทั่ว', en: 'Spread the sauce' }, toppings: ['mushroom', 'olive', 'corn', 'pineapple', 'pepper', 'tomatoslice', 'shrimp', 'chili', 'mint', 'sesame']
   },
   smoothie: {
     name: { th: 'สมูทตี', en: 'Smoothie' }, ingredients: ['strawberry', 'banana', 'milk'], tool: 'spoon', appliance: 'blender',
-    action: { th: 'คนผลไม้กับนม', en: 'Stir the fruit and milk' }, toppings: ['cream', 'cherry', 'strawberry', 'banana', 'marshmallow']
+    action: { th: 'คนผลไม้กับนม', en: 'Stir the fruit and milk' }, toppings: ['cream', 'cherry', 'strawberry', 'banana', 'marshmallow', 'kiwi', 'orange', 'mint', 'sprinkles', 'chocsauce']
   },
   omelet: {
     name: { th: 'ไข่เจียว', en: 'Omelet' }, ingredients: ['egg', 'springonion', 'tomato'], tool: 'whisk', appliance: 'pan',
-    action: { th: 'ตีไข่ให้ฟู', en: 'Whisk the eggs' }, toppings: ['ketchup', 'springonion', 'corn', 'carrot', 'peas']
+    action: { th: 'ตีไข่ให้ฟู', en: 'Whisk the eggs' }, toppings: ['ketchup', 'springonion', 'corn', 'carrot', 'peas', 'chili', 'tomatoslice', 'cucumber', 'shrimp', 'sesame']
   },
   noodles: {
     name: { th: 'ก๋วยเตี๋ยว', en: 'Noodle soup' }, ingredients: ['noodles', 'bokchoy', 'fishball'], tool: 'ladle', appliance: 'pot',
-    action: { th: 'คนให้เข้ากัน', en: 'Stir it together' }, toppings: ['egg', 'springonion', 'coriander', 'corn', 'carrot']
+    action: { th: 'คนให้เข้ากัน', en: 'Stir it together' }, toppings: ['egg', 'springonion', 'coriander', 'corn', 'carrot', 'chili', 'lime', 'shrimp', 'seaweed', 'sesame']
   },
   cookie: {
     name: { th: 'คุกกี้', en: 'Cookie' }, ingredients: ['flour', 'butter', 'chocchips'], tool: 'rollingpin', appliance: 'oven',
-    action: { th: 'คลึงแป้งให้แบน', en: 'Roll the dough flat' }, toppings: ['chocchip', 'star', 'heart', 'rainbow', 'marshmallow']
+    action: { th: 'คลึงแป้งให้แบน', en: 'Roll the dough flat' }, toppings: ['chocchip', 'star', 'heart', 'rainbow', 'marshmallow', 'sprinkles', 'chocsauce', 'honeydrizzle', 'starcookie', 'banana']
   },
   icecream: {
     name: { th: 'ไอศกรีม', en: 'Ice cream' }, ingredients: ['milk', 'strawberry', 'sugar'], tool: 'whisk', appliance: 'freezer',
-    action: { th: 'ตีให้เนียน', en: 'Whisk until smooth' }, toppings: ['cherry', 'wafer', 'chocchip', 'star', 'banana']
+    action: { th: 'ตีให้เนียน', en: 'Whisk until smooth' }, toppings: ['cherry', 'wafer', 'chocchip', 'star', 'banana', 'sprinkles', 'chocsauce', 'kiwi', 'orange', 'mint']
   },
   toast: {
     name: { th: 'ขนมปังปิ้ง', en: 'Toast' }, ingredients: ['bread', 'butter', 'honey'], tool: 'knife', appliance: 'toaster',
-    action: { th: 'ทาเนยให้ทั่ว', en: 'Spread the butter' }, toppings: ['banana', 'strawberry', 'blueberry', 'chocchip', 'heart']
+    action: { th: 'ทาเนยให้ทั่ว', en: 'Spread the butter' }, toppings: ['banana', 'strawberry', 'blueberry', 'chocchip', 'heart', 'honeydrizzle', 'chocsauce', 'kiwi', 'orange', 'sprinkles']
   },
   cake: {
     name: { th: 'เค้กวันเกิด', en: 'Birthday cake' }, ingredients: ['flour', 'egg', 'sugar'], tool: 'whisk', appliance: 'oven',
-    action: { th: 'ตีให้ฟู', en: 'Whisk until fluffy' }, toppings: ['candle', 'cream', 'strawberry', 'star', 'heart']
+    action: { th: 'ตีให้ฟู', en: 'Whisk until fluffy' }, toppings: ['candle', 'cream', 'strawberry', 'star', 'heart', 'sprinkles', 'chocsauce', 'cherry', 'starcookie', 'blueberry']
   }
 };
 
@@ -104,7 +108,11 @@ const FRIENDS = {
   squirrel: { name: { th: 'กระรอก', en: 'Squirrel' }, likes: ['cookie', 'toast', 'cake'], unlock: 30 }
 };
 // รูปหน้าตาที่วาดแล้ว: assets/friends/<id>-<อารมณ์>.png (ตัว/อารมณ์ที่ยังไม่มีใช้ท่า CSS + รูปปกติ)
-const FRIEND_ART = {};
+const FRIEND_ART = {
+  seal: ['love', 'yum', 'sneeze', 'full'],
+  turtle: ['love', 'yum', 'sneeze', 'full'],
+  rabbit: ['love', 'yum', 'sneeze', 'full']
+};
 const FRIEND_MAX_ON_SCREEN = 4;
 // ปฏิกิริยาตอนกิน เรียงตามลำดับที่เช็ก: จาม (มีพริกหวาน) > อิ่มแปล้ (ท็อปปิ้ง 10+) > ชอบสุดๆ (เมนูโปรด/ตามสั่ง) > อร่อย
 const REACTIONS = {
@@ -113,13 +121,14 @@ const REACTIONS = {
   love: { th: 'ชอบที่สุดเลย!', en: 'My favorite!', tone: 980, particle: '💗' },
   yum: { th: 'อร่อยมาก ขอบคุณนะ', en: 'Yummy! Thank you!', tone: 880, particle: '✨' }
 };
-const SNEEZE_TOPPINGS = ['pepper'];
+const SNEEZE_TOPPINGS = ['pepper', 'chili'];
 const FULL_TOPPINGS = 10;
 
 const COPY = {
   th: {
     title: 'ครัวจิ๋วแสนสนุก', subtitle: 'เลือกของอร่อย แล้วลงมือทำเลย', language: '🇹🇭 ไทย',
     home: 'กลับหน้าครัว', listen: 'ฟังอีกครั้ง', add: 'ลากวัตถุดิบลงชาม หรือแตะของแล้วแตะชาม',
+    cut: 'ปาดนิ้วหั่น', crack: 'แตะให้แตก', cutDone: 'หั่นแล้ว', crackDone: 'แตกแล้ว', prepDone: 'เตรียมเสร็จแล้ว ไปใส่ชามกัน', draw: 'ลากนิ้วบนอาหารเพื่อวาดครีม',
     mixHint: { stir: 'ลากวนๆ ในชามจนแถบเต็ม', whisk: 'ลากไปมาเร็วๆ จนแถบเต็ม', roll: 'ลากซ้ายขวาจนแถบเต็ม', spread: 'ลากไปมาให้ทั่วจนแถบเต็ม' },
     start: 'เริ่มเลย', hold: 'กดค้าง', decorate: 'ตกแต่งได้ตามใจ',
     done: 'เสร็จแล้ว', serve: 'ลากอาหารไปหาเพื่อน ป้อนได้หลายคน', again: 'ทำอีกจาน', gallery: 'ผลงานของฉัน', place: 'แตะจุดบนอาหาร หรือลากไปวาง',
@@ -130,6 +139,7 @@ const COPY = {
   en: {
     title: 'Happy Little Kitchen', subtitle: 'Pick a treat and make it your way', language: '🇬🇧 ENG',
     home: 'Back to the kitchen', listen: 'Listen again', add: 'Drag into the bowl, or tap an item then tap the bowl',
+    cut: 'Swipe to slice the', crack: 'Tap to crack the', cutDone: 'sliced', crackDone: 'cracked', prepDone: 'All prepped! Into the bowl', draw: 'Drag on the food to draw frosting',
     mixHint: { stir: 'Drag in circles until the bar is full', whisk: 'Drag back and forth until the bar is full', roll: 'Drag left and right until the bar is full', spread: 'Drag all over until the bar is full' },
     start: 'Start', hold: 'Hold', decorate: 'Decorate it your way',
     done: 'All done', serve: 'Drag food to friends. You can feed more than one', again: 'Make another', gallery: 'My creations', place: 'Tap the food or drag to place it',
@@ -155,6 +165,8 @@ const ingredientSrc = (id) => `assets/ingredients/${id}.png`;
 const toolSrc = (id) => `assets/tools/${id}.png`;
 const applianceSrc = (id) => `assets/appliances/${id}.png`;
 const toppingSrc = (id) => `assets/toppings/${id}.png`;
+const preparedSrc = (id) => INGREDIENTS[id].prepared ? `assets/ingredients/${INGREDIENTS[id].prepared}.png` : ingredientSrc(id);
+const prepList = (recipe) => recipe.ingredients.filter((id) => INGREDIENTS[id].prep);
 
 function normalizeTopping(top, index) {
   const fallback = POSITIONS[index % POSITIONS.length];
@@ -355,12 +367,12 @@ function showHome() {
 function startRecipe(id) {
   activeRecipe = id;
   step = 0;
-  creation = { recipe: id, color: '#ef6f61', toppings: [], friend: null, at: Date.now() };
+  creation = { recipe: id, color: '#ef6f61', toppings: [], strokes: [], friend: null, at: Date.now() };
   renderStep();
 }
 
 function dots() {
-  return `<div class="progress-dots">${Array.from({ length: 5 }, (_, i) => `<i class="${i < step ? 'done' : i === step ? 'now' : ''}"></i>`).join('')}</div>`;
+  return `<div class="progress-dots">${STEPS.map((_, i) => `<i class="${i < step ? 'done' : i === step ? 'now' : ''}"></i>`).join('')}</div>`;
 }
 
 function screen(content, prompt) {
@@ -384,11 +396,122 @@ function screen(content, prompt) {
 
 function renderStep() {
   if (!activeRecipe) return showHome();
-  if (step === 0) renderIngredients();
-  else if (step === 1) renderMix();
-  else if (step === 2) renderCook();
-  else if (step === 3) renderDecorate();
+  const name = STEPS[step];
+  if (name === 'prep') renderPrep();
+  else if (name === 'add') renderIngredients();
+  else if (name === 'mix') renderMix();
+  else if (name === 'cook') renderCook();
+  else if (name === 'decorate') renderDecorate();
   else renderServe();
+}
+
+// ขั้นเตรียม: วัตถุดิบที่ต้องหั่น/ตอกทีละอย่างบนเขียง ปาดนิ้วหั่น หรือแตะให้ไข่แตก
+function renderPrep() {
+  const recipe = RECIPES[activeRecipe];
+  const queue = prepList(recipe);
+  if (!queue.length) { step++; return renderStep(); }
+  let index = 0;
+  const promptFor = (id) => `${t(INGREDIENTS[id].prep)} ${local(INGREDIENTS[id])}`;
+  screen(`<div class="stage-zone">
+      <div class="board-zone">
+        <img class="board" src="${toolSrc('board')}" alt="">
+        <button class="prep-item" id="prep-item" data-action="${INGREDIENTS[queue[0]].prep}" aria-label="${promptFor(queue[0])}">
+          <img src="${ingredientSrc(queue[0])}" alt="">
+          <span class="cut-line" aria-hidden="true"></span>
+        </button>
+        <span class="touch-hint prep-hint" aria-hidden="true">☝</span>
+      </div>
+    </div>
+    <div class="tray prep-queue" aria-hidden="true">
+      ${queue.map((id, i) => `<span class="queue-item ${i === 0 ? 'now' : ''}" data-queue="${id}"><img src="${ingredientSrc(id)}" alt=""></span>`).join('')}
+    </div>`, promptFor(queue[0]));
+  const item = app.querySelector('#prep-item');
+  const img = item.querySelector('img');
+  const promptElement = app.querySelector('#prompt');
+  const hint = app.querySelector('.prep-hint');
+  let hits = 0;
+  let busy = false;
+  let pointerId = null;
+  let start = null;
+  let swiped = false;
+
+  const setHint = () => {
+    const action = INGREDIENTS[queue[index]].prep;
+    item.dataset.action = action;
+    hint.className = `touch-hint prep-hint ${action}`;
+  };
+  const hit = () => {
+    hits++;
+    item.classList.remove('hit');
+    requestAnimationFrame(() => item.classList.add('hit'));
+    tone(560 + hits * 90, .1);
+  };
+  const finishItem = async () => {
+    busy = true;
+    const id = queue[index];
+    img.src = preparedSrc(id);
+    item.classList.add('prepared');
+    app.querySelector(`[data-queue="${id}"]`)?.classList.add('done');
+    tone(900, .2);
+    await speak(`${local(INGREDIENTS[id])} ${t(`${INGREDIENTS[id].prep}Done`)}`);
+    index++;
+    if (index >= queue.length) {
+      await speak(t('prepDone'));
+      step++;
+      return renderStep();
+    }
+    hits = 0;
+    const next = queue[index];
+    img.src = ingredientSrc(next);
+    item.classList.remove('prepared');
+    item.setAttribute('aria-label', promptFor(next));
+    app.querySelectorAll('.queue-item').forEach((element) => element.classList.toggle('now', element.dataset.queue === next));
+    setHint();
+    promptElement.textContent = promptFor(next);
+    speak(promptFor(next));
+    busy = false;
+  };
+  const progress = () => {
+    if (busy) return;
+    hit();
+    const goal = INGREDIENTS[queue[index]].prep === 'crack' ? CRACK_TAPS : CUT_SWIPES;
+    if (hits >= goal) finishItem();
+  };
+
+  setHint();
+  item.addEventListener('pointerdown', (event) => {
+    if (busy || (event.button !== undefined && event.button !== 0)) return;
+    event.preventDefault();
+    pointerId = event.pointerId;
+    start = { x: event.clientX, y: event.clientY };
+    swiped = false;
+    try { item.setPointerCapture?.(pointerId); } catch {}
+  });
+  item.addEventListener('pointermove', (event) => {
+    if (!start || event.pointerId !== pointerId || swiped) return;
+    event.preventDefault();
+    if (INGREDIENTS[queue[index]].prep !== 'cut') return;
+    if (Math.hypot(event.clientX - start.x, event.clientY - start.y) >= 40) {
+      swiped = true;
+      progress();
+    }
+  });
+  const release = (event) => {
+    if (event.pointerId !== pointerId) return;
+    pointerId = null;
+    start = null;
+  };
+  item.addEventListener('pointerup', release);
+  item.addEventListener('pointercancel', release);
+  item.addEventListener('click', () => {
+    if (INGREDIENTS[queue[index]].prep === 'crack') progress();
+    else if (!swiped) {
+      // แตะเฉยๆ ตอนต้องหั่น: เขย่าบอกว่าให้ปาด
+      item.classList.remove('nudge');
+      requestAnimationFrame(() => item.classList.add('nudge'));
+      tone(300, .1);
+    }
+  });
 }
 
 function bindDragChoice(button, options) {
@@ -479,7 +602,7 @@ function renderIngredients() {
   const prompt = t('add');
   screen(`<div class="stage-zone"><button class="bowl ready" id="bowl" aria-label="bowl"></button></div>
     <div class="tray" id="ingredients">
-      ${recipe.ingredients.map((id, index) => `<button class="ingredient" data-index="${index}" aria-label="${local(INGREDIENTS[id])}"><img src="${ingredientSrc(id)}" alt=""></button>`).join('')}
+      ${recipe.ingredients.map((id, index) => `<button class="ingredient" data-index="${index}" aria-label="${local(INGREDIENTS[id])}"><img src="${preparedSrc(id)}" alt=""></button>`).join('')}
     </div>`, prompt);
 
   const bowl = app.querySelector('#bowl');
@@ -508,7 +631,7 @@ function renderIngredients() {
     bowl.classList.add('drop-target');
     setTimeout(() => bowl.isConnected && bowl.classList.remove('drop-target'), 420);
     const id = recipe.ingredients[Number(button.dataset.index)];
-    bowl.insertAdjacentHTML('beforeend', `<img class="in-bowl" src="${ingredientSrc(id)}" alt="">`);
+    bowl.insertAdjacentHTML('beforeend', `<img class="in-bowl" src="${preparedSrc(id)}" alt="">`);
     tone(520 + added * 80);
     added++;
     const isLast = added === recipe.ingredients.length;
@@ -545,7 +668,7 @@ function renderMix() {
   const prompt = `${local(recipe.action)} · ${t('mixHint')[motion]}`;
   screen(`<div class="stage-zone" style="display:flex;flex-direction:column;gap:16px">
       <button class="mix-tool invite-tool motion-${motion}" id="mix" data-motion="${motion}" aria-label="${local(recipe.action)}" style="--spread:0">
-        <span class="mix-fill" id="mix-fill">${recipe.ingredients.map((id) => `<img src="${ingredientSrc(id)}" alt="">`).join('')}</span>
+        <span class="mix-fill" id="mix-fill">${recipe.ingredients.map((id) => `<img src="${preparedSrc(id)}" alt="">`).join('')}</span>
         <img class="mix-icon" id="mix-icon" src="${toolSrc(recipe.tool)}" alt="${local(tool)}">
         <span class="touch-hint" aria-hidden="true">☝</span>
       </button>
@@ -746,13 +869,41 @@ function dishHTML() {
   return `<div class="dish" id="dish">
     <span class="food-color" id="food-color" style="background:${creation.color}"></span>
     <img class="food-icon" src="${dishSrc(activeRecipe)}" alt="${local(recipe.name)}">
+    <canvas class="frosting" id="frosting" aria-hidden="true"></canvas>
     ${creation.toppings.map(toppingHTML).join('')}
   </div>`;
 }
 
+// ครีมที่วาดด้วยนิ้ว เก็บเป็น % ของจาน วาดใหม่ทุกครั้งที่จานถูก render
+function paintStrokes(dish) {
+  const canvas = dish.querySelector('#frosting');
+  if (!canvas) return null;
+  const rect = dish.getBoundingClientRect();
+  const scale = Math.min(3, window.devicePixelRatio || 1);
+  canvas.width = Math.round(rect.width * scale);
+  canvas.height = Math.round(rect.height * scale);
+  const ctx = canvas.getContext('2d');
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+  ctx.lineWidth = canvas.width * .055;
+  const drawStroke = (stroke) => {
+    if (stroke.points.length < 2) return;
+    ctx.strokeStyle = stroke.color;
+    ctx.beginPath();
+    stroke.points.forEach(([x, y], i) => {
+      const px = x / 100 * canvas.width;
+      const py = y / 100 * canvas.height;
+      if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+    });
+    ctx.stroke();
+  };
+  (creation.strokes || []).forEach(drawStroke);
+  return { ctx, canvas, drawStroke };
+}
+
 function renderDecorate() {
   const recipe = RECIPES[activeRecipe];
-  const prompt = t('decorate');
+  const prompt = `${t('decorate')} · ${t('draw')}`;
   screen(`<div class="stage-zone">${dishHTML()}</div>
     <div class="tray decorate-controls">
       ${COLORS.map((color) => `<button class="swatch ${color === creation.color ? 'selected' : ''}" data-color="${color}" style="background:${color}" aria-label="color"></button>`).join('')}
@@ -762,6 +913,49 @@ function renderDecorate() {
   const dish = app.querySelector('#dish');
   const promptElement = app.querySelector('#prompt');
   let selectedTop = null;
+  const painter = paintStrokes(dish);
+  // วาดครีม: ลากนิ้วบนจาน (แตะเฉยๆ = วางท็อปปิ้งที่เลือกไว้)
+  let stroke = null;
+  let strokePointer = null;
+  let ignoreDishClick = false;
+  const toDish = (event) => {
+    const rect = dish.getBoundingClientRect();
+    return [((event.clientX - rect.left) / rect.width) * 100, ((event.clientY - rect.top) / rect.height) * 100];
+  };
+  dish.addEventListener('pointerdown', (event) => {
+    if (event.button !== undefined && event.button !== 0) return;
+    strokePointer = event.pointerId;
+    stroke = { color: creation.color, points: [toDish(event)], moved: false, startX: event.clientX, startY: event.clientY };
+    try { dish.setPointerCapture?.(strokePointer); } catch {}
+  });
+  dish.addEventListener('pointermove', (event) => {
+    if (!stroke || event.pointerId !== strokePointer) return;
+    event.preventDefault();
+    if (!stroke.moved && Math.hypot(event.clientX - stroke.startX, event.clientY - stroke.startY) < 6) return;
+    if (!stroke.moved) {
+      stroke.moved = true;
+      creation.strokes ||= [];
+      if (creation.strokes.length >= 40) creation.strokes.shift();
+      creation.strokes.push(stroke);
+      dish.classList.add('drawing');
+    }
+    stroke.points.push(toDish(event));
+    if (stroke.points.length % 3 === 0) tone(700 + (stroke.points.length % 12) * 20, .04);
+    painter?.drawStroke(stroke);
+  });
+  const endStroke = (event) => {
+    if (!stroke || event.pointerId !== strokePointer) return;
+    if (stroke.moved) {
+      delete stroke.moved; delete stroke.startX; delete stroke.startY;
+      dish.classList.remove('drawing');
+      ignoreDishClick = true;
+      setTimeout(() => { ignoreDishClick = false; }, 0);
+    }
+    stroke = null;
+    strokePointer = null;
+  };
+  dish.addEventListener('pointerup', endStroke);
+  dish.addEventListener('pointercancel', endStroke);
   const isOverDish = (x, y) => {
     const rect = dish.getBoundingClientRect();
     const padding = 20;
@@ -810,6 +1004,7 @@ function renderDecorate() {
     });
   });
   dish.addEventListener('click', (event) => {
+    if (ignoreDishClick) return;
     if (selectedTop) placeTopping(selectedTop, event.clientX, event.clientY);
   });
   app.querySelector('#done').onclick = async () => {
@@ -874,6 +1069,7 @@ function renderServe() {
       <button class="action-btn" id="home">⌂ ${t('home')}</button>
     </div>`, prompt);
   const dish = app.querySelector('#dish');
+  paintStrokes(dish);
   const food = dish.querySelector('.food-icon');
   const friendButtons = [...app.querySelectorAll('.friend-btn')];
   let feeding = false;
@@ -947,7 +1143,7 @@ function renderServe() {
     creation.friend ||= friendId;
     button.classList.add('fed');
     if (!gallerySaved) {
-      state.gallery.unshift({ ...creation, friends: [...creation.friends] });
+      state.gallery.unshift({ ...creation, friends: [...creation.friends], strokes: (creation.strokes || []).map((item) => ({ color: item.color, points: item.points })) });
       gallerySaved = true;
     } else {
       state.gallery[0] = { ...creation, friends: [...creation.friends] };

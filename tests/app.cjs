@@ -37,6 +37,33 @@ const path = require('node:path');
     }, new Date().toISOString().slice(0, 10));
     await page.reload();
     await page.locator('.recipe-card').first().waitFor();
+    const PREP = { egg: 'crack', tomato: 'cut', strawberry: 'cut', banana: 'cut', springonion: 'cut', bokchoy: 'cut', butter: 'cut', bread: 'cut' };
+    const doPrep = async (recipe) => {
+      await page.locator('#prep-item').waitFor();
+      const queue = await page.locator('.queue-item').evaluateAll((items) => items.map((item) => item.dataset.queue));
+      assert.ok(queue.length >= 1, `${recipe} has something to prep`);
+      for (const id of queue) {
+        assert.equal(await page.locator('#prep-item').getAttribute('data-action'), PREP[id], `${recipe}: ${id} prep action`);
+        const box = await page.locator('#prep-item').boundingBox();
+        if (PREP[id] === 'crack') {
+          await page.locator('#prep-item').click();
+          await page.locator('#prep-item').click();
+        } else {
+          // แตะเฉยๆ ต้องไม่นับ (เขย่าเตือน)
+          await page.locator('#prep-item').click();
+          for (let i = 0; i < 3; i++) {
+            await page.mouse.move(box.x + box.width * .2, box.y + box.height * .5);
+            await page.mouse.down();
+            await page.mouse.move(box.x + box.width * .8, box.y + box.height * .5, { steps: 4 });
+            await page.mouse.up();
+          }
+        }
+        await page.waitForFunction((id) => document.querySelector(`[data-queue="${id}"]`)?.classList.contains('done') || !document.querySelector('#prep-item'), id);
+      }
+      if (recipe === 'omelet') await page.screenshot({ path: path.join(output, 'prep-mobile.png'), fullPage: true });
+    };
+    const reactionSrcs = [];
+    page.on('request', (request) => { if (/friends\/\w+-(love|yum|sneeze|full)\.png/.test(request.url())) reactionSrcs.push(request.url()); });
     const dismissPopup = async () => {
       await page.waitForTimeout(700);
       if (await page.locator('.popup-layer').count()) {
@@ -63,6 +90,8 @@ const path = require('node:path');
 
     for (const recipe of RECIPES) {
       await page.locator(`[data-recipe="${recipe}"]`).click();
+      assert.equal(await page.locator('.progress-dots i').count(), 6);
+      await doPrep(recipe);
       const ingredients = page.locator('.ingredient');
       assert.equal(await ingredients.count(), 3);
       assert.equal(await page.locator('.ingredient img').count(), 3);
@@ -141,8 +170,26 @@ const path = require('node:path');
         await page.screenshot({ path: path.join(output, 'toast-popped-mobile.png'), fullPage: true });
       }
       await page.locator('.topping-btn').first().waitFor();
-      assert.equal(await page.locator('.topping-btn').count(), 5);
+      assert.equal(await page.locator('.topping-btn').count(), 10);
       assert.equal(await page.locator('#dish img.food-icon').count(), 1);
+      assert.equal(await page.locator('#dish canvas.frosting').count(), 1);
+      if (recipe === 'cake') {
+        // ลากนิ้วบนจาน = วาดครีม (ไม่วางท็อปปิ้ง) และเก็บไว้ในผลงาน
+        const dishBox = await page.locator('#dish').boundingBox();
+        await page.mouse.move(dishBox.x + dishBox.width * .3, dishBox.y + dishBox.height * .5);
+        await page.mouse.down();
+        await page.mouse.move(dishBox.x + dishBox.width * .7, dishBox.y + dishBox.height * .55, { steps: 10 });
+        await page.mouse.up();
+        assert.equal(await page.locator('#dish img.topping').count(), 0);
+        const painted = await page.locator('#frosting').evaluate((canvas) => {
+          const data = canvas.getContext('2d').getImageData(0, 0, canvas.width, canvas.height).data;
+          let count = 0;
+          for (let i = 3; i < data.length; i += 4) if (data[i] > 0) count++;
+          return count;
+        });
+        assert.ok(painted > 500, `frosting was drawn (${painted} px)`);
+        await page.screenshot({ path: path.join(output, 'frosting-mobile.png'), fullPage: true });
+      }
       await page.locator('.swatch').nth(2).click();
       if (recipe === 'cupcake') {
         const topBox = await page.locator('.topping-btn').first().boundingBox();
@@ -214,6 +261,8 @@ const path = require('node:path');
         assert.equal(cupcakeSave.served, 3);
         assert.equal(cupcakeSave.ordersDone, 1);
         assert.equal(cupcakeSave.order, null);
+        // แมวน้ำมีรูปหน้าตาแล้ว: ระหว่างปฏิกิริยาต้องสลับเป็น seal-love.png (เช็กจาก log)
+        assert.ok(reactionSrcs.some((src) => src.endsWith('seal-love.png')), 'expression art used');
       }
       await page.locator('#home').click();
       assert.deepEqual(errors, [], `no page errors after ${recipe}`);
@@ -222,6 +271,7 @@ const path = require('node:path');
     const saved = await page.evaluate(() => JSON.parse(localStorage.getItem('happy-little-kitchen-v1')));
     assert.equal(saved.gallery.length, 6);
     assert.equal(saved.gallery[0].recipe, 'cake');
+    assert.ok(saved.gallery[0].strokes.length >= 1 && saved.gallery[0].strokes[0].points.length > 2, 'frosting strokes saved');
     assert.equal(await page.locator('img.gallery-item').count(), 6);
     // ป้อน 11 ครั้ง → ปลดล็อกแมว (3) เพนกวิน (6) จิ้งจอก (10); หน้าครัวโชว์เพื่อน 4 + คนสั่ง + เงาคนต่อไป
     assert.equal(saved.served, 11);
@@ -231,6 +281,7 @@ const path = require('node:path');
     await page.screenshot({ path: path.join(output, 'home-friends-mobile.png'), fullPage: true });
     // หน้าเสิร์ฟมีเพื่อนสูงสุด 4 คน และคนสั่งอยู่คนแรกเสมอ
     await page.locator('[data-recipe="toast"]').click();
+    await doPrep('toast');
     for (let i = 0; i < 3; i++) { await page.locator('.ingredient').nth(i).click(); await page.locator('#bowl').click(); }
     await page.locator('#mix').waitFor();
     for (let i = 0; i < 20; i++) await page.locator('#mix').click();
@@ -281,11 +332,11 @@ const path = require('node:path');
     await page.locator('#back').click();
 
     await page.waitForFunction(() => navigator.serviceWorker.controller);
-    assert.ok((await page.evaluate(() => caches.keys())).includes('happy-little-kitchen-v11'));
+    assert.ok((await page.evaluate(() => caches.keys())).includes('happy-little-kitchen-v12'));
     await context.setOffline(true);
     await page.reload();
     await page.locator('.recipe-card').first().waitFor();
-    console.log('PASS nine recipes, friend orders, reactions, friend unlocks, multi-friend feeding, selection protection, Thai/English, gallery migration, responsive views, and offline mode.');
+    console.log('PASS nine recipes with prep step, frosting drawing, 10 toppings, friend orders, drawn reactions, friend unlocks, multi-friend feeding, selection protection, Thai/English, gallery migration, responsive views, and offline mode.');
   } finally {
     await browser.close();
   }

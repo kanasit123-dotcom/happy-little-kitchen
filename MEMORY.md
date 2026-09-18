@@ -24,7 +24,7 @@ The user generates art in Gemini themselves; the AI writes prompts, cuts backgro
 
 ## Friends, orders and unlocks (2026-09-17)
 
-Market research (Toca Kitchen 2, Dr. Panda Restaurant, Sago Mini) showed the strongest hooks are character reactions and "a friend asks for a dish". The kitchen now has a daily order bubble, four reactions (love / yum / sneeze / full — all positive or funny, never disappointed), and eight extra friends that unlock at 3, 6, 10, 14, 18, 22, 26, 30 feedings. Planned next, in order: slicing step (needs cut-ingredient art), deeper decorating (finger-drawn icing + 14 more toppings), sandbox "mystery dish" mode, sound effects. Art prompts for all of these are in `design/PROMPTS-gemini-2.md`.
+Market research (Toca Kitchen 2, Dr. Panda Restaurant, Sago Mini) showed the strongest hooks are character reactions and "a friend asks for a dish". The kitchen now has a daily order bubble, four reactions (love / yum / sneeze / full — all positive or funny, never disappointed), and eight extra friends that unlock at 3, 6, 10, 14, 18, 22, 26, 30 feedings. Done 2026-09-18: slicing/cracking prep step, finger-drawn frosting, 10 toppings per recipe (37 topping images), drawn expression art for seal/turtle/rabbit (the other eight friends still use CSS motion; prompts for them are section B of `design/PROMPTS-gemini-2.md`). Still planned: sandbox "mystery dish" mode (plate/bowl/glass art is already in `assets/dishes/`), sound effects. Art prompts for all of these are in `design/PROMPTS-gemini-2.md`.
 
 ## Characters
 

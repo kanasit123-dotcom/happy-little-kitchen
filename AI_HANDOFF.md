@@ -14,6 +14,8 @@ Before changing code, read `README.md`, `MEMORY.md`, `index.html`, `css/app.css`
 - Do not add scores, countdowns, advertisements, subscriptions, or wrong-answer pressure.
 - Spoken prompts must finish before the next spoken prompt or automatic step transition.
 - Ingredients support real drag-and-drop, or tap an ingredient followed by tapping the bowl.
+- Steps are `STEPS` = prep → add → mix → cook → decorate → serve. Prep shows each ingredient with a `prep` field on the cutting board: `cut` = three swipes (taps only nudge), `crack` = two taps; the art then switches to `INGREDIENTS[x].prepared` for the rest of the recipe.
+- Decorating: swatches set both the plate tint and the frosting colour; dragging on the dish draws a frosting stroke on the `#frosting` canvas (`creation.strokes`, redrawn by `paintStrokes()` on the serve screen and stored with the gallery entry). A tap with a topping selected places it; a drag never does.
 - Mixing is a drag gesture on the bowl that depends on the tool (`TOOLS[x].motion`): spoon/ladle = circles, whisk = fast back-and-forth, rolling pin = left-right, butter knife = all over. Plain taps still add a little progress so a child who cannot drag yet can finish. Goals live in `MIX_GOAL`.
 - Drag ghosts (ingredients, toppings, the finished food) are the picture only, sized to the on-screen source. Keep it that way; a cloned button with its white card looked wrong on the iPad.
 - `body` is `position: fixed` and `#app` scrolls internally, which stops iOS Safari's rubber-band bounce; `touchmove` is blocked unless `#app` really overflows. Every screen should fit 390x664 (iPhone with Safari bars) without scrolling.

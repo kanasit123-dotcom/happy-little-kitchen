@@ -30,9 +30,9 @@ SIZE = 800
 KINDS = {
     'dish': ('dishes', 512),
     'appliance': ('appliances', 640),
-    'ing': ('ingredients', 320),
-    'tool': ('tools', 320),
-    'top': ('toppings', 192),
+    'ing': ('ingredients', 400),
+    'tool': ('tools', 400),
+    'top': ('toppings', 256),
     'friend': ('friends', 800),
 }
 WHITE = 238         # ทุก channel >= ค่านี้ถือว่าเป็นพื้นขาว (JPEG มี noise นิดหน่อย)

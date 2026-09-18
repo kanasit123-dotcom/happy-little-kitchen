@@ -3,6 +3,9 @@
 วิธีใช้:
     python design/blobs.py <ไฟล์แผ่น>                      # แค่ดูว่าเจอกี่ชิ้น อยู่ตรงไหน (เรียงบน→ล่าง ซ้าย→ขวา)
     python design/blobs.py <ไฟล์แผ่น> item-tophat item-sunhat ... # ตั้งชื่อตามลำดับที่พิมพ์ (ใส่ - เพื่อข้าม)
+    python design/blobs.py --grid 2x2 <ไฟล์แผ่น> a b c d       # แผ่นที่วางเป็นตารางเป๊ะ: ตัดตามช่อง (แถวxคอลัมน์)
+                                                              ใช้กับชิ้นที่มีเศษลอยแยกกัน เช่น หัวใจรอบตัวละคร สปริงเกิล
+    python design/blobs.py --grow 8 <ไฟล์แผ่น> ...             # ชิ้นที่เป็นเม็ดเล็กๆ กระจาย (งา สปริงเกิล) ให้ขยายหมึกมากขึ้นจนรวมเป็นก้อนเดียว
     ผลลัพธ์อยู่ใน assets/incoming/<ชื่อ>.png แล้วค่อยรัน python design/cutout.py
 
 หลักการ: หาก้อนหมึกที่ติดกัน (ขยายหมึกออกก่อนนิดหน่อยให้ชิ้นส่วนใกล้ๆ เช่น แว่นสองข้าง รวมเป็นก้อนเดียว)
@@ -61,11 +64,30 @@ def find_blobs(im):
 
 
 if __name__ == '__main__':
-    src = Path(sys.argv[1])
+    args = sys.argv[1:]
+    grid = None
+    while args and args[0].startswith('--'):
+        flag = args.pop(0)
+        if flag == '--grid':
+            rows, cols = map(int, args.pop(0).lower().split('x'))
+            grid = (rows, cols)
+        elif flag == '--grow':
+            GROW = int(args.pop(0)) | 1   # MaxFilter ต้องเป็นเลขคี่
+    src = Path(args[0])
     if not src.is_absolute():
         src = ROOT / src
-    names = sys.argv[2:]
+    names = args[1:]
     im = Image.open(src).convert('RGB')
+    if grid:
+        rows, cols = grid
+        cw, ch = im.width / cols, im.height / rows
+        for i, name in enumerate(names[:rows * cols]):
+            r, c = divmod(i, cols)
+            box = (int(c * cw), int(r * ch), int((c + 1) * cw), int((r + 1) * ch))
+            print(f'{i + 1:2}. ช่อง แถว {r + 1} คอลัมน์ {c + 1}' + (f' -> {name}' if name != '-' else ' (ข้าม)'))
+            if name != '-':
+                im.crop(box).save(INCOMING / f'{name}.png')
+        sys.exit()
     blobs = find_blobs(im)
     for i, b in enumerate(blobs):
         box = (max(0, b[0]), max(0, b[1]), min(im.width, b[2]), min(im.height, b[3]))
