@@ -1,11 +1,11 @@
-const CACHE = 'happy-little-kitchen-v24';
+const CACHE = 'happy-little-kitchen-v25';
 
 const FILES = [
   './',
   'index.html',
   'manifest.webmanifest',
-  'css/app.css?v=24',
-  'js/app.js?v=24',
+  'css/app.css?v=25',
+  'js/app.js?v=25',
   'assets/kitchen.jpg',
   'assets/friends/butterfly-full.png',
   'assets/friends/butterfly-love.png',
@@ -233,8 +233,9 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return;
   if (event.request.mode === 'navigate') {
+    // ขอ index.html จากเซิร์ฟเวอร์เสมอ (ข้าม HTTP cache 10 นาทีของ GitHub Pages) จะได้เห็นเวอร์ชันใหม่ทันทีที่ deploy
     event.respondWith(
-      fetch(event.request).then((response) => {
+      fetch(new Request(event.request, { cache: 'no-cache' })).then((response) => {
         const copy = response.clone();
         caches.open(CACHE).then((cache) => cache.put('index.html', copy)).catch(() => {});
         return response;

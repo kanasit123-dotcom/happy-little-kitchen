@@ -2376,4 +2376,17 @@ document.addEventListener('selectionchange', () => {
 });
 showHome();
 
-if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
+// อัปเดตเกม: เช็กเวอร์ชันใหม่ทุกครั้งที่เปิด และพอตัวใหม่พร้อมก็โหลดหน้าใหม่ให้เองตอนอยู่หน้าครัว (ไม่ขัดจังหวะตอนกำลังทำอาหาร)
+if ('serviceWorker' in navigator) {
+  let reloadWhenIdle = false;
+  navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' }).then((registration) => registration.update().catch(() => {})).catch(() => {});
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (!navigator.serviceWorker.controller) return;   // ครั้งแรกที่ติดตั้ง ไม่ต้องโหลดใหม่
+    if (activeRecipe) reloadWhenIdle = true; else location.reload();
+  });
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible' && reloadWhenIdle && !activeRecipe) location.reload();
+  });
+  const originalShowHome = showHome;
+  showHome = () => { if (reloadWhenIdle) { location.reload(); return; } originalShowHome(); };
+}

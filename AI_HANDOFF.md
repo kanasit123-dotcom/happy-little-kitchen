@@ -44,7 +44,7 @@ Before changing code, read `README.md`, `MEMORY.md`, `index.html`, `css/app.css`
 - `css/app.css` `.appliance.<name>` rules: position of the food inside each appliance image and the running/finished effects (glow, steam, snow, sparks, toast pop-up). Percentages were measured against the current appliance art; re-measure if the art changes.
 - `design/PROMPTS-gemini.md`, `design/cutout.py`, `design/blobs.py`: art pipeline. Raw Gemini output goes in `assets/incoming/` (git-ignored); `cutout.py` routes by file-name prefix (`dish-`, `appliance-`, `ing-`, `tool-`, `top-`).
 - `css/app.css`: responsive layout, appliance illustrations, interaction states, and animations.
-- `sw.js`: offline cache. Increment the cache version whenever deployed assets change.
+- `sw.js`: offline cache. Increment the cache version whenever deployed assets change. Navigations are fetched with `cache: 'no-cache'` so GitHub Pages' 10-minute HTTP cache cannot hand back the old `index.html`; the page registers with `updateViaCache: 'none'`, calls `update()` on load and reloads itself when a new worker takes control (immediately on the home screen, otherwise on the next return home).
 - `tests/app.cjs`: Chrome end-to-end coverage for all nine recipes, image loading, responsive layouts, offline mode, drag/drop, hold/pause, decoration, feeding, and legacy-save migration.
 - `MEMORY.md`: long-term product decisions.
 
