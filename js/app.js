@@ -437,19 +437,19 @@ function orderBubbleHTML(order, done = false) {
   return `<span class="bubble ${done ? 'done' : ''}" aria-hidden="true"><img src="${dishSrc(order.recipe)}" alt="">${done ? '<b>✓</b>' : ''}</span>`;
 }
 
-// แถวเพื่อนบนหน้าครัว: คนที่สั่งอาหาร (มีป้าย) + เพื่อนคนอื่นที่มาแล้ว + เงาของเพื่อนคนต่อไป
+// แถวเพื่อนบนหน้าครัว: คนที่สั่งอาหาร (มีป้าย) + เพื่อนทุกคนที่มาแล้ว + เงาของเพื่อนคนต่อไป — เลื่อนซ้ายขวาได้เมื่อเพื่อนเยอะ
 function friendsRowHTML() {
   const order = ensureOrder();
-  const others = unlockedFriends().filter((id) => id !== order.friend).sort((a, b) => FRIENDS[b].unlock - FRIENDS[a].unlock).slice(0, 4).reverse();
+  const others = unlockedFriends().filter((id) => id !== order.friend);
   const next = nextLockedFriend();
   const orderLabel = `${local(FRIENDS[order.friend].name)} ${t('wants')} ${local(RECIPES[order.recipe].name)}`;
-  return `<div class="friends-row">
+  return `<div class="friends-row scroll-x"><div class="friends-track">
     <button class="friend-peek order" id="order" data-order-friend="${order.friend}" data-order-recipe="${order.recipe}" aria-label="${orderLabel}">
       ${orderBubbleHTML(order)}<img src="${friendSrc(order.friend)}" alt="">
     </button>
-    ${others.map((id) => `<img class="friend-peek" src="${friendSrc(id)}" alt="${local(FRIENDS[id].name)}">`).join('')}
+    ${others.map((id) => `<button class="friend-peek buddy" data-buddy="${id}" aria-label="${local(FRIENDS[id].name)}"><img src="${friendSrc(id)}" alt=""></button>`).join('')}
     ${next ? `<span class="friend-peek next" title="${t('nextFriend')}" aria-label="${t('nextFriend')}"><img src="${friendSrc(next)}" alt=""><i style="--p:${Math.round(state.served / FRIENDS[next].unlock * 100)}%"></i></span>` : ''}
-  </div>`;
+  </div></div>`;
 }
 
 function showHome() {
@@ -480,6 +480,23 @@ function showHome() {
       startRecipe(recipe);
     };
   }
+  // แถบเพื่อนเลื่อนได้: จางขอบด้านที่ยังมีเพื่อนซ่อนอยู่
+  const row = app.querySelector('.friends-row');
+  const updateEdges = () => {
+    row.classList.toggle('more-right', row.scrollLeft + row.clientWidth < row.scrollWidth - 4);
+    row.classList.toggle('more-left', row.scrollLeft > 4);
+  };
+  row.addEventListener('scroll', updateEdges, { passive: true });
+  requestAnimationFrame(updateEdges);
+  // แตะเพื่อน = พูดชื่อ + เด้ง
+  app.querySelectorAll('[data-buddy]').forEach((button) => {
+    button.onclick = () => {
+      unlockAudio();
+      tone(700, .15);
+      flash(button, 'wave', 700);
+      speak(local(FRIENDS[button.dataset.buddy].name));
+    };
+  });
   app.querySelectorAll('[data-recipe]').forEach((button) => {
     button.onclick = async () => {
       unlockAudio();
@@ -1810,6 +1827,7 @@ document.addEventListener('selectstart', (event) => event.preventDefault());
 document.addEventListener('gesturestart', (event) => event.preventDefault(), { passive: false });
 // iOS Safari เด้งหน้าขึ้นลงตอนลาก (rubber band) — กันไว้ ยกเว้นตอนเนื้อหาล้นจอจริงๆ ให้เลื่อนได้
 document.addEventListener('touchmove', (event) => {
+  if (event.target.closest?.('.scroll-x')) return;
   if (app.scrollHeight <= app.clientHeight + 1) event.preventDefault();
 }, { passive: false });
 document.addEventListener('selectionchange', () => {

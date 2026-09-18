@@ -343,10 +343,10 @@ const path = require('node:path');
     assert.equal(saved.gallery.length, 6);
     assert.equal(saved.gallery[0].recipe, 'smoothie');
     assert.equal(await page.locator('img.gallery-item').count(), 6);
-    // ป้อน 11 ครั้ง → ปลดล็อกแมว (3) เพนกวิน (6) จิ้งจอก (10); หน้าครัวโชว์เพื่อน 4 + คนสั่ง + เงาคนต่อไป
+    // ป้อน 11 ครั้ง → ปลดล็อกแมว (3) เพนกวิน (6) จิ้งจอก (10); หน้าครัวโชว์เพื่อนทั้ง 6 + เงาคนต่อไป
     assert.equal(saved.served, 11);
     assert.ok(saved.order && saved.order.friend, 'a new order exists');
-    assert.equal(await page.locator('.friends-row .friend-peek').count(), 6);
+    assert.equal(await page.locator('.friends-row .friend-peek').count(), 7);
     assert.ok(await page.locator('.friends-row img[src*="fox"]').count() >= 1, 'fox unlocked');
     await page.screenshot({ path: path.join(output, 'home-friends-mobile.png'), fullPage: true });
     // หน้าเสิร์ฟมีเพื่อนสูงสุด 4 คน และคนสั่งอยู่คนแรกเสมอ
@@ -358,6 +358,20 @@ const path = require('node:path');
     assert.equal(await page.evaluate(() => document.querySelector('#app').scrollWidth > innerWidth), false, 'serve screen with 4 friends fits');
     await page.screenshot({ path: path.join(output, 'serve-four-mobile.png'), fullPage: true });
     await page.locator('#back').click();
+
+    // เพื่อนครบ 11 ตัว: แถวเพื่อนบนหน้าครัวต้องโชว์ทุกตัว เลื่อนซ้ายขวาได้ ไม่ล้นจอ
+    await page.evaluate(() => { const saved = JSON.parse(localStorage.getItem('happy-little-kitchen-v1')); saved.served = 30; localStorage.setItem('happy-little-kitchen-v1', JSON.stringify(saved)); });
+    await page.reload();
+    await page.locator('.recipe-card').first().waitFor();
+    assert.equal(await page.locator('.friends-row .friend-peek').count(), 11);
+    assert.equal(await page.locator('.friends-row .next').count(), 0);
+    assert.equal(await page.evaluate(() => document.querySelector('#app').scrollWidth > innerWidth), false, 'home does not overflow with 11 friends');
+    assert.equal(await page.evaluate(() => { const row = document.querySelector('.friends-row'); return row.scrollWidth > row.clientWidth && row.classList.contains('more-right'); }), true, 'friends row scrolls');
+    await page.evaluate(() => { document.querySelector('.friends-row').scrollLeft = 9999; });
+    await page.waitForFunction(() => document.querySelector('.friends-row').classList.contains('more-left'));
+    assert.equal(await page.locator('[data-buddy="squirrel"]').evaluate((element) => { const r = element.getBoundingClientRect(); return r.right <= innerWidth && r.left >= 0; }), true, 'last friend reachable by scrolling');
+    await page.locator('[data-buddy="squirrel"]').click();
+    await page.screenshot({ path: path.join(output, 'home-eleven-mobile.png'), fullPage: true });
 
     // ผลงานเก่าที่เก็บท็อปปิ้งเป็น emoji ต้องยังโหลดได้
     await page.evaluate(() => {
@@ -392,7 +406,7 @@ const path = require('node:path');
     await page.locator('#back').click();
 
     await page.waitForFunction(() => navigator.serviceWorker.controller);
-    assert.ok((await page.evaluate(() => caches.keys())).includes('happy-little-kitchen-v14'));
+    assert.ok((await page.evaluate(() => caches.keys())).includes('happy-little-kitchen-v15'));
     await context.setOffline(true);
     await page.reload();
     await page.locator('.recipe-card').first().waitFor();
