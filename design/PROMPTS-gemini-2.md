@@ -10,7 +10,7 @@
 | ชุด | ใช้กับฟีเจอร์ | จำนวน | วิธี |
 |---|---|---|---|
 | **A. หน้าตาเพื่อน 3 ตัวหลัก** | ปฏิกิริยาตอนกิน (ชอบสุดๆ / อร่อย / จาม / อิ่ม) | 12 รูป | รูปละ 1 prompt (แก้จากรูปเดิม) |
-| B. หน้าตาเพื่อนที่ปลดล็อก 8 ตัว | เหมือน A แต่ตัวใหม่ — *ทำทีหลังได้* ตอนนี้ใช้ท่าเด้งแบบ CSS แทน | 32 รูป | รูปละ 1 prompt |
+| B. หน้าตาเพื่อนที่ปลดล็อก 8 ตัว | เหมือน A แต่ตัวใหม่ | 8 แผ่น (2×2) | แผ่นละ 1 prompt |
 | **C. วัตถุดิบหั่นแล้ว + เขียง** | ขั้น "หั่น" ปาดนิ้วหั่นก่อนใส่ชาม | 1 แผ่น (10 ชิ้น) | 1 prompt |
 | **D. ท็อปปิ้งเพิ่ม 14 ชิ้น** | แต่งหน้าลึกขึ้น (10 แบบ/เมนู) | 1 แผ่น | 1 prompt |
 | E. ภาชนะครัวอิสระ | โหมด sandbox "จานลึกลับ" | 3 รูป | รูปละ 1 prompt |
@@ -105,11 +105,60 @@ Expression: stuffed and sleepy — round bulging tummy, leaning back, ears droop
 
 ---
 
-# B. หน้าตาเพื่อนที่ปลดล็อก 8 ตัว (32 รูป — ทำทีหลังได้)
+# B. หน้าตาเพื่อนที่ปลดล็อก 8 ตัว (8 แผ่น — แผ่นละ 4 อารมณ์)
 
-ตัวละคร: แมว เพนกวิน จิ้งจอก ยูนิคอร์น โลมา ผีเสื้อ หมึกยักษ์ กระรอก (รูปต้นฉบับอยู่ใน `assets/friends/<ชื่อ>.png` แล้ว)
-ใช้บล็อกสไตล์ A + prompt 4 อารมณ์เดียวกับข้างบน เปลี่ยนคำว่า flippers/paws ให้ตรงตัว (ปีกเพนกวิน, หนวดหมึก, ปีกผีเสื้อ, กีบยูนิคอร์น, ครีบโลมา)
-ชื่อไฟล์ `friend-cat-love.jpg`, `friend-penguin-yum.jpg`, … ตามรูปแบบเดิม — ทำตัวไหนเสร็จเกมจะใช้รูปตัวนั้นทันที ตัวที่ยังไม่มีใช้ท่า CSS
+รอบที่แล้ว Gemini ทำ 3 ตัวหลักมาเป็น**แผ่นละตัว 4 ช่อง (2×2)** ซึ่งตัดง่ายและได้ผลดีมาก — รอบนี้ขอแบบเดียวกันเลย ตัวละ 1 prompt
+**แนบรูปตัวนั้นเป็นรูปแรก** (`assets/friends/cat.png` …) แล้ววางบล็อกสไตล์ B + prompt ของตัวนั้น เซฟเป็น `sheet-<ชื่อ>-faces.jpg`
+
+ลำดับช่องต้องเป๊ะ (เกมตัดตามช่อง): **บนซ้าย = love (ดีใจสุดๆ) · บนขวา = yum (อร่อย) · ล่างซ้าย = sneeze (จาม) · ล่างขวา = full (อิ่มแปล้)**
+
+## บล็อกสไตล์สำหรับชุด B (วางนำหน้าทุก prompt ของ B)
+
+```text
+Use the attached character image as the exact reference. Create ONE square sheet showing THE SAME character four times in a 2x2 grid — identical species, colors, outfit, proportions and art style (children's picture-book, soft colored-pencil shading, big bright eyes, rosy cheeks) — changing ONLY the facial expression and pose in each cell. Cell order: TOP-LEFT overjoyed, TOP-RIGHT happily eating, BOTTOM-LEFT mid-sneeze, BOTTOM-RIGHT stuffed and sleepy. Each version is full body, centered in its own cell, facing the viewer, about the same size as the reference, with clear white space between the four so none touch or overlap. Small hearts, sparkles, motion lines or "zzz" circles may float near the character. Background uniformly pure flat white (#FFFFFF). No cast shadow, no food, no text, no border, no grid lines, no other characters. Sweet and funny, for children aged 4-6.
+```
+
+## B1. แมว (แนบ `cat.png`) — เซฟเป็น `sheet-cat-faces.jpg`
+```text
+Character: the chubby ginger-and-white kitten with the yellow collar and gold bell (the ball of yarn may be set aside). TOP-LEFT overjoyed: eyes squeezed shut into happy arcs, huge open smile, both front paws raised high, tail curled up, three small pink hearts above the head. TOP-RIGHT happily eating: cheeks puffed full, small content smile, eyes half-closed, one paw on the tummy, a tiny sparkle by the cheek. BOTTOM-LEFT mid-sneeze: eyes shut tight, mouth wide open in an "ah-choo", whiskers flying out, ears back, both paws spread, two motion lines and a small puff of air. BOTTOM-RIGHT stuffed and sleepy: round bulging tummy, leaning back, eyes half-closed and dreamy, tiny satisfied smile, one paw patting the belly, "zzz" made of three tiny circles floating above.
+```
+
+## B2. เพนกวิน (แนบ `penguin.png`) — เซฟเป็น `sheet-penguin-faces.jpg`
+```text
+Character: the fluffy baby penguin with the sky-blue knitted beanie and white pom-pom. TOP-LEFT overjoyed: eyes squeezed shut into happy arcs, beak open in a big smile, both flippers raised high, hopping a little, three small pink hearts above the head. TOP-RIGHT happily eating: cheeks puffed full, small content smile, eyes half-closed, one flipper on the tummy, a tiny sparkle by the cheek. BOTTOM-LEFT mid-sneeze: eyes shut tight, beak wide open in an "ah-choo", beanie tilted, both flippers spread, two motion lines and a small puff of air. BOTTOM-RIGHT stuffed and sleepy: round bulging white tummy, leaning back, eyes half-closed and dreamy, tiny satisfied smile, one flipper patting the belly, "zzz" made of three tiny circles floating above.
+```
+
+## B3. จิ้งจอก (แนบ `fox.png`) — เซฟเป็น `sheet-fox-faces.jpg`
+```text
+Character: the small orange fox with the white chest, white tail tip and green satchel bag. TOP-LEFT overjoyed: eyes squeezed shut into happy arcs, huge open smile, both paws raised high, tail swishing up, three small pink hearts above the head. TOP-RIGHT happily eating: cheeks puffed full, small content smile, eyes half-closed, one paw on the tummy, a tiny sparkle by the cheek. BOTTOM-LEFT mid-sneeze: eyes shut tight, mouth wide open in an "ah-choo", ears flung back, both paws spread, two motion lines and a small puff of air. BOTTOM-RIGHT stuffed and sleepy: round bulging tummy, leaning back, eyes half-closed and dreamy, tiny satisfied smile, one paw patting the belly, "zzz" made of three tiny circles floating above.
+```
+
+## B4. ยูนิคอร์น (แนบ `unicorn.png`) — เซฟเป็น `sheet-unicorn-faces.jpg`
+```text
+Character: the small white unicorn foal with the golden horn, pastel rainbow mane and tail, and gold star hair clip, standing on four legs. TOP-LEFT overjoyed: eyes squeezed shut into happy arcs, huge open smile, front hooves lifted in a little rear-up, mane bouncing, three small pink hearts above the head. TOP-RIGHT happily eating: cheeks puffed full, small content smile, eyes half-closed, head tilted sweetly, a tiny sparkle by the cheek. BOTTOM-LEFT mid-sneeze: eyes shut tight, mouth wide open in an "ah-choo", mane flying up, ears back, two motion lines and a small puff of air. BOTTOM-RIGHT stuffed and sleepy: round bulging tummy, sitting down on the hind legs, eyes half-closed and dreamy, tiny satisfied smile, "zzz" made of three tiny circles floating above.
+```
+
+## B5. โลมา (แนบ `dolphin.png`) — เซฟเป็น `sheet-dolphin-faces.jpg`
+```text
+Character: the cheerful light blue dolphin with the cream belly and coral pink flower behind the head, balancing upright on its tail. TOP-LEFT overjoyed: eyes squeezed shut into happy arcs, beak open in a big smile, both flippers raised high, jumping up a little, three small pink hearts above the head. TOP-RIGHT happily eating: cheeks puffed full, small content smile, eyes half-closed, one flipper on the belly, a tiny sparkle by the cheek. BOTTOM-LEFT mid-sneeze: eyes shut tight, beak wide open in an "ah-choo", head tilted back, both flippers spread, two motion lines and a small puff of air. BOTTOM-RIGHT stuffed and sleepy: round bulging belly, leaning back on the tail, eyes half-closed and dreamy, tiny satisfied smile, one flipper patting the belly, "zzz" made of three tiny circles floating above.
+```
+
+## B6. ผีเสื้อ (แนบ `butterfly.png`) — เซฟเป็น `sheet-butterfly-faces.jpg`
+```text
+Character: the cute butterfly with the round lavender body, big pastel pink and lilac wings with mint dots, and two thin antennae with yellow tips, wings fully open. TOP-LEFT overjoyed: eyes squeezed shut into happy arcs, huge open smile, tiny arms raised high, wings lifted up in joy, three small pink hearts above the head. TOP-RIGHT happily eating: cheeks puffed full, small content smile, eyes half-closed, one tiny hand on the tummy, a tiny sparkle by the cheek. BOTTOM-LEFT mid-sneeze: eyes shut tight, mouth wide open in an "ah-choo", antennae flung back, wings fluttering with two motion lines and a small puff of air. BOTTOM-RIGHT stuffed and sleepy: round bulging tummy, wings drooping softly, eyes half-closed and dreamy, tiny satisfied smile, "zzz" made of three tiny circles floating above.
+```
+
+## B7. หมึกยักษ์ (แนบ `octopus.png`) — เซฟเป็น `sheet-octopus-faces.jpg`
+```text
+Character: the small lavender-purple baby octopus with the big round head, eight curly arms with pale pink suckers, and the tiny white sailor hat with a blue band. TOP-LEFT overjoyed: eyes squeezed shut into happy arcs, huge open smile, four arms raised high in celebration, three small pink hearts above the head. TOP-RIGHT happily eating: cheeks puffed full, small content smile, eyes half-closed, two arms hugging the tummy, a tiny sparkle by the cheek. BOTTOM-LEFT mid-sneeze: eyes shut tight, mouth wide open in an "ah-choo", sailor hat popping up, all arms flung outward, two motion lines and a small puff of air. BOTTOM-RIGHT stuffed and sleepy: round bulging body, arms relaxed and spread flat, eyes half-closed and dreamy, tiny satisfied smile, "zzz" made of three tiny circles floating above.
+```
+
+## B8. กระรอก (แนบ `squirrel.png`) — เซฟเป็น `sheet-squirrel-faces.jpg`
+```text
+Character: the small chestnut-brown squirrel with the cream belly, big fluffy curled tail, tufted ears and yellow bow at the neck (the acorn may be set aside). TOP-LEFT overjoyed: eyes squeezed shut into happy arcs, huge open smile, both paws raised high, tail puffed up, three small pink hearts above the head. TOP-RIGHT happily eating: cheeks puffed extra full like a squirrel storing food, small content smile, eyes half-closed, one paw on the tummy, a tiny sparkle by the cheek. BOTTOM-LEFT mid-sneeze: eyes shut tight, mouth wide open in an "ah-choo", ears back, tail frizzed out, both paws spread, two motion lines and a small puff of air. BOTTOM-RIGHT stuffed and sleepy: round bulging tummy, leaning back against the fluffy tail, eyes half-closed and dreamy, tiny satisfied smile, one paw patting the belly, "zzz" made of three tiny circles floating above.
+```
+
+ตอนใส่เกม: `python design/blobs.py --grid 2x2 assets/incoming/sheet-cat-faces.jpg friend-cat-love friend-cat-yum friend-cat-sneeze friend-cat-full` → `cutout.py` → เพิ่ม `cat: ['love','yum','sneeze','full']` ใน `FRIEND_ART` + ไฟล์ใน `sw.js`
 
 ---
 
