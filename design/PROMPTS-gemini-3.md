@@ -54,8 +54,8 @@ Create ONE square sheet containing exactly the objects listed below, arranged in
 
 ```text
 6 objects, 2 rows of 3, seen from a three-quarter top-down angle:
-1) raw beaten egg just poured into a dark grey frying pan: a glossy pale yellow liquid disc with small green spring onion rings and red tomato bits, edges still wet, the pan drawn small around it
-2) a half-cooked omelet in the same dark grey frying pan: the underside golden and set, the top still slightly glossy and pale, edges starting to ruffle
+1) raw beaten egg just poured out, ON ITS OWN with no pan: a round glossy pale yellow liquid disc with small green spring onion rings and red tomato bits, edges still wet
+2) a half-cooked omelet ON ITS OWN with no pan: round, the edges golden and set and starting to ruffle, the middle still slightly glossy and pale
 3) a Thai noodle-blanching basket: a round wire mesh basket with a long wooden handle, empty
 4) the same wire basket holding a nest of pale yellow noodles
 5) the same wire basket holding green bok choy leaves
