@@ -150,6 +150,33 @@ button:focus-visible { outline: 4px solid var(--sky); outline-offset: 4px; }
 .prompt-icon { height: 1.6em; width: auto; vertical-align: middle; margin-right: 6px; }
 .recipe-card b { max-width: 100%; overflow-wrap: anywhere; }
 
+/* ครัวอิสระ: การ์ดยาวใต้ตารางเมนู */
+.free-card { width: 100%; max-width: 920px; min-height: 56px; display: flex; align-items: center; justify-content: center; gap: 12px; padding: 4px 16px; border: 4px solid white; border-bottom-color: var(--purple); border-radius: 8px; background: rgba(255,253,248,.96); box-shadow: var(--shadow); cursor: pointer; color: var(--ink); font-size: 1.15rem; font-weight: 900; }
+.free-card img { height: 52px; width: auto; }
+.free-card:active { transform: translateY(4px); box-shadow: 0 2px 0 rgba(36,56,71,.18); }
+.tray.free-tray, .tray.topping-scroll { display: grid; grid-auto-flow: column; grid-template-rows: repeat(2, auto); gap: 8px; justify-content: start; overflow-x: auto; overflow-y: hidden; scrollbar-width: none; -webkit-overflow-scrolling: touch; overscroll-behavior-x: contain; touch-action: pan-x; }
+.tray.free-tray::-webkit-scrollbar, .tray.topping-scroll::-webkit-scrollbar { display: none; }
+.free-tray .ingredient { width: 82px; height: 74px; touch-action: none; }
+.topping-scroll .topping-btn { touch-action: none; }
+.tray.machine-tray { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.machine-btn { border: 3px solid var(--edge); border-radius: 12px; background: white; padding: 8px; cursor: pointer; box-shadow: 0 5px 0 rgba(36,56,71,.14); }
+.machine-btn img { width: 100%; aspect-ratio: 1; object-fit: contain; pointer-events: none; }
+.machine-btn:active { transform: translateY(4px); box-shadow: 0 1px 0 rgba(36,56,71,.18); }
+.free-inside { position: absolute; left: 50%; top: 58%; width: 40%; aspect-ratio: 1; transform: translate(-50%, -50%); z-index: 3; pointer-events: none; }
+.appliance.blender .free-inside { top: 36%; width: 30%; }
+.appliance.pan .free-inside { top: 37%; }
+.appliance.pot .free-inside, .appliance.freezer .free-inside { opacity: 0; }
+.appliance.toaster .free-inside { top: 30%; z-index: 1; }
+.free-inside img { position: absolute; width: 40%; height: 40%; object-fit: contain; transform: translate(-50%, -50%); }
+/* จานลึกลับ: สีตามวิธีปรุง */
+.dish.tint-oven .bit { filter: sepia(.4) saturate(1.1) drop-shadow(0 2px 1px rgba(36,56,71,.2)); }
+.dish.tint-pan .bit { filter: sepia(.5) contrast(1.1) drop-shadow(0 2px 1px rgba(36,56,71,.2)); }
+.dish.tint-toaster .bit { filter: sepia(.6) brightness(.95) drop-shadow(0 2px 1px rgba(36,56,71,.2)); }
+.dish.tint-pot .bit { filter: saturate(.85) brightness(1.05) drop-shadow(0 2px 1px rgba(36,56,71,.2)); }
+.dish.tint-freezer .bit { filter: hue-rotate(-20deg) brightness(1.15) saturate(.8) drop-shadow(0 0 6px rgba(190,230,255,.9)); }
+.dish.tint-blender .bit { filter: blur(1.2px) saturate(1.4) opacity(.85); }
+.dish.tint-blender::after { content: ''; position: absolute; left: 34%; top: 40%; width: 32%; height: 34%; border-radius: 10% 10% 30% 30%; background: linear-gradient(rgba(247,166,184,.55), rgba(247,166,184,.85)); z-index: 4; pointer-events: none; }
+
 .friends-row {
   width: 100%;
   height: clamp(74px, 13vh, 116px);
@@ -775,8 +802,11 @@ img.pop { animation: serve-pop .45s cubic-bezier(.2,1.4,.4,1) both; }
   .language-btn { min-width: 72px; }
   .home { justify-content: flex-start; padding-top: 1vh; }
   .recipes { grid-template-columns: repeat(3, 1fr); gap: 8px; }
-  .home { gap: 12px; }
-  .recipe-card { min-height: clamp(84px, 13vh, 108px); padding: 6px; gap: 4px; }
+  .home { gap: 10px; }
+  .recipe-card { min-height: clamp(78px, 12vh, 104px); padding: 6px; gap: 4px; }
+  .free-card { min-height: 48px; font-size: 1rem; }
+  .free-card img { height: 40px; }
+  .machine-btn { padding: 4px; }
   .recipe-card b { font-size: .88rem; }
   .topbar-title { font-size: 1.2rem; }
   .brand h1 { font-size: 1.8rem; }
@@ -803,6 +833,20 @@ img.pop { animation: serve-pop .45s cubic-bezier(.2,1.4,.4,1) both; }
   .carry { width: 26vw; }
   .friend-btn { width: clamp(64px, 20vw, 145px); height: clamp(84px, 25vw, 175px); }
   .feed-bite { width: 72px; height: 72px; }
+}
+
+/* จอเตี้ย (iPhone มีแถบ Safari): บีบหน้าครัวให้พอดีจอ ไม่ต้องเลื่อน */
+@media (max-width: 620px) and (max-height: 720px) {
+  .home { gap: 8px; padding-top: 4px; }
+  .brand { padding: 4px 16px 6px; }
+  .brand h1 { font-size: 1.5rem; }
+  .brand p { display: none; }
+  .recipe-card { min-height: clamp(76px, 11.5vh, 100px); }
+  .gallery-strip { min-height: 52px; padding: 5px 12px; gap: 8px; }
+  .gallery-item { width: 38px; height: 38px; }
+  .free-card { min-height: 42px; padding: 2px 12px; }
+  .free-card img { height: 32px; }
+  .friends-row { height: clamp(56px, 10vh, 74px); }
 }
 
 @media (max-width: 350px) {

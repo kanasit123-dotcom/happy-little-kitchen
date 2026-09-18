@@ -1,11 +1,11 @@
-﻿const CACHE = 'happy-little-kitchen-v16';
+const CACHE = 'happy-little-kitchen-v17';
 
 const FILES = [
   './',
   'index.html',
   'manifest.webmanifest',
-  'css/app.css?v=16',
-  'js/app.js?v=16',
+  'css/app.css?v=17',
+  'js/app.js?v=17',
   'assets/kitchen.jpg',
   'assets/friends/butterfly-full.png',
   'assets/friends/butterfly-love.png',
@@ -66,6 +66,7 @@ const FILES = [
   'assets/dishes/cake.png',
   'assets/dishes/cookie.png',
   'assets/dishes/cupcake.png',
+  'assets/dishes/free.png',
   'assets/dishes/glass.png',
   'assets/dishes/icecream.png',
   'assets/dishes/noodles.png',

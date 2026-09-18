@@ -1,4 +1,4 @@
-﻿const { chromium } = require('playwright');
+const { chromium } = require('playwright');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
@@ -21,16 +21,16 @@ const path = require('node:path');
     const RECIPES = ['omelet', 'pizza', 'noodles', 'cupcake', 'cookie', 'cake', 'icecream', 'toast', 'smoothie'];
     assert.equal(await page.locator('.recipe-card').count(), 9);
     assert.equal(await page.locator('.recipe-card img.recipe-icon').count(), 9);
-    // เนเธ–เธงเน€เธเธทเนเธญเธ: เธเธเธชเธฑเนเธเธญเธฒเธซเธฒเธฃ (เธกเธตเธเนเธฒเธข) + เน€เธเธทเนเธญเธเธญเธตเธ 2 + เน€เธเธฒเน€เธเธทเนเธญเธเธเธเธ•เนเธญเนเธ
+    // แถวเพื่อน: คนสั่งอาหาร (มีป้าย) + เพื่อนอีก 2 + เงาเพื่อนคนต่อไป
     assert.equal(await page.locator('#order .bubble img').count(), 1);
     assert.equal(await page.locator('.friend-peek').count(), 4);
     assert.equal(await page.locator('.friend-peek.next').count(), 1);
-    // เนเธ•เธฐเธเนเธฒเธขเธชเธฑเนเธ โ’ เน€เธเนเธฒเน€เธกเธเธนเธเธฑเนเธเธ—เธฑเธเธ—เธต
+    // แตะป้ายสั่ง → เข้าเมนูนั้นทันที
     const firstOrder = await page.locator('#order').evaluate((element) => ({ friend: element.dataset.orderFriend, recipe: element.dataset.orderRecipe }));
     await page.locator('#order').click();
     assert.ok((await page.locator('.title-icon').getAttribute('src')).endsWith(`${firstOrder.recipe}.png`));
     await page.locator('#back').click();
-    // เธ•เธฑเนเธเธญเธญเน€เธ”เธญเธฃเนเนเธซเนเนเธกเธงเธเนเธณเธญเธขเธฒเธเธเธดเธเธเธฑเธเน€เธเนเธ เน€เธเธทเนเธญเน€เธ—เธชเธงเนเธฒเธ—เธณเธ•เธฒเธกเธชเธฑเนเธเนเธฅเนเธงเธเนเธฒเธขเธ•เธดเนเธเธ–เธนเธ
+    // ตั้งออเดอร์ให้แมวน้ำอยากกินคัพเค้ก เพื่อเทสว่าทำตามสั่งแล้วป้ายติ๊กถูก
     await page.evaluate((today) => {
       const saved = JSON.parse(localStorage.getItem('happy-little-kitchen-v1'));
       saved.order = { friend: 'seal', recipe: 'cupcake', date: today };
@@ -38,7 +38,7 @@ const path = require('node:path');
     }, new Date().toISOString().slice(0, 10));
     await page.reload();
     await page.locator('.recipe-card').first().waitFor();
-    // เธ—เธธเธเธฃเธนเธเนเธซเธฅเธ”เนเธ”เนเธเธฃเธดเธ (เนเธกเนเนเธเนเนเธเธฅเนเธซเธฒเธข)
+    // ทุกรูปโหลดได้จริง (ไม่ใช่ไฟล์หาย)
     await page.waitForFunction(() => [...document.images].every((img) => img.complete));
     assert.deepEqual(await page.evaluate(() => [...document.images].filter((img) => !img.naturalWidth).map((img) => img.getAttribute('src'))), []);
     assert.equal(await page.evaluate(() => getComputedStyle(document.body).userSelect), 'none');
@@ -100,7 +100,7 @@ const path = require('node:path');
       await page.screenshot({ path: path.join(output, `${name}-mobile.png`), fullPage: true });
     };
 
-    // เนเธเนเธเธฑเนเธเธเธฑเธเธเธธเธเธฑเธเธ•เธฒเธกเธเธเธดเธ” เนเธฅเนเธงเธฃเธญเนเธซเนเน€เธเธกเนเธเธเธฑเนเธเธ–เธฑเธ”เนเธ
+    // แก้ขั้นปัจจุบันตามชนิด แล้วรอให้เกมไปขั้นถัดไป
     const solveStep = async (recipe) => {
       const stepElement = page.locator('#step');
       const type = await stepElement.getAttribute('data-type');
@@ -114,7 +114,7 @@ const path = require('node:path');
             await page.locator('#prep-item').click();
             await page.locator('#prep-item').click();
           } else {
-            await page.locator('#prep-item').click(); // เนเธ•เธฐเน€เธเธขเน เธ•เนเธญเธเนเธกเนเธเธฑเธ
+            await page.locator('#prep-item').click(); // แตะเฉยๆ ต้องไม่นับ
             for (let i = 0; i < 3; i++) await swipe(page.locator('#prep-item'), 90, 0, { x: .2, y: .5 });
           }
           await page.waitForFunction((count) => document.querySelectorAll('.queue-item.done').length >= count || !document.querySelector('#prep-item'), queue.indexOf(id) + 1);
@@ -124,7 +124,7 @@ const path = require('node:path');
         const count = await page.locator('.ingredient').count();
         for (let i = 0; i < count; i++) {
           if (i === 0 && recipe === 'omelet') {
-            // เธฅเธฒเธเธเธฃเธดเธ 1 เธเธดเนเธ
+            // ลากจริง 1 ชิ้น
             await dragTo(page.locator('.ingredient').nth(0), page.locator('#target'));
             assert.equal(await page.locator('.ingredient').nth(0).evaluate((element) => element.classList.contains('used')), true);
           } else {
@@ -159,7 +159,7 @@ const path = require('node:path');
         assert.equal(await page.locator('#appliance.running').count(), 1, `${recipe} ${type} runs while held`);
         await shot(`${type}-${await target.getAttribute('data-appliance')}`);
         if (recipe === 'omelet' && type === 'cook') {
-          // เธเธฅเนเธญเธขเนเธฅเนเธงเนเธ–เธเธซเธขเธธเธ”
+          // ปล่อยแล้วแถบหยุด
           await page.mouse.up();
           const paused = await page.locator('#meter').evaluate((element) => element.style.width);
           await page.waitForTimeout(400);
@@ -173,7 +173,7 @@ const path = require('node:path');
         await shot('pour');
         await hold(page.locator('#pour-source'), 4000);
       } else if (type === 'flip') {
-        await page.locator('#appliance').click(); // เนเธ•เธฐเน€เธเธขเน เนเธกเนเธเธฅเธดเธ
+        await page.locator('#appliance').click(); // แตะเฉยๆ ไม่พลิก
         assert.equal(await stepElement.getAttribute('data-index'), index);
         await swipe(page.locator('#appliance'), 0, -120);
       } else if (type === 'move') {
@@ -227,7 +227,7 @@ const path = require('node:path');
           await page.mouse.move(topBox.x + topBox.width / 2, topBox.y + topBox.height / 2);
           await page.mouse.down();
           await page.mouse.move(dishBox.x + dishBox.width * .68, dishBox.y + dishBox.height * .35, { steps: 8 });
-          // เธ•เธฑเธงเธ—เธตเนเธฅเธญเธขเธ•เธฒเธกเธเธดเนเธงเธ•เนเธญเธเน€เธเนเธเธฃเธนเธเธฅเนเธงเธ เนเธกเนเธกเธตเธเธทเนเธเธเธฒเธง เนเธฅเธฐเธเธเธฒเธ”เน€เธ—เนเธฒเธฃเธนเธเนเธเธเธธเนเธก
+          // ตัวที่ลอยตามนิ้วต้องเป็นรูปล้วน ไม่มีพื้นขาว และขนาดเท่ารูปในปุ่ม
           const ghost = await page.locator('.drag-ghost').evaluate((element) => ({
             tag: element.tagName, background: getComputedStyle(element).backgroundColor, width: element.getBoundingClientRect().width
           }));
@@ -241,7 +241,7 @@ const path = require('node:path');
         }
         assert.equal(await page.locator('#dish img.topping').count(), 1);
         if (recipe === 'cake') {
-          // เธฅเธฒเธเธเธดเนเธงเธเธเธเธฒเธ = เธงเธฒเธ”เธเธฃเธตเธก (เนเธกเนเธงเธฒเธเธ—เนเธญเธเธเธดเนเธ) เนเธฅเธฐเธงเธฒเธเนเธ”เนเน€เธเธดเธ 8 เธเธดเนเธ เธเธญเธ–เธถเธ 30 เธเธดเนเธเน€เธเนเธฒเธชเธธเธ”เธซเธฒเธขเนเธ
+          // ลากนิ้วบนจาน = วาดครีม (ไม่วางท็อปปิ้ง) และวางได้เกิน 8 ชิ้น พอถึง 30 ชิ้นเก่าสุดหายไป
           const dishBox = await page.locator('#dish').boundingBox();
           await page.mouse.move(dishBox.x + dishBox.width * .3, dishBox.y + dishBox.height * .5);
           await page.mouse.down();
@@ -287,7 +287,7 @@ const path = require('node:path');
         assert.equal(await page.locator('.friend-btn[data-reaction]').count(), 1, `${recipe}: friend reacted`);
         await dismissPopup();
         if (recipe === 'cupcake') {
-          // เน€เธเธทเนเธญเธเธเธเนเธฃเธเธเธทเธญเนเธกเธงเธเนเธณเธ—เธตเนเธชเธฑเนเธเธเธฑเธเน€เธเนเธ โ’ เธเนเธฒเธขเธ•เธดเนเธเธ–เธนเธ + เธเธเธดเธเธดเธฃเธดเธขเธฒ "เธเธญเธเธ—เธตเนเธชเธธเธ”" เธ”เนเธงเธขเธฃเธนเธเธซเธเนเธฒเธ•เธฒเธ—เธตเนเธงเธฒเธ”เนเธงเน
+          // เพื่อนคนแรกคือแมวน้ำที่สั่งคัพเค้ก → ป้ายติ๊กถูก + ปฏิกิริยา "ชอบที่สุด" ด้วยรูปหน้าตาที่วาดไว้
           assert.equal(await page.locator('.friend-btn').first().getAttribute('data-friend'), 'seal');
           assert.equal(await page.locator('.friend-btn').first().getAttribute('data-reaction'), 'love');
           assert.equal(await page.locator('.friend-btn .bubble.done').count(), 1);
@@ -332,7 +332,7 @@ const path = require('node:path');
       }
       assert.deepEqual(errors, [], `no page errors after ${recipe}`);
     }
-    // เธ—เธธเธเธเธเธดเธ”เธเธฑเนเธเธ–เธนเธเน€เธฅเนเธเธญเธขเนเธฒเธเธเนเธญเธขเธซเธเธถเนเธเธเธฃเธฑเนเธ เนเธฅเธฐเนเธ•เนเธฅเธฐเน€เธกเธเธนเธกเธตเธเธฑเนเธเธ•เธญเธเธ•เนเธฒเธเธเธฑเธ
+    // ทุกชนิดขั้นถูกเล่นอย่างน้อยหนึ่งครั้ง และแต่ละเมนูมีขั้นตอนต่างกัน
     for (const type of ['prep', 'add', 'mix', 'cook', 'pour', 'flip', 'move', 'dip', 'spread', 'sprinkle', 'shape', 'lid', 'slice', 'candles', 'decorate', 'serve']) {
       assert.ok(seen.has(type), `step type ${type} exercised`);
     }
@@ -358,13 +358,13 @@ const path = require('node:path');
     assert.ok((await page.locator('.title-icon').getAttribute('src')).endsWith(`${saved.gallery[1].recipe}.png`), 'make again opens that recipe');
     await page.locator('#back').click();
     await page.locator('.recipe-card').first().waitFor();
-    // เธเนเธญเธ 11 เธเธฃเธฑเนเธ โ’ เธเธฅเธ”เธฅเนเธญเธเนเธกเธง (3) เน€เธเธเธเธงเธดเธ (6) เธเธดเนเธเธเธญเธ (10); เธซเธเนเธฒเธเธฃเธฑเธงเนเธเธงเนเน€เธเธทเนเธญเธเธ—เธฑเนเธ 6 + เน€เธเธฒเธเธเธ•เนเธญเนเธ
+    // ป้อน 11 ครั้ง → ปลดล็อกแมว (3) เพนกวิน (6) จิ้งจอก (10); หน้าครัวโชว์เพื่อนทั้ง 6 + เงาคนต่อไป
     assert.equal(saved.served, 11);
     assert.ok(saved.order && saved.order.friend, 'a new order exists');
     assert.equal(await page.locator('.friends-row .friend-peek').count(), 7);
     assert.ok(await page.locator('.friends-row img[src*="fox"]').count() >= 1, 'fox unlocked');
     await page.screenshot({ path: path.join(output, 'home-friends-mobile.png'), fullPage: true });
-    // เธซเธเนเธฒเน€เธชเธดเธฃเนเธเธกเธตเน€เธเธทเนเธญเธเธชเธนเธเธชเธธเธ” 4 เธเธ เนเธฅเธฐเธเธเธชเธฑเนเธเธญเธขเธนเนเธเธเนเธฃเธเน€เธชเธกเธญ
+    // หน้าเสิร์ฟมีเพื่อนสูงสุด 4 คน และคนสั่งอยู่คนแรกเสมอ
     await page.locator('[data-recipe="toast"]').click();
     await page.locator('#step').waitFor();
     while ((await page.locator('#step').getAttribute('data-type')) !== 'serve') await solveStep('toast-again');
@@ -374,7 +374,53 @@ const path = require('node:path');
     await page.screenshot({ path: path.join(output, 'serve-four-mobile.png'), fullPage: true });
     await page.locator('#back').click();
 
-    // เน€เธเธทเนเธญเธเธเธฃเธ 11 เธ•เธฑเธง: เนเธ–เธงเน€เธเธทเนเธญเธเธเธเธซเธเนเธฒเธเธฃเธฑเธงเธ•เนเธญเธเนเธเธงเนเธ—เธธเธเธ•เธฑเธง เน€เธฅเธทเนเธญเธเธเนเธฒเธขเธเธงเธฒเนเธ”เน เนเธกเนเธฅเนเธเธเธญ
+    // ครัวอิสระ: ใส่อะไรก็ได้ → เลือกเครื่อง → จานลึกลับ → แต่ง (ท็อปปิ้งทั้งหมด เลื่อนได้) → เสิร์ฟ
+    await page.locator('[data-recipe="free"]').click();
+    await page.locator('#step[data-type="freeadd"]').waitFor();
+    assert.equal(await page.locator('#done').isDisabled(), true);
+    for (const id of ['egg', 'fishball', 'strawberry', 'chocchips']) {
+      await page.locator(`.ingredient[data-id="${id}"]`).scrollIntoViewIfNeeded();
+      await page.locator(`.ingredient[data-id="${id}"]`).click();
+      await page.locator('#target').click();
+    }
+    assert.equal(await page.locator('#target .in-bowl').count(), 4);
+    await page.screenshot({ path: path.join(output, 'free-add-mobile.png'), fullPage: true });
+    await page.locator('#done').click();
+    await page.locator('#step[data-type="freecook"]').waitFor();
+    assert.equal(await page.locator('.machine-btn').count(), 6);
+    await page.locator('.machine-btn[data-kind="pan"]').click();
+    await page.locator('#appliance').waitFor();
+    {
+      const { x, y } = await center(page.locator('#appliance'));
+      await page.mouse.move(x, y);
+      await page.mouse.down();
+      await page.waitForTimeout(300);
+      await page.screenshot({ path: path.join(output, 'free-cook-mobile.png'), fullPage: true });
+      await page.waitForTimeout(5200);
+      await page.mouse.up();
+    }
+    await page.locator('#step[data-type="decorate"]').waitFor();
+    assert.equal(await page.locator('.dish.tint-pan').count(), 1);
+    assert.equal(await page.locator('#dish .bit').count(), 4);
+    assert.equal(await page.locator('.topping-scroll .topping-btn').count(), 40);
+    assert.equal(await page.evaluate(() => document.querySelector('#app').scrollWidth > innerWidth), false, 'free decorate fits');
+    await page.locator('.topping-btn[data-top="shrimp"]').scrollIntoViewIfNeeded();
+    await page.locator('.topping-btn[data-top="shrimp"]').click();
+    await page.locator('#dish').click({ position: { x: 135, y: 100 } });
+    await page.screenshot({ path: path.join(output, 'free-decorate-mobile.png'), fullPage: true });
+    await page.locator('#done').click();
+    await page.locator('.friend-btn').first().waitFor();
+    await page.locator('.friend-btn').first().click();
+    await page.locator('#finish-actions:not([hidden])').waitFor();
+    await dismissPopup();
+    await page.locator('#home').click();
+    await page.locator('.recipe-card').first().waitFor();
+    const withFree = await page.evaluate(() => JSON.parse(localStorage.getItem('happy-little-kitchen-v1')));
+    assert.equal(withFree.gallery[0].recipe, 'free');
+    assert.deepEqual(withFree.gallery[0].free, { items: ['egg', 'fishball', 'strawberry', 'chocchips'], machine: 'pan' });
+    assert.ok(withFree.gallery[0].photo.startsWith('data:image/jpeg'));
+
+    // เพื่อนครบ 11 ตัว: แถวเพื่อนบนหน้าครัวต้องโชว์ทุกตัว เลื่อนซ้ายขวาได้ ไม่ล้นจอ
     await page.evaluate(() => { const saved = JSON.parse(localStorage.getItem('happy-little-kitchen-v1')); saved.served = 30; localStorage.setItem('happy-little-kitchen-v1', JSON.stringify(saved)); });
     await page.reload();
     await page.locator('.recipe-card').first().waitFor();
@@ -388,9 +434,9 @@ const path = require('node:path');
     await page.locator('[data-buddy="squirrel"]').click();
     await page.screenshot({ path: path.join(output, 'home-eleven-mobile.png'), fullPage: true });
 
-    // เธเธฅเธเธฒเธเน€เธเนเธฒเธ—เธตเนเน€เธเนเธเธ—เนเธญเธเธเธดเนเธเน€เธเนเธ emoji เธ•เนเธญเธเธขเธฑเธเนเธซเธฅเธ”เนเธ”เน
+    // ผลงานเก่าที่เก็บท็อปปิ้งเป็น emoji ต้องยังโหลดได้
     await page.evaluate(() => {
-      const legacy = { lang: 'th', sound: false, gallery: [{ recipe: 'cupcake', color: '#ef6f61', toppings: ['โญ', { icon: '๐“', x: 40, y: 40 }], friend: 'seal', friends: ['seal'], at: 1 }] };
+      const legacy = { lang: 'th', sound: false, gallery: [{ recipe: 'cupcake', color: '#ef6f61', toppings: ['⭐', { icon: '🍓', x: 40, y: 40 }], friend: 'seal', friends: ['seal'], at: 1 }] };
       localStorage.setItem('happy-little-kitchen-v1', JSON.stringify(legacy));
     });
     await page.reload();
@@ -406,7 +452,7 @@ const path = require('node:path');
       const overflow = await page.evaluate(() => document.documentElement.scrollWidth > innerWidth || document.querySelector('#app').scrollWidth > innerWidth);
       assert.equal(overflow, false, `home fits ${width}px`);
     }
-    // body เธ•เธฃเธถเธเธเธฑเธเธเธญ (เธเธฑเธ iOS เน€เธ”เนเธ) เนเธฅเธฐเธซเธเนเธฒเธเธฃเธฑเธงเธเธ iPhone เธ—เธตเนเธกเธตเนเธ–เธ Safari เธขเธฑเธเนเธกเนเธ•เนเธญเธเน€เธฅเธทเนเธญเธ
+    // body ตรึงกับจอ (กัน iOS เด้ง) และหน้าครัวบน iPhone ที่มีแถบ Safari ยังไม่ต้องเลื่อน
     assert.equal(await page.evaluate(() => getComputedStyle(document.body).position), 'fixed');
     await page.setViewportSize({ width: 390, height: 664 });
     await page.reload();
@@ -421,7 +467,7 @@ const path = require('node:path');
     await page.locator('#back').click();
 
     await page.waitForFunction(() => navigator.serviceWorker.controller);
-    assert.ok((await page.evaluate(() => caches.keys())).includes('happy-little-kitchen-v16'));
+    assert.ok((await page.evaluate(() => caches.keys())).includes('happy-little-kitchen-v17'));
     await context.setOffline(true);
     await page.reload();
     await page.locator('.recipe-card').first().waitFor();
