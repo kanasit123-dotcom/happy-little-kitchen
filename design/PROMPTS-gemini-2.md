@@ -254,3 +254,14 @@ ONE object, centered, generous white margin, square 1:1 image. Subject: a tall c
 - ชุด C: `python design/blobs.py assets/incoming/sheet-cut.jpg ing-tomato-cut ing-banana-cut ing-strawberry-cut ing-bokchoy-cut ing-cheese-cut ing-bread-cut ing-butter-cut ing-egg-cracked ing-springonion-cut tool-board` แล้ว `cutout.py`
 - ชุด D: `python design/blobs.py assets/incoming/sheet-toppings-2.jpg <ชื่อ 14 ชิ้นด้านบน>` แล้ว `cutout.py`
 - ชุด E: `cutout.py dish-plate dish-bowl dish-glass`
+
+---
+
+# C. หน้า "อี๋" (ไม่ชอบ) ของเพื่อนทั้ง 11 ตัว — 1 แผ่น (ทำเมื่อไหร่ก็ได้)
+
+เกมมีปฏิกิริยา "อี๋ ไม่ชอบอันนี้" แล้ว (ตอนนี้ใช้รูปปกติ + ส่ายหัว) ถ้าอยากได้หน้าตาจริง: แนบรูปเพื่อนทั้ง 11 ตัว (`assets/friends/<ชื่อ>.png`) แล้วขอแผ่น 3 แถว × 4 ช่อง (ช่องสุดท้ายว่าง) เซฟเป็น `sheet-yuck.jpg`
+
+```text
+Use the eleven attached character images as exact references. Create ONE square sheet with a 3x4 grid (last cell empty) showing each character once, in this order: seal, turtle, rabbit, cat, penguin, fox, unicorn, dolphin, butterfly, octopus, squirrel — identical species, colors, outfit and art style as each reference — all making the SAME playful "yuck" face: eyes squeezed shut, tongue sticking out, nose wrinkled, one paw/flipper/hand pushing something away, a couple of small blue sweat drops, still cute and funny not mean. Full body, centered in each cell, facing the viewer, clear white space between all so none touch or overlap. Pure flat white background, no cast shadow, no food, no text, no grid lines.
+```
+ตัด: `python design/blobs.py --grid 3x4 assets/incoming/sheet-yuck.jpg friend-seal-yuck friend-turtle-yuck friend-rabbit-yuck friend-cat-yuck friend-penguin-yuck friend-fox-yuck friend-unicorn-yuck friend-dolphin-yuck friend-butterfly-yuck friend-octopus-yuck friend-squirrel-yuck -` → `cutout.py` → เพิ่ม `'yuck'` ในรายการของทุกตัวใน `FRIEND_ART`

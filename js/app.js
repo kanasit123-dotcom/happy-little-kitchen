@@ -264,24 +264,37 @@ RECIPES.free = {
 };
 
 // likes = เมนูโปรด (กินแล้วดีใจสุดๆ) · unlock = จำนวนครั้งที่ป้อนเพื่อนสะสม ก่อนตัวนี้จะมาเล่นด้วย
+// likes = เมนูโปรด · loves = ท็อปปิ้งที่ชอบมาก (ใส่แล้วดีใจสุดๆ) · hates = ของที่ไม่ชอบ (ใส่แล้วทำหน้าอี๋ — ขำๆ ไม่มีโทษ)
 const FRIENDS = {
-  seal: { name: { th: 'แมวน้ำ', en: 'Seal' }, likes: ['icecream', 'smoothie', 'noodles'], unlock: 0 },
-  turtle: { name: { th: 'เต่า', en: 'Turtle' }, likes: ['noodles', 'omelet', 'pizza'], unlock: 0 },
-  rabbit: { name: { th: 'กระต่าย', en: 'Rabbit' }, likes: ['cake', 'cupcake', 'cookie'], unlock: 0 },
-  cat: { name: { th: 'แมว', en: 'Cat' }, likes: ['omelet', 'toast', 'noodles'], unlock: 3 },
-  penguin: { name: { th: 'เพนกวิน', en: 'Penguin' }, likes: ['icecream', 'smoothie', 'toast'], unlock: 6 },
-  fox: { name: { th: 'จิ้งจอก', en: 'Fox' }, likes: ['pizza', 'cookie', 'omelet'], unlock: 10 },
-  unicorn: { name: { th: 'ยูนิคอร์น', en: 'Unicorn' }, likes: ['cake', 'cupcake', 'icecream'], unlock: 14 },
-  dolphin: { name: { th: 'โลมา', en: 'Dolphin' }, likes: ['smoothie', 'noodles', 'toast'], unlock: 18 },
-  butterfly: { name: { th: 'ผีเสื้อ', en: 'Butterfly' }, likes: ['cupcake', 'cake', 'smoothie'], unlock: 22 },
-  octopus: { name: { th: 'หมึกยักษ์', en: 'Octopus' }, likes: ['noodles', 'pizza', 'omelet'], unlock: 26 },
-  squirrel: { name: { th: 'กระรอก', en: 'Squirrel' }, likes: ['cookie', 'toast', 'cake'], unlock: 30 }
+  seal: { name: { th: 'แมวน้ำ', en: 'Seal' }, likes: ['icecream', 'smoothie', 'noodles'], loves: ['shrimp', 'cherry'], hates: ['chili', 'mushroom'], unlock: 0 },
+  turtle: { name: { th: 'เต่า', en: 'Turtle' }, likes: ['noodles', 'omelet', 'pizza'], loves: ['mint', 'cucumber'], hates: ['chocsauce', 'marshmallow'], unlock: 0 },
+  rabbit: { name: { th: 'กระต่าย', en: 'Rabbit' }, likes: ['cake', 'cupcake', 'cookie'], loves: ['carrot', 'strawberry'], hates: ['shrimp', 'seaweed', 'fishball'], unlock: 0 },
+  cat: { name: { th: 'แมว', en: 'Cat' }, likes: ['omelet', 'toast', 'noodles'], loves: ['shrimp', 'cream'], hates: ['lime', 'cucumber'], unlock: 3 },
+  penguin: { name: { th: 'เพนกวิน', en: 'Penguin' }, likes: ['icecream', 'smoothie', 'toast'], loves: ['shrimp', 'seaweed'], hates: ['chili', 'honeydrizzle'], unlock: 6 },
+  fox: { name: { th: 'จิ้งจอก', en: 'Fox' }, likes: ['pizza', 'cookie', 'omelet'], loves: ['blueberry', 'corn'], hates: ['lime', 'olive'], unlock: 10 },
+  unicorn: { name: { th: 'ยูนิคอร์น', en: 'Unicorn' }, likes: ['cake', 'cupcake', 'icecream'], loves: ['rainbow', 'sprinkles'], hates: ['garlic', 'seaweed', 'fishball'], unlock: 14 },
+  dolphin: { name: { th: 'โลมา', en: 'Dolphin' }, likes: ['smoothie', 'noodles', 'toast'], loves: ['seaweed', 'kiwi'], hates: ['chocsauce', 'pepper'], unlock: 18 },
+  butterfly: { name: { th: 'ผีเสื้อ', en: 'Butterfly' }, likes: ['cupcake', 'cake', 'smoothie'], loves: ['honeydrizzle', 'mint'], hates: ['garlic', 'egg'], unlock: 22 },
+  octopus: { name: { th: 'หมึกยักษ์', en: 'Octopus' }, likes: ['noodles', 'pizza', 'omelet'], loves: ['sesame', 'corn'], hates: ['lime', 'marshmallow'], unlock: 26 },
+  squirrel: { name: { th: 'กระรอก', en: 'Squirrel' }, likes: ['cookie', 'toast', 'cake'], loves: ['chocchip', 'corn'], hates: ['shrimp', 'fishball'], unlock: 30 }
 };
+const THING_NAMES = { ...INGREDIENTS };   // ชื่อท็อปปิ้งสำหรับพูด (เฉพาะที่ใช้ในความชอบ)
+Object.assign(THING_NAMES, {
+  shrimp: { th: 'กุ้ง', en: 'shrimp' }, cherry: { th: 'เชอร์รี', en: 'cherry' }, mint: { th: 'ใบมินต์', en: 'mint' }, cucumber: { th: 'แตงกวา', en: 'cucumber' },
+  chocsauce: { th: 'ซอสช็อกโกแลต', en: 'chocolate sauce' }, marshmallow: { th: 'มาร์ชเมลโล่', en: 'marshmallow' }, carrot: { th: 'แครอท', en: 'carrot' },
+  seaweed: { th: 'สาหร่าย', en: 'seaweed' }, cream: { th: 'วิปครีม', en: 'whipped cream' }, lime: { th: 'มะนาว', en: 'lime' }, chili: { th: 'พริก', en: 'chili' },
+  mushroom: { th: 'เห็ด', en: 'mushroom' }, honeydrizzle: { th: 'น้ำผึ้ง', en: 'honey' }, blueberry: { th: 'บลูเบอร์รี', en: 'blueberry' }, corn: { th: 'ข้าวโพด', en: 'corn' },
+  olive: { th: 'มะกอก', en: 'olive' }, rainbow: { th: 'สายรุ้ง', en: 'rainbow' }, sprinkles: { th: 'สปริงเกิล', en: 'sprinkles' }, garlic: { th: 'กระเทียมเจียว', en: 'fried garlic' },
+  kiwi: { th: 'กีวี', en: 'kiwi' }, pepper: { th: 'พริกหวาน', en: 'bell pepper' }, sesame: { th: 'งา', en: 'sesame' }, chocchip: { th: 'ช็อกโกแลตชิป', en: 'chocolate chip' }
+});
+const thingSrc = (key) => (INGREDIENTS[key] ? preparedSrc(key) : toppingSrc(key));
+const thingName = (key) => local(THING_NAMES[key] || INGREDIENTS[key] || { th: key, en: key });
 // รูปหน้าตาที่วาดแล้ว: assets/friends/<id>-<อารมณ์>.png (ตัว/อารมณ์ที่ยังไม่มีใช้ท่า CSS + รูปปกติ)
 const FRIEND_ART = Object.fromEntries(['seal', 'turtle', 'rabbit', 'cat', 'penguin', 'fox', 'unicorn', 'dolphin', 'butterfly', 'octopus', 'squirrel'].map((id) => [id, ['love', 'yum', 'sneeze', 'full']]));
 const FRIEND_MAX_ON_SCREEN = 4;
 // ปฏิกิริยาตอนกิน เรียงตามลำดับที่เช็ก: จาม (มีพริก) > อิ่มแปล้ (ท็อปปิ้ง 10+) > ชอบสุดๆ (เมนูโปรด/ตามสั่ง) > อร่อย
 const REACTIONS = {
+  yuck: { th: 'อี๋ ไม่ชอบอันนี้เลย', en: 'Eww, not this one!', tone: 260, particle: '💦' },
   sneeze: { th: 'ฮัดเช้ย! จี๊ดจ๊าดจัง', en: 'Achoo! So zingy!', tone: 300, particle: '💨' },
   full: { th: 'อิ่มแปล้เลย', en: 'So full!', tone: 380, particle: '💤' },
   love: { th: 'ชอบที่สุดเลย!', en: 'My favorite!', tone: 980, particle: '💗' },
@@ -303,6 +316,8 @@ const COPY = {
     poured: 'เทเรียบร้อย', flipped: 'พลิกสวยเลย!', spreadDone: 'ทาทั่วแล้ว', sprinkled: 'โรยทั่วแล้ว', shaped: 'ครบแล้ว', lidOn: 'ปิดฝาแล้ว', sliced: 'ตัดเรียบร้อย', dipped: 'ลวกได้ที่แล้ว', moved: 'เรียบร้อย',
     candlePlace: 'แตะบนเค้ก ปักเทียน', candleLight: 'แตะเทียนให้ติดไฟ', candleBlow: 'ปาดนิ้วผ่านเทียน เป่าเลย!', birthday: 'สุขสันต์วันเกิด!',
     ready: 'พร้อมแล้ว ไปตกแต่งกัน', wants: 'อยากกิน', orderDone: 'ตรงใจเลย ขอบคุณนะ!', newFriend: 'เพื่อนใหม่มาเล่นด้วย', nextFriend: 'เพื่อนคนต่อไป', ok: 'ตกลง',
+    likesWord: 'ชอบ', hatesWord: 'ไม่ชอบ', parent: 'ผู้ปกครอง', parentHold: 'กดค้าง 2 วินาที', stats: 'สถิติ', madeCount: 'จานที่ทำ', servedCount: 'ป้อนเพื่อน', friendsCount: 'เพื่อนที่มาแล้ว', ordersCount: 'ทำตามที่เพื่อนขอ',
+    resetAll: 'รีเซ็ตทั้งหมด (กดค้าง)', resetBook: 'ล้างสมุดผลงาน (กดค้าง)', resetDone: 'รีเซ็ตแล้ว เริ่มใหม่ได้เลย', resetNote: 'รีเซ็ตแล้วเพื่อนจะกลับไปเหลือ 3 ตัว สมุดผลงานว่าง', version: 'เวอร์ชัน',
     mixed: { stir: 'เข้ากันดีแล้ว', whisk: 'ฟูกำลังดี', roll: 'แบนสวยเลย', spread: 'ทาทั่วแล้ว' },
     freeTitle: 'ครัวอิสระ ✨ ทำอะไรก็ได้', mystery: 'ได้จานลึกลับแล้ว!', pickMachine: 'กดค้างให้เครื่องทำงาน ปล่อยเมื่อแถบเต็ม', burnt: 'โอ๊ะ ไหม้แล้ว! ก็ยังกินได้นะ', freeAdd: 'แตะของที่อยากใส่ ลงชามได้เลย'
   },
@@ -318,6 +333,8 @@ const COPY = {
     poured: 'All poured', flipped: 'Perfect flip!', spreadDone: 'All covered', sprinkled: 'Nicely sprinkled', shaped: 'All done', lidOn: 'Lid is on', sliced: 'Sliced up', dipped: 'Cooked just right', moved: 'Done',
     candlePlace: 'Tap the cake to add candles', candleLight: 'Tap the candles to light them', candleBlow: 'Swipe across the candles to blow!', birthday: 'Happy birthday!',
     ready: 'Ready! Let us decorate it', wants: 'wants to eat', orderDone: 'Just what I wanted! Thank you!', newFriend: 'A new friend came to play', nextFriend: 'Next friend', ok: 'OK',
+    likesWord: 'likes', hatesWord: 'does not like', parent: 'Parents', parentHold: 'Hold for 2 seconds', stats: 'Stats', madeCount: 'Dishes made', servedCount: 'Friends fed', friendsCount: 'Friends unlocked', ordersCount: 'Orders completed',
+    resetAll: 'Reset everything (hold)', resetBook: 'Clear the cookbook (hold)', resetDone: 'Reset done, start fresh', resetNote: 'Resetting goes back to three friends and an empty cookbook', version: 'Version',
     mixed: { stir: 'Perfectly mixed', whisk: 'Nice and fluffy', roll: 'Rolled out nicely', spread: 'All spread out' },
     freeTitle: 'Free kitchen ✨ make anything', mystery: 'A mystery dish!', pickMachine: 'Hold to run the machine, let go when the bar is full', burnt: 'Oops, it burned! Still tasty', freeAdd: 'Tap anything you want to put in the bowl'
   }
@@ -372,11 +389,12 @@ function loadState() {
         .slice(0, GALLERY_MAX)
         .map((item) => ({ ...item, toppings: (Array.isArray(item.toppings) ? item.toppings : []).map(normalizeTopping) })),
       served: Number.isFinite(saved?.served) ? saved.served : 0,
+      made: Number.isFinite(saved?.made) ? saved.made : (Array.isArray(saved?.gallery) ? saved.gallery.length : 0),
       ordersDone: Number.isFinite(saved?.ordersDone) ? saved.ordersDone : 0,
       order
     };
   } catch {
-    return { lang: 'th', sound: true, gallery: [], served: 0, ordersDone: 0, order: null };
+    return { lang: 'th', sound: true, gallery: [], served: 0, made: 0, ordersDone: 0, order: null };
   }
 }
 
@@ -491,6 +509,7 @@ const SFX = {
   yum: () => chirp(420, 520, { gain: .06, length: .35 }),
   achoo: () => { chirp(500, 900, { gain: .05, length: .25 }); noiseBurst({ type: 'bandpass', freq: 1200, q: .6, gain: .16, length: .3, sweepTo: 500 }); },
   snore: () => { chirp(180, 120, { type: 'triangle', gain: .05, length: .5 }); chirp(140, 200, { type: 'triangle', gain: .04, length: .5, delay: .55 }); },
+  yuck: () => { chirp(520, 260, { type: 'triangle', gain: .06, length: .45 }); noiseBurst({ type: 'lowpass', freq: 700, gain: .08, length: .25 }); },
   // เพลงแฮปปี้เบิร์ธเดย์ ท่อนแรก
   birthday: () => {
     const notes = [[392, .3], [392, .2], [440, .5], [392, .5], [523, .5], [494, .9], [392, .3], [392, .2], [440, .5], [392, .5], [587, .5], [523, .9]];
@@ -610,7 +629,7 @@ function stopSpeech() {
 
 function topbar(title, canBack = false) {
   return `<div class="topbar">
-    ${canBack ? `<button class="round-btn" id="back" aria-label="${t('home')}">←</button>` : '<span class="home-spacer" style="width:58px"></span>'}
+    ${canBack ? `<button class="round-btn" id="back" aria-label="${t('home')}">←</button>` : `<button class="round-btn parent-btn" id="parent" aria-label="${t('parent')} — ${t('parentHold')}"><span>👪</span><i></i></button>`}
     <div class="topbar-title">${title}</div>
     <button class="language-btn" id="language" aria-label="Language">${t('language')}</button>
     <button class="round-btn" id="sound" aria-label="${t('listen')}">${state.sound ? '🔊' : '🔇'}</button>
@@ -622,6 +641,7 @@ function bindTopbar(onBack) {
   const rerender = () => {
     if (activeRecipe) renderStep();
     else if (app.querySelector('.book')) showBook();
+    else if (app.querySelector('.parent')) showParent();
     else showHome();
   };
   app.querySelector('#language').onclick = () => {
@@ -697,6 +717,61 @@ function snapshot(dish) {
   }
 }
 
+// ปุ่มกันเด็ก: ต้องกดค้าง 2 วินาที (มีวงแหวนโหลดให้เห็น) ถึงจะทำงาน
+function bindHold(button, action, ms = 2000) {
+  if (!button) return;
+  let timer = null;
+  const start = (event) => {
+    if (event.button !== undefined && event.button !== 0) return;
+    event.preventDefault();
+    button.classList.add('holding');
+    button.style.setProperty('--hold', `${ms}ms`);
+    timer = setTimeout(() => { button.classList.remove('holding'); timer = null; tone(700, .2); action(); }, ms);
+  };
+  const cancel = () => { if (timer) { clearTimeout(timer); timer = null; } button.classList.remove('holding'); };
+  button.addEventListener('pointerdown', start);
+  button.addEventListener('pointerup', cancel);
+  button.addEventListener('pointercancel', cancel);
+  button.addEventListener('pointerleave', cancel);
+  button.addEventListener('click', (event) => event.preventDefault());
+}
+
+const version = () => (document.querySelector('script[src*="v="]')?.getAttribute('src').match(/v=(\d+)/) || [])[1] || '?';
+
+// หน้าผู้ปกครอง: สถิติ + รีเซ็ต (ไม่มีอะไรที่เด็กกดพลาดได้ ทุกปุ่มต้องกดค้าง)
+function showParent() {
+  activeRecipe = null;
+  const unlocked = unlockedFriends().length;
+  app.innerHTML = `<div class="app-shell play-screen">
+    ${topbar(`👪 ${t('parent')}`, true)}
+    <section class="parent">
+      <div class="stats">
+        <div class="stat"><b>${state.made}</b><span>${t('madeCount')}</span></div>
+        <div class="stat"><b>${state.served}</b><span>${t('servedCount')}</span></div>
+        <div class="stat"><b>${unlocked} / ${Object.keys(FRIENDS).length}</b><span>${t('friendsCount')}</span></div>
+        <div class="stat"><b>${state.ordersDone}</b><span>${t('ordersCount')}</span></div>
+      </div>
+      <p class="note">${t('resetNote')}</p>
+      <button class="action-btn hold-btn" id="reset-book"><i></i><span>🖼️ ${t('resetBook')}</span></button>
+      <button class="action-btn danger hold-btn" id="reset-all"><i></i><span>🔄 ${t('resetAll')}</span></button>
+      <p class="note small">${t('version')} v${version()} · ${t('parentHold')}</p>
+    </section>
+  </div>`;
+  bindTopbar(showHome);
+  bindHold(app.querySelector('#reset-book'), () => {
+    state.gallery = [];
+    saveState();
+    showParent();
+    speak(t('resetDone'));
+  });
+  bindHold(app.querySelector('#reset-all'), () => {
+    state = { lang: state.lang, sound: state.sound, gallery: [], served: 0, made: 0, ordersDone: 0, order: null };
+    saveState();
+    showParent();
+    speak(t('resetDone'));
+  });
+}
+
 function friendChipsHTML(ids) {
   return `<span class="chips">${(ids || []).map((id) => `<img src="${friendSrc(id)}" alt="${local(FRIENDS[id].name)}">`).join('')}</span>`;
 }
@@ -754,7 +829,7 @@ function friendsRowHTML() {
     <button class="friend-peek order" id="order" data-order-friend="${order.friend}" data-order-recipe="${order.recipe}" aria-label="${orderLabel}">
       ${orderBubbleHTML(order)}<img src="${friendSrc(order.friend)}" alt="">
     </button>
-    ${others.map((id) => `<button class="friend-peek buddy" data-buddy="${id}" aria-label="${local(FRIENDS[id].name)}"><img src="${friendSrc(id)}" alt=""></button>`).join('')}
+    ${others.map((id) => `<button class="friend-peek buddy" data-buddy="${id}" aria-label="${prefsSpeech(id)}"><img src="${friendSrc(id)}" alt=""></button>`).join('')}
     ${next ? `<span class="friend-peek next" title="${t('nextFriend')}" aria-label="${t('nextFriend')}"><img src="${friendSrc(next)}" alt=""><i style="--p:${Math.round(state.served / FRIENDS[next].unlock * 100)}%"></i></span>` : ''}
   </div></div>`;
 }
@@ -778,6 +853,7 @@ function showHome() {
     </section>
   </div>`;
   bindTopbar(showHome);
+  bindHold(app.querySelector('#parent'), showParent);
   const book = app.querySelector('#book');
   if (book) book.onclick = () => { tone(620); showBook(); };
   const orderButton = app.querySelector('#order');
@@ -804,7 +880,7 @@ function showHome() {
       unlockAudio();
       tone(700, .15);
       flash(button, 'wave', 700);
-      speak(local(FRIENDS[button.dataset.buddy].name));
+      speak(prefsSpeech(button.dataset.buddy));
     };
   });
   app.querySelectorAll('[data-recipe]').forEach((button) => {
@@ -1900,9 +1976,20 @@ RENDERERS.freeadd = (current) => {
     <div class="finish-actions"><button class="action-btn primary" id="done" disabled>✓ ${t('done')}</button></div>`, prompt);
   const target = app.querySelector('#target');
   const done = app.querySelector('#done');
-  // แตะ = ของลอยจากถาดลงชาม (ไม่ต้องลาก ถาดจะได้เลื่อนดูของได้)
+  const add = (id) => {
+    stage.free.push(id);
+    flash(target, 'drop-target', 420);
+    const n = stage.free.length - 1;
+    target.insertAdjacentHTML('beforeend', `<img class="in-bowl" src="${preparedSrc(id)}" alt="" style="left:${30 + (n % 4) * 13}%;top:${30 + Math.floor(n / 4) % 3 * 12}%">`);
+    SFX.plip();
+    tone(520 + (n % 6) * 60);
+    speak(local(INGREDIENTS[id]));
+    done.disabled = false;
+    if (stage.free.length >= 3) target.classList.remove('ready');
+  };
+  // แตะ = ของลอยจากถาดลงชาม · ลากขึ้นไปวางในชามก็ได้ · ปาดซ้ายขวา = เลื่อนถาด (touch-action: pan-x ให้เบราว์เซอร์จัดการ)
   app.querySelectorAll('.ingredient').forEach((button) => {
-    button.onclick = () => {
+    const fly = () => {
       const id = button.dataset.id;
       const from = button.querySelector('img').getBoundingClientRect();
       const to = target.getBoundingClientRect();
@@ -1918,19 +2005,15 @@ RENDERERS.freeadd = (current) => {
       });
       flash(button, 'tapped', 300);
       SFX.swish();
-      setTimeout(() => {
-        flyer.remove();
-        stage.free.push(id);
-        flash(target, 'drop-target', 420);
-        const n = stage.free.length - 1;
-        target.insertAdjacentHTML('beforeend', `<img class="in-bowl" src="${preparedSrc(id)}" alt="" style="left:${30 + (n % 4) * 13}%;top:${30 + Math.floor(n / 4) % 3 * 12}%">`);
-        SFX.plip();
-        tone(520 + (n % 6) * 60);
-        speak(local(INGREDIENTS[id]));
-        done.disabled = false;
-        if (stage.free.length >= 3) target.classList.remove('ready');
-      }, 420);
+      setTimeout(() => { flyer.remove(); add(id); }, 420);
     };
+    bindDragChoice(button, {
+      onTap: fly,
+      isOverTarget: (x, y) => within(target, x, y, 54),
+      onHover: (over) => target.classList.toggle('drop-target', over),
+      onDrop: () => add(button.dataset.id),
+      onMiss: () => flash(target, 'drop-miss', 380)
+    });
   });
   done.onclick = () => { if (stage.free.length) next(); };
 };
@@ -2035,10 +2118,6 @@ RENDERERS.decorate = (current) => {
     };
   });
   app.querySelectorAll('.topping-btn:not(.pen-btn)').forEach((button) => {
-    if (current.scroll) {
-      button.onclick = () => selectTopping(button);
-      return;
-    }
     bindDragChoice(button, {
       onTap: () => selectTopping(button),
       isOverTarget: (x, y) => within(dish, x, y, 20),
@@ -2069,14 +2148,24 @@ function pickDiners() {
   return [order.friend, ...rest.slice(0, FRIEND_MAX_ON_SCREEN - 1)];
 }
 
+// ปฏิกิริยา: ของที่ไม่ชอบ/ไหม้ → อี๋ · พริก → จาม · ของโปรด/เมนูโปรด → ชอบสุดๆ · เยอะเกิน → อิ่มแปล้ · ที่เหลือ → อร่อย
 function reactionFor(friendId) {
-  const keys = creation.toppings.map((item) => item.key);
+  const friend = FRIENDS[friendId];
+  const keys = [...creation.toppings.map((item) => item.key), ...(creation.free?.items || [])];
+  if (creation.free?.burnt || keys.some((key) => friend.hates.includes(key))) return 'yuck';
   if (keys.some((key) => SNEEZE_TOPPINGS.includes(key))) return 'sneeze';
-  if (creation.free?.burnt) return 'sneeze';
-  if (keys.length + (creation.free?.items.length || 0) >= FULL_TOPPINGS) return 'full';
-  if (creation.free) return pick(['yum', 'yum', 'love']);
-  if (FRIENDS[friendId].likes.includes(activeRecipe)) return 'love';
+  if (keys.some((key) => friend.loves.includes(key)) || (!creation.free && friend.likes.includes(activeRecipe))) return 'love';
+  if (keys.length >= FULL_TOPPINGS) return 'full';
   return 'yum';
+}
+// ป้ายเล็กใต้เพื่อน: ของที่ชอบ ❤ กับของที่ไม่ชอบ ✖ (เด็กจะได้รู้ว่าให้อะไรแล้วเพื่อนจะทำหน้ายังไง)
+function prefsHTML(id) {
+  const friend = FRIENDS[id];
+  return `<span class="prefs" aria-hidden="true"><i class="love"><img src="${thingSrc(friend.loves[0])}" alt=""></i><i class="hate"><img src="${thingSrc(friend.hates[0])}" alt=""></i></span>`;
+}
+function prefsSpeech(id) {
+  const friend = FRIENDS[id];
+  return `${local(friend.name)} ${t('likesWord')} ${friend.loves.map(thingName).join(` ${t('and')} `)} ${t('hatesWord')} ${friend.hates.slice(0, 2).map(thingName).join(` ${t('and')} `)}`;
 }
 
 function popup(html, spoken) {
@@ -2105,8 +2194,8 @@ RENDERERS.serve = () => {
   const diners = pickDiners();
   screen(`<div class="stage-zone">
       <div class="serve-layout">${stageHTML({ plate: true })}<div class="customer-grid">
-        ${diners.map((id) => `<button class="friend-btn" data-friend="${id}" aria-label="${local(FRIENDS[id].name)}">
-          <img class="portrait" src="${friendSrc(id)}" alt="${local(FRIENDS[id].name)}">${id === order.friend ? orderBubbleHTML(order) : ''}
+        ${diners.map((id) => `<button class="friend-btn" data-friend="${id}" aria-label="${prefsSpeech(id)}">
+          <img class="portrait" src="${friendSrc(id)}" alt="${local(FRIENDS[id].name)}">${id === order.friend ? orderBubbleHTML(order) : ''}${prefsHTML(id)}
         </button>`).join('')}
       </div></div>
     </div>
@@ -2164,7 +2253,7 @@ RENDERERS.serve = () => {
     burst.innerHTML = Array.from({ length: reaction === 'yum' ? 3 : 5 }, (_, i) => `<i style="left:${18 + i * 16}%;animation-delay:${i * .12}s">${info.particle}</i>`).join('');
     button.appendChild(burst);
     tone(info.tone, .35);
-    ({ love: SFX.giggle, yum: SFX.yum, sneeze: SFX.achoo, full: SFX.snore })[reaction]?.();
+    ({ love: SFX.giggle, yum: SFX.yum, sneeze: SFX.achoo, full: SFX.snore, yuck: SFX.yuck })[reaction]?.();
     await speak(local(info));
     await wait(400);
     burst.remove();
@@ -2185,6 +2274,7 @@ RENDERERS.serve = () => {
     button.classList.add('fed');
     if (!gallerySaved) {
       state.gallery.unshift({ ...creation, friends: [...creation.friends], photo: snapshot(dish) });
+      state.made++;
       gallerySaved = true;
     } else {
       state.gallery[0] = { ...state.gallery[0], ...creation, friends: [...creation.friends] };
