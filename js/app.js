@@ -42,6 +42,8 @@ const TOOLS = {
 const MIX_GOAL = { stir: 3, whisk: 2000, roll: 1800, spread: 2000 };
 const MIX_TAP_GAIN = 5;
 const MAX_TOPPINGS = 30;
+const GALLERY_MAX = 12;
+const PHOTO_SIZE = 384;
 
 const APPLIANCES = {
   oven: { cook: { th: 'กดเตาอบค้างไว้จนแถบเต็ม', en: 'Press and hold the oven until the bar is full' }, done: { th: 'สุกกำลังดีเลย', en: 'Baked just right' }, tone: 430 },
@@ -61,10 +63,10 @@ const LEGACY_TOPPINGS = { '⭐': 'star', '🍓': 'strawberry', '🌈': 'rainbow'
 const PENS = {
   ketchup: { art: 'tool:ketchup', color: '#e0332b', th: 'ซอสมะเขือเทศ', en: 'ketchup' },
   mayo: { art: 'tool:mayo', color: '#fff3d1', th: 'มายองเนส', en: 'mayonnaise' },
-  jam: { art: 'ing:jam', color: '#c9313d', th: 'แยม', en: 'jam' },
-  honey: { art: 'ing:honey', color: '#f2b134', th: 'น้ำผึ้ง', en: 'honey' },
-  butter: { art: 'ing:butter-cut', color: '#f6d35b', th: 'เนย', en: 'butter' },
-  sauce: { art: 'ing:sauce', color: '#d9432f', th: 'ซอสมะเขือเทศ', en: 'tomato sauce' },
+  jam: { art: 'ing:jam', color: 'rgba(201,49,61,.9)', th: 'แยม', en: 'jam' },
+  honey: { art: 'ing:honey', color: 'rgba(242,177,52,.85)', th: 'น้ำผึ้ง', en: 'honey' },
+  butter: { art: 'ing:butter-cut', color: 'rgba(246,211,91,.85)', th: 'เนย', en: 'butter' },
+  sauce: { art: 'ing:sauce', color: 'rgba(217,67,47,.9)', th: 'ซอสมะเขือเทศ', en: 'tomato sauce' },
   cream: { art: 'top:cream', color: '#f7b8c4', th: 'ครีม', en: 'frosting' }
 };
 const COLORS = ['#ef6f61', '#f4bd3f', '#54b99a', '#67bde3', '#9a78bd'];
@@ -98,7 +100,7 @@ const RECIPES = {
     steps: [
       { type: 'mix', tool: 'rollingpin', action: { th: 'คลึงแป้งให้แบน', en: 'Roll the dough flat' }, fill: 'ing:dough', result: 'pizza-base' },
       { type: 'spread', base: 'pizza-base', pens: ['sauce'], goal: .55, say: { th: 'ถูนิ้วทาซอสให้ทั่วแผ่น', en: 'Rub the sauce all over the base' } },
-      { type: 'sprinkle', item: 'ing:cheese-shreds', tool: 'tool:grater', count: 5, say: { th: 'แตะที่ขูดชีส โรยชีสให้ทั่ว', en: 'Tap the grater to sprinkle cheese' } },
+      { type: 'sprinkle', item: 'ing:cheese-shreds', tool: 'tool:grater', count: 5, say: { th: 'แตะที่ขูดชีส ให้ชีสตกลงบนพิซซ่า', en: 'Tap the grater so cheese falls onto the pizza' } },
       { type: 'decorate', before: true, say: { th: 'วางหน้าพิซซ่าตามใจ แล้วแตะเสร็จแล้ว', en: 'Add toppings, then tap done' } },
       { type: 'cook', appliance: 'oven', inside: 'stage', result: 'dish:pizza', keep: 'toppings' },
       { type: 'slice', count: 2, say: { th: 'ปาดนิ้วตัดพิซซ่าเป็นชิ้น', en: 'Swipe to slice the pizza' } },
@@ -245,7 +247,8 @@ const COPY = {
     cut: 'ปาดนิ้วหั่น', crack: 'แตะให้แตก', cutDone: 'หั่นแล้ว', crackDone: 'แตกแล้ว', prepDone: 'เตรียมเสร็จแล้ว', draw: 'ลากนิ้วบนอาหารเพื่อวาดครีม',
     mixHint: { stir: 'ลากวนๆ ในชามจนแถบเต็ม', whisk: 'ลากไปมาเร็วๆ จนแถบเต็ม', roll: 'ลากซ้ายขวาจนแถบเต็ม', spread: 'ลากไปมาให้ทั่วจนแถบเต็ม' },
     start: 'เริ่มเลย', hold: 'กดค้าง', decorate: 'ตกแต่งได้ตามใจ',
-    done: 'เสร็จแล้ว', serve: 'ลากอาหารไปหาเพื่อน ป้อนได้หลายคน', again: 'ทำอีกจาน', gallery: 'ผลงานของฉัน', place: 'แตะจุดบนอาหาร หรือลากไปวาง',
+    done: 'เสร็จแล้ว', serve: 'ลากอาหารไปหาเพื่อน ป้อนได้หลายคน', again: 'ทำอีกจาน', gallery: 'สมุดผลงาน', place: 'แตะจุดบนอาหาร หรือลากไปวาง',
+    bookIntro: 'นี่คือของอร่อยที่หนูทำเอง แตะดูได้เลย', gaveTo: 'ให้', and: 'กับ', makeAgain: 'ทำอีก',
     praise: ['น่ากินมาก!', 'หอมจังเลย!', 'ทำเก่งมาก!'],
     poured: 'เทเรียบร้อย', flipped: 'พลิกสวยเลย!', spreadDone: 'ทาทั่วแล้ว', sprinkled: 'โรยทั่วแล้ว', shaped: 'ครบแล้ว', lidOn: 'ปิดฝาแล้ว', sliced: 'ตัดเรียบร้อย', dipped: 'ลวกได้ที่แล้ว', moved: 'เรียบร้อย',
     candlePlace: 'แตะบนเค้ก ปักเทียน', candleLight: 'แตะเทียนให้ติดไฟ', candleBlow: 'ปาดนิ้วผ่านเทียน เป่าเลย!', birthday: 'สุขสันต์วันเกิด!',
@@ -258,7 +261,8 @@ const COPY = {
     cut: 'Swipe to slice the', crack: 'Tap to crack the', cutDone: 'sliced', crackDone: 'cracked', prepDone: 'All prepped', draw: 'Drag on the food to draw frosting',
     mixHint: { stir: 'Drag in circles until the bar is full', whisk: 'Drag back and forth until the bar is full', roll: 'Drag left and right until the bar is full', spread: 'Drag all over until the bar is full' },
     start: 'Start', hold: 'Hold', decorate: 'Decorate it your way',
-    done: 'All done', serve: 'Drag food to friends. You can feed more than one', again: 'Make another', gallery: 'My creations', place: 'Tap the food or drag to place it',
+    done: 'All done', serve: 'Drag food to friends. You can feed more than one', again: 'Make another', gallery: 'My cookbook', place: 'Tap the food or drag to place it',
+    bookIntro: 'These are the treats you made. Tap one to see it', gaveTo: 'for', and: 'and', makeAgain: 'Make again',
     praise: ['That looks delicious!', 'It smells wonderful!', 'Great cooking!'],
     poured: 'All poured', flipped: 'Perfect flip!', spreadDone: 'All covered', sprinkled: 'Nicely sprinkled', shaped: 'All done', lidOn: 'Lid is on', sliced: 'Sliced up', dipped: 'Cooked just right', moved: 'Done',
     candlePlace: 'Tap the cake to add candles', candleLight: 'Tap the candles to light them', candleBlow: 'Swipe across the candles to blow!', birthday: 'Happy birthday!',
@@ -287,6 +291,8 @@ function art(ref) {
   const [kind, key] = ref.includes(':') ? ref.split(':') : ['state', ref];
   return `assets/${FOLDERS[kind]}/${key}.png`;
 }
+// url() ใน custom property ถูกแปลงเทียบกับไฟล์ CSS ไม่ใช่หน้าเว็บ เลยต้องใช้ที่อยู่เต็ม
+const absolute = (src) => new URL(src, location.href).href;
 const dishSrc = (id) => art(`dish:${id}`);
 const ingredientSrc = (id) => art(`ing:${id}`);
 const toolSrc = (id) => art(`tool:${id}`);
@@ -311,7 +317,7 @@ function loadState() {
       sound: saved?.sound !== false,
       gallery: gallery
         .filter((item) => item && RECIPES[item.recipe])
-        .slice(0, 6)
+        .slice(0, GALLERY_MAX)
         .map((item) => ({ ...item, toppings: (Array.isArray(item.toppings) ? item.toppings : []).map(normalizeTopping) })),
       served: Number.isFinite(saved?.served) ? saved.served : 0,
       ordersDone: Number.isFinite(saved?.ordersDone) ? saved.ordersDone : 0,
@@ -367,6 +373,156 @@ function tone(freq = 540, length = .12) {
   osc.stop(audioCtx.currentTime + length);
 }
 
+
+// ---------------------------------------------------------------- เสียงประกอบ (สังเคราะห์ด้วย WebAudio ไม่ต้องมีไฟล์เสียง เล่นออฟไลน์ได้)
+let noiseBuffer = null;
+function noiseSource() {
+  if (!noiseBuffer) {
+    const length = audioCtx.sampleRate * 2;
+    noiseBuffer = audioCtx.createBuffer(1, length, audioCtx.sampleRate);
+    const data = noiseBuffer.getChannelData(0);
+    for (let i = 0; i < length; i++) data[i] = Math.random() * 2 - 1;
+  }
+  const source = audioCtx.createBufferSource();
+  source.buffer = noiseBuffer;
+  source.loop = true;
+  return source;
+}
+function sfxReady() {
+  if (!state.sound) return false;
+  unlockAudio();
+  return Boolean(audioCtx);
+}
+// เสียงสั้นๆ: noise ผ่าน filter + envelope
+function noiseBurst({ type = 'bandpass', freq = 1500, q = 1, gain = .12, attack = .005, length = .15, sweepTo = null } = {}) {
+  if (!sfxReady()) return;
+  const now = audioCtx.currentTime;
+  const source = noiseSource();
+  const filter = audioCtx.createBiquadFilter();
+  filter.type = type;
+  filter.frequency.setValueAtTime(freq, now);
+  filter.Q.value = q;
+  if (sweepTo) filter.frequency.exponentialRampToValueAtTime(sweepTo, now + length);
+  const amp = audioCtx.createGain();
+  amp.gain.setValueAtTime(.0001, now);
+  amp.gain.exponentialRampToValueAtTime(gain, now + attack);
+  amp.gain.exponentialRampToValueAtTime(.0001, now + length);
+  source.connect(filter).connect(amp).connect(audioCtx.destination);
+  source.start(now);
+  source.stop(now + length + .05);
+}
+function chirp(from, to, { type = 'sine', gain = .07, length = .18, delay = 0 } = {}) {
+  if (!sfxReady()) return;
+  const now = audioCtx.currentTime + delay;
+  const osc = audioCtx.createOscillator();
+  const amp = audioCtx.createGain();
+  osc.type = type;
+  osc.frequency.setValueAtTime(from, now);
+  osc.frequency.exponentialRampToValueAtTime(to, now + length);
+  amp.gain.setValueAtTime(.0001, now);
+  amp.gain.exponentialRampToValueAtTime(gain, now + .02);
+  amp.gain.exponentialRampToValueAtTime(.0001, now + length);
+  osc.connect(amp).connect(audioCtx.destination);
+  osc.start(now);
+  osc.stop(now + length + .05);
+}
+const SFX = {
+  chop: () => { noiseBurst({ type: 'lowpass', freq: 900, gain: .18, length: .09 }); chirp(220, 90, { gain: .05, length: .08 }); },
+  crack: () => { noiseBurst({ type: 'highpass', freq: 2500, gain: .14, length: .07 }); chirp(900, 300, { gain: .04, length: .1 }); },
+  plip: () => chirp(700, 1100, { gain: .06, length: .09 }),
+  swish: () => noiseBurst({ type: 'bandpass', freq: 1800, q: .7, gain: .05, length: .14, sweepTo: 2600 }),
+  whoosh: () => noiseBurst({ type: 'bandpass', freq: 600, q: .8, gain: .12, length: .32, sweepTo: 2400 }),
+  tick: () => noiseBurst({ type: 'highpass', freq: 4000, gain: .06, length: .04 }),
+  clunk: () => { noiseBurst({ type: 'lowpass', freq: 400, gain: .16, length: .1 }); chirp(160, 120, { type: 'triangle', gain: .06, length: .12 }); },
+  ding: () => { chirp(1568, 1560, { gain: .09, length: .5 }); chirp(2349, 2340, { gain: .05, length: .35, delay: .02 }); },
+  giggle: () => [0, .12, .24, .36].forEach((d, i) => chirp(600 + i * 120, 900 + i * 120, { gain: .06, length: .1, delay: d })),
+  yum: () => chirp(420, 520, { gain: .06, length: .35 }),
+  achoo: () => { chirp(500, 900, { gain: .05, length: .25 }); noiseBurst({ type: 'bandpass', freq: 1200, q: .6, gain: .16, length: .3, sweepTo: 500 }); },
+  snore: () => { chirp(180, 120, { type: 'triangle', gain: .05, length: .5 }); chirp(140, 200, { type: 'triangle', gain: .04, length: .5, delay: .55 }); },
+  // เพลงแฮปปี้เบิร์ธเดย์ ท่อนแรก
+  birthday: () => {
+    const notes = [[392, .3], [392, .2], [440, .5], [392, .5], [523, .5], [494, .9], [392, .3], [392, .2], [440, .5], [392, .5], [587, .5], [523, .9]];
+    let at = 0;
+    notes.forEach(([freq, length]) => { chirp(freq, freq, { type: 'triangle', gain: .07, length: length * .9, delay: at }); at += length; });
+  }
+};
+// เสียงยาวระหว่างกดค้าง คืน stop()
+const LOOPS = {
+  sizzle: () => ({ noise: { type: 'bandpass', freq: 3800, q: .5, gain: .07 }, crackle: 14 }),
+  boil: () => ({ noise: { type: 'lowpass', freq: 420, q: .8, gain: .07 }, blips: [140, 260, 240] }),
+  whirr: () => ({ osc: { type: 'sawtooth', freq: 95, gain: .045, lowpass: 900, vibrato: 7 } }),
+  hum: () => ({ osc: { type: 'triangle', freq: 60, gain: .04, lowpass: 400, vibrato: 0 }, noise: { type: 'lowpass', freq: 700, q: .5, gain: .02 } }),
+  freeze: () => ({ noise: { type: 'lowpass', freq: 260, q: .5, gain: .035 }, blips: [1900, 2400, 400] }),
+  pour: () => ({ noise: { type: 'bandpass', freq: 650, q: 1.2, gain: .06 }, wobble: 5 })
+};
+const APPLIANCE_LOOP = { pan: 'sizzle', pot: 'boil', blender: 'whirr', oven: 'hum', toaster: 'hum', freezer: 'freeze' };
+function startLoop(name) {
+  if (!sfxReady() || !LOOPS[name]) return () => {};
+  const spec = LOOPS[name]();
+  const now = audioCtx.currentTime;
+  const master = audioCtx.createGain();
+  master.gain.setValueAtTime(.0001, now);
+  master.gain.exponentialRampToValueAtTime(1, now + .15);
+  master.connect(audioCtx.destination);
+  const nodes = [];
+  let timer = null;
+  if (spec.noise) {
+    const source = noiseSource();
+    const filter = audioCtx.createBiquadFilter();
+    filter.type = spec.noise.type;
+    filter.frequency.value = spec.noise.freq;
+    filter.Q.value = spec.noise.q;
+    const amp = audioCtx.createGain();
+    amp.gain.value = spec.noise.gain;
+    if (spec.crackle || spec.wobble) {
+      const lfo = audioCtx.createOscillator();
+      const depth = audioCtx.createGain();
+      lfo.frequency.value = spec.crackle || spec.wobble;
+      depth.gain.value = spec.noise.gain * .8;
+      lfo.connect(depth).connect(amp.gain);
+      lfo.start(now);
+      nodes.push(lfo);
+    }
+    source.connect(filter).connect(amp).connect(master);
+    source.start(now);
+    nodes.push(source);
+  }
+  if (spec.osc) {
+    const osc = audioCtx.createOscillator();
+    osc.type = spec.osc.type;
+    osc.frequency.value = spec.osc.freq;
+    const filter = audioCtx.createBiquadFilter();
+    filter.type = 'lowpass';
+    filter.frequency.value = spec.osc.lowpass;
+    const amp = audioCtx.createGain();
+    amp.gain.value = spec.osc.gain;
+    if (spec.osc.vibrato) {
+      const lfo = audioCtx.createOscillator();
+      const depth = audioCtx.createGain();
+      lfo.frequency.value = spec.osc.vibrato;
+      depth.gain.value = spec.osc.freq * .04;
+      lfo.connect(depth).connect(osc.frequency);
+      lfo.start(now);
+      nodes.push(lfo);
+    }
+    osc.connect(filter).connect(amp).connect(master);
+    osc.start(now);
+    nodes.push(osc);
+  }
+  if (spec.blips) {
+    const [low, high, every] = spec.blips;
+    timer = setInterval(() => chirp(low + Math.random() * (high - low), low, { gain: .035, length: .12 }), every);
+  }
+  return () => {
+    clearInterval(timer);
+    const end = audioCtx.currentTime;
+    master.gain.cancelScheduledValues(end);
+    master.gain.setValueAtTime(master.gain.value, end);
+    master.gain.exponentialRampToValueAtTime(.0001, end + .2);
+    setTimeout(() => { nodes.forEach((node) => { try { node.stop(); } catch {} }); master.disconnect(); }, 260);
+  };
+}
+
 function speak(text) {
   currentPrompt = text;
   if (!state.sound || !('speechSynthesis' in window)) return Promise.resolve();
@@ -411,26 +567,125 @@ function topbar(title, canBack = false) {
 
 function bindTopbar(onBack) {
   app.querySelector('#back')?.addEventListener('click', () => { tone(360); onBack(); });
+  const rerender = () => {
+    if (activeRecipe) renderStep();
+    else if (app.querySelector('.book')) showBook();
+    else showHome();
+  };
   app.querySelector('#language').onclick = () => {
     stopSpeech();
     state.lang = state.lang === 'th' ? 'en' : 'th';
     saveState();
-    if (activeRecipe) renderStep(); else showHome();
+    rerender();
   };
   app.querySelector('#sound').onclick = () => {
     state.sound = !state.sound;
     saveState();
     if (!state.sound) stopSpeech();
-    if (activeRecipe) renderStep(); else showHome();
+    rerender();
   };
 }
 
 function galleryHTML() {
   if (!state.gallery.length) return '<div class="gallery-strip" hidden></div>';
-  return `<div class="gallery-strip" aria-label="${t('gallery')}">
-    <span class="gallery-title">🖼️</span>
-    ${state.gallery.map((item) => `<img class="gallery-item" src="${dishSrc(item.recipe)}" alt="${local(RECIPES[item.recipe].name)}">`).join('')}
+  return `<button class="gallery-strip" id="book" aria-label="${t('gallery')}">
+    <span class="gallery-title">📖</span>
+    ${state.gallery.slice(0, 6).map((item) => `<img class="gallery-item" src="${item.photo || dishSrc(item.recipe)}" alt="${local(RECIPES[item.recipe].name)}">`).join('')}
+  </button>`;
+}
+
+// ถ่ายรูปจานบนจอ (ฐาน + สีที่ทา + ของโรย + ท็อปปิ้ง + เทียน) เก็บเป็น JPEG เล็กๆ ไว้ในสมุดผลงาน
+function snapshot(dish) {
+  try {
+    const rect = dish.getBoundingClientRect();
+    const canvas = document.createElement('canvas');
+    canvas.width = canvas.height = PHOTO_SIZE;
+    const ctx = canvas.getContext('2d');
+    const k = PHOTO_SIZE / rect.width;
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, PHOTO_SIZE, PHOTO_SIZE);
+    // ซูมเข้าหน่อยให้อาหารเต็มรูป (บนจอมีขอบจานกว้าง)
+    ctx.translate(PHOTO_SIZE / 2, PHOTO_SIZE / 2);
+    ctx.scale(1.35, 1.35);
+    ctx.translate(-PHOTO_SIZE / 2, -PHOTO_SIZE / 2);
+    const plate = dish.querySelector('.food-color');
+    if (plate) {
+      ctx.fillStyle = plate.style.background;
+      ctx.globalAlpha = .45;
+      ctx.beginPath();
+      ctx.arc(PHOTO_SIZE / 2, PHOTO_SIZE / 2, PHOTO_SIZE * .31, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.globalAlpha = 1;
+    }
+    const drawImage = (img) => {
+      if (!img.complete || !img.naturalWidth) return;
+      const r = img.getBoundingClientRect();
+      // วาดแบบ object-fit: contain ในกล่องของรูป
+      const scale = Math.min(r.width / img.naturalWidth, r.height / img.naturalHeight);
+      const w = img.naturalWidth * scale;
+      const h = img.naturalHeight * scale;
+      ctx.drawImage(img, (r.left - rect.left + (r.width - w) / 2) * k, (r.top - rect.top + (r.height - h) / 2) * k, w * k, h * k);
+    };
+    const base = dish.querySelector('.food-icon');
+    drawImage(base);
+    // สีที่ทา: ตัดให้อยู่ในรูปฐานเหมือนบนจอ
+    const layer = document.createElement('canvas');
+    layer.width = layer.height = PHOTO_SIZE;
+    const lctx = layer.getContext('2d');
+    lctx.drawImage(paint, 0, 0, PHOTO_SIZE, PHOTO_SIZE);
+    lctx.globalCompositeOperation = 'destination-in';
+    const br = base.getBoundingClientRect();
+    const scale = Math.min(br.width / base.naturalWidth, br.height / base.naturalHeight);
+    lctx.drawImage(base, (br.left - rect.left + (br.width - base.naturalWidth * scale) / 2) * k, (br.top - rect.top + (br.height - base.naturalHeight * scale) / 2) * k, base.naturalWidth * scale * k, base.naturalHeight * scale * k);
+    ctx.drawImage(layer, 0, 0);
+    dish.querySelectorAll('.bit, .topping, .candle img').forEach(drawImage);
+    return canvas.toDataURL('image/jpeg', .82);
+  } catch {
+    return null;
+  }
+}
+
+function friendChipsHTML(ids) {
+  return `<span class="chips">${(ids || []).map((id) => `<img src="${friendSrc(id)}" alt="${local(FRIENDS[id].name)}">`).join('')}</span>`;
+}
+
+// สมุดผลงาน: รูปจานที่ทำแล้ว แตะเพื่อฟังชื่อ + ดูใหญ่
+function showBook() {
+  activeRecipe = null;
+  const items = state.gallery;
+  app.innerHTML = `<div class="app-shell play-screen">
+    ${topbar(`📖 ${t('gallery')}`, true)}
+    <div class="prompt">${t('bookIntro')}</div>
+    <section class="book">
+      ${items.map((item, index) => `<button class="book-card" data-book="${index}" aria-label="${local(RECIPES[item.recipe].name)}">
+        <img class="photo" src="${item.photo || dishSrc(item.recipe)}" alt="">
+        <span class="book-meta"><img class="mini" src="${dishSrc(item.recipe)}" alt="">${friendChipsHTML(item.friends)}</span>
+      </button>`).join('')}
+    </section>
   </div>`;
+  bindTopbar(showHome);
+  speak(t('bookIntro'));
+  app.querySelectorAll('[data-book]').forEach((button) => {
+    button.onclick = async () => {
+      const item = items[Number(button.dataset.book)];
+      const names = (item.friends || []).map((id) => local(FRIENDS[id].name)).join(` ${t('and')} `);
+      tone(620);
+      flash(button, 'pop', 500);
+      const layer = document.createElement('div');
+      layer.className = 'popup-layer';
+      layer.innerHTML = `<div class="popup book-popup">
+        <img class="photo big" src="${item.photo || dishSrc(item.recipe)}" alt="">
+        <p><img class="mini" src="${dishSrc(item.recipe)}" alt=""> ${local(RECIPES[item.recipe].name)}</p>
+        ${friendChipsHTML(item.friends)}
+        <span class="popup-actions"><button class="action-btn primary" id="book-again">↻ ${t('makeAgain')}</button><button class="action-btn" id="popup-ok">👍 ${t('ok')}</button></span>
+      </div>`;
+      document.body.appendChild(layer);
+      layer.querySelector('#popup-ok').onclick = () => layer.remove();
+      layer.addEventListener('click', (event) => { if (event.target === layer) layer.remove(); });
+      layer.querySelector('#book-again').onclick = () => { layer.remove(); startRecipe(item.recipe); };
+      await speak(`${local(RECIPES[item.recipe].name)}${names ? ` ${t('gaveTo')} ${names}` : ''}`);
+    };
+  });
 }
 
 function orderBubbleHTML(order, done = false) {
@@ -470,6 +725,8 @@ function showHome() {
     </section>
   </div>`;
   bindTopbar(showHome);
+  const book = app.querySelector('#book');
+  if (book) book.onclick = () => { tone(620); showBook(); };
   const orderButton = app.querySelector('#order');
   if (orderButton) {
     orderButton.onclick = async () => {
@@ -648,15 +905,18 @@ const flash = (element, className, ms = 400) => {
   setTimeout(() => element.isConnected && element.classList.remove(className), ms);
 };
 // กดค้าง: คืน promise เมื่อแถบเต็ม (ปล่อยแล้วแถบหยุด)
-function holdMeter(element, meter, { seconds = 5, tone: freq = 430, onStart, onStop, onTick } = {}) {
+function holdMeter(element, meter, { seconds = 5, tone: freq = 430, loop = null, onStart, onStop, onTick } = {}) {
   return new Promise((resolve) => {
     let progress = 0;
     let timer = null;
     let finished = false;
     let nextChime = 20;
+    let stopLoop = () => {};
     const stop = () => {
       window.removeEventListener('pointerup', stop);
       window.removeEventListener('pointercancel', stop);
+      stopLoop();
+      stopLoop = () => {};
       if (finished) return;
       clearInterval(timer);
       timer = null;
@@ -668,6 +928,7 @@ function holdMeter(element, meter, { seconds = 5, tone: freq = 430, onStart, onS
       event?.preventDefault();
       element.classList.add('running', 'holding');
       tone(freq, .18);
+      if (loop) stopLoop = startLoop(loop);
       onStart?.();
       window.addEventListener('pointerup', stop, { once: true });
       window.addEventListener('pointercancel', stop, { once: true });
@@ -684,6 +945,7 @@ function holdMeter(element, meter, { seconds = 5, tone: freq = 430, onStart, onS
           clearInterval(timer);
           window.removeEventListener('pointerup', stop);
           window.removeEventListener('pointercancel', stop);
+          setTimeout(() => { stopLoop(); stopLoop = () => {}; }, 700);
           resolve();
         }
       }, 100);
@@ -705,12 +967,12 @@ const holdHintHTML = () => `<span class="hold-hint" aria-hidden="true"><b>☝</b
 function toppingHTML(item) {
   return `<img class="topping" src="${toppingSrc(item.key)}" alt="" style="left:${item.x}%;top:${item.y}%">`;
 }
-function bitHTML(bit) {
-  return `<img class="bit" src="${art(bit.art)}" alt="" style="left:${bit.x}%;top:${bit.y}%;width:${bit.size || 14}%">`;
+function bitHTML(bit, extra = '', delay = 0) {
+  return `<img class="bit ${extra}" src="${art(bit.art)}" alt="" style="left:${bit.x}%;top:${bit.y}%;width:${bit.size || 14}%;animation-delay:${delay}ms">`;
 }
 // เวที: รูปฐาน + สีที่ทา + ของโรย + ท็อปปิ้ง + รอยตัด + เทียน
 function stageHTML({ base = stage.base, plate = false, id = 'dish', className = 'dish' } = {}) {
-  return `<div class="${className}" id="${id}">
+  return `<div class="${className}" id="${id}" style="--mask:url('${absolute(base)}')">
     ${plate ? `<span class="food-color" id="food-color" style="background:${creation.color}"></span>` : ''}
     <img class="food-icon" src="${base}" alt="">
     <canvas class="frosting" aria-hidden="true"></canvas>
@@ -853,7 +1115,7 @@ RENDERERS.prep = (current) => {
     hits++;
     item.classList.remove('hit');
     requestAnimationFrame(() => item.classList.add('hit'));
-    tone(560 + hits * 90, .1);
+    if (INGREDIENTS[queue[index]].prep === 'crack') SFX.crack(); else SFX.chop();
   };
   const finishItem = async () => {
     busy = true;
@@ -861,7 +1123,7 @@ RENDERERS.prep = (current) => {
     img.src = preparedSrc(id);
     item.classList.add('prepared');
     app.querySelector(`.queue-item[data-index="${index}"]`)?.classList.add('done');
-    tone(900, .2);
+    SFX.plip();
     await speak(`${local(INGREDIENTS[id])} ${t(`${INGREDIENTS[id].prep}Done`)}`);
     index++;
     if (index >= queue.length) return next();
@@ -952,6 +1214,7 @@ RENDERERS.add = (current) => {
     const id = current.items[Number(button.dataset.index)];
     const spot = intoAppliance ? '' : `style="left:${34 + (added % 3) * 16}%;top:${34 + Math.floor(added / 3) * 14}%"`;
     target.insertAdjacentHTML('beforeend', `<img class="in-bowl ${intoAppliance ? 'sink' : ''}" src="${preparedSrc(id)}" alt="" ${spot}>`);
+    SFX.plip();
     tone(520 + added * 80);
     added++;
     const isLast = added === current.items.length;
@@ -1058,6 +1321,7 @@ RENDERERS.mix = (current) => {
     if (distance < 2) return;
     moved = true;
     moveTool(event.clientX - center.x, event.clientY - center.y);
+    if (!last.swishAt || performance.now() - last.swishAt > 220) { SFX.swish(); last.swishAt = performance.now(); }
     let gain = 0;
     if (motion === 'stir') {
       const angle = Math.atan2(event.clientY - center.y, event.clientX - center.x);
@@ -1128,12 +1392,13 @@ RENDERERS.cook = (current) => {
   const element = app.querySelector('#appliance');
   const cookingStage = app.querySelector('#cooking-stage');
   if (cookingStage) syncPaint(cookingStage);
-  holdMeter(element, app.querySelector('#meter'), { seconds: current.seconds || 5, tone: APPLIANCES[kind].tone }).then(async () => {
+  holdMeter(element, app.querySelector('#meter'), { seconds: current.seconds || 5, tone: APPLIANCES[kind].tone, loop: APPLIANCE_LOOP[kind] }).then(async () => {
     element.removeAttribute('tabindex');
     await wait(900);
     element.classList.remove('running', 'holding');
     element.classList.add('finished');
-    tone(820, .25);
+    SFX.ding();
+    if (kind === 'toaster') SFX.clunk();
     if (current.result) {
       const resultSrc = art(current.result);
       if (current.result.startsWith('appliance:')) {
@@ -1177,7 +1442,7 @@ RENDERERS.pour = (current) => {
   const target = app.querySelector('#pour-target');
   const oilSheen = current.from === 'ing:oil';
   holdMeter(source, app.querySelector('#meter'), {
-    seconds: current.seconds || 3, tone: 520,
+    seconds: current.seconds || 3, tone: 520, loop: 'pour',
     onStart: () => { source.classList.add('tilting'); target.classList.add('receiving'); },
     onStop: () => { source.classList.remove('tilting'); target.classList.remove('receiving'); },
     onTick: (progress) => { if (oilSheen) target.style.setProperty('--sheen', progress / 100); }
@@ -1223,7 +1488,7 @@ RENDERERS.flip = (current) => {
     if (start.y - event.clientY >= 60) {
       done = true;
       food.classList.add('flipping');
-      tone(600, .15);
+      SFX.whoosh();
       await wait(260);
       food.src = art(current.after);
       stage.base = art(current.after);
@@ -1257,6 +1522,7 @@ RENDERERS.move = (current) => {
   const stack = [[50, 40], [50, 22], [50, 6]];
   const drop = async () => {
     count++;
+    SFX.plip();
     tone(600 + count * 80, .15);
     flash(to, 'drop-target', 420);
     if (count < current.count) {
@@ -1296,7 +1562,7 @@ RENDERERS.dip = (current) => {
   const element = app.querySelector('#appliance');
   const basket = app.querySelector('#dip-basket');
   holdMeter(element, app.querySelector('#meter'), {
-    seconds: current.seconds || 3, tone: 300,
+    seconds: current.seconds || 3, tone: 300, loop: 'boil',
     onStart: () => basket.classList.add('down'),
     onStop: () => basket.classList.remove('down')
   }).then(async () => {
@@ -1331,6 +1597,7 @@ RENDERERS.spread = (current) => {
     if (current.result) {
       stage.base = art(current.result);
       dish.querySelector('.food-icon').src = stage.base;
+      dish.style.setProperty('--mask', `url('${absolute(stage.base)}')`);
       clearPaint();
       syncPaint(dish);
       dish.classList.add('pop');
@@ -1366,10 +1633,9 @@ RENDERERS.spread = (current) => {
 // ---------------------------------------------------------------- ขั้น: โรย (แตะที่ขูด/ขวดโรยของลงเวที)
 RENDERERS.sprinkle = (current) => {
   const prompt = local(current.say);
-  screen(`<div class="stage-zone">${stageHTML()}</div>
-    <div class="tray">
+  screen(`<div class="stage-zone"><div class="sprinkle-wrap">${stageHTML()}
       <button class="shaker" id="shaker" aria-label="${prompt}"><img src="${art(current.tool)}" alt="">${hintHTML('tap')}</button>
-    </div>`, prompt);
+    </div></div>`, prompt);
   const dish = app.querySelector('#dish');
   syncPaint(dish);
   const shaker = app.querySelector('#shaker');
@@ -1378,13 +1644,13 @@ RENDERERS.sprinkle = (current) => {
     if (shaker.disabled) return;
     taps++;
     flash(shaker, 'shake', 300);
-    tone(500 + taps * 60, .1);
+    SFX.tick(); setTimeout(SFX.tick, 60); setTimeout(SFX.tick, 130);
     for (let i = 0; i < 5; i++) {
       const angle = Math.random() * Math.PI * 2;
       const radius = Math.random() * 28;
       const bit = { art: current.item, x: 50 + Math.cos(angle) * radius, y: 50 + Math.sin(angle) * radius, size: 12 + Math.random() * 6 };
       stage.bits.push(bit);
-      dish.insertAdjacentHTML('beforeend', bitHTML(bit));
+      dish.insertAdjacentHTML('beforeend', bitHTML(bit, 'fall', i * 70));
     }
     if (taps >= current.count) {
       shaker.disabled = true;
@@ -1410,7 +1676,7 @@ RENDERERS.shape = (current) => {
     const bit = { art: current.piece, x: Math.max(14, Math.min(86, x)), y: Math.max(18, Math.min(82, y)), size: 22 };
     stage.bits.push(bit);
     dish.insertAdjacentHTML('beforeend', bitHTML(bit));
-    tone(560 + stage.bits.length * 60, .12);
+    SFX.plip();
     badge.textContent = `${stage.bits.length} / ${current.count}`;
     if (stage.bits.length >= current.count) {
       await wait(400);
@@ -1438,7 +1704,7 @@ RENDERERS.lid = (current) => {
     lid.classList.add('used');
     target.querySelector('.machine').src = art(current.result);
     flash(target, 'pop', 500);
-    tone(720, .2);
+    SFX.clunk();
     await wait(400);
     await speak(t('lidOn'));
     next();
@@ -1474,7 +1740,7 @@ RENDERERS.slice = (current) => {
       start.cut = true;
       stage.slices++;
       dish.insertAdjacentHTML('beforeend', `<i class="slice-line" style="transform:translate(-50%,-50%) rotate(${(stage.slices - 1) * 90 + 45}deg)"></i>`);
-      tone(640 + stage.slices * 80, .12);
+      SFX.chop();
       if (stage.slices >= current.count) {
         done = true;
         await wait(400);
@@ -1526,7 +1792,8 @@ RENDERERS.candles = (current) => {
       if (!element || element.classList.contains('lit')) return;
       element.classList.add('lit');
       stage.candles[Number(element.dataset.index)].lit = true;
-      tone(900, .15);
+      SFX.tick();
+      chirp(1200, 1800, { gain: .04, length: .12 });
       if (stage.candles.every((candle) => candle.lit)) {
         await wait(300);
         hint.className = 'touch-hint blow';
@@ -1547,8 +1814,9 @@ RENDERERS.candles = (current) => {
       dish.dataset.phase = phase;
       dish.querySelectorAll('[data-candle]').forEach((element) => { element.classList.remove('lit'); element.classList.add('out'); });
       stage.candles.forEach((candle) => { candle.lit = false; candle.out = true; });
-      tone(300, .3);
+      SFX.whoosh();
       confetti();
+      setTimeout(SFX.birthday, 300);
       await speak(t('birthday'));
       next();
     }
@@ -1594,7 +1862,7 @@ RENDERERS.decorate = (current) => {
     const item = { key, x, y };
     creation.toppings.push(item);
     dish.insertAdjacentHTML('beforeend', toppingHTML(item));
-    tone(680 + creation.toppings.length * 20);
+    SFX.plip();
   };
   app.querySelectorAll('.swatch').forEach((button) => {
     button.onclick = () => {
@@ -1737,6 +2005,7 @@ RENDERERS.serve = () => {
     burst.innerHTML = Array.from({ length: reaction === 'yum' ? 3 : 5 }, (_, i) => `<i style="left:${18 + i * 16}%;animation-delay:${i * .12}s">${info.particle}</i>`).join('');
     button.appendChild(burst);
     tone(info.tone, .35);
+    ({ love: SFX.giggle, yum: SFX.yum, sneeze: SFX.achoo, full: SFX.snore })[reaction]?.();
     await speak(local(info));
     await wait(400);
     burst.remove();
@@ -1756,12 +2025,12 @@ RENDERERS.serve = () => {
     creation.friend ||= friendId;
     button.classList.add('fed');
     if (!gallerySaved) {
-      state.gallery.unshift({ ...creation, friends: [...creation.friends] });
+      state.gallery.unshift({ ...creation, friends: [...creation.friends], photo: snapshot(dish) });
       gallerySaved = true;
     } else {
-      state.gallery[0] = { ...creation, friends: [...creation.friends] };
+      state.gallery[0] = { ...state.gallery[0], ...creation, friends: [...creation.friends] };
     }
-    state.gallery = state.gallery.slice(0, 6);
+    state.gallery = state.gallery.slice(0, GALLERY_MAX);
     const orderMatched = state.order && state.order.friend === friendId && state.order.recipe === activeRecipe;
     const unlockedBefore = unlockedFriends();
     state.served++;
