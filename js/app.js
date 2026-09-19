@@ -439,7 +439,6 @@ function t(key) { return COPY[state.lang][key]; }
 function local(value) { return value[state.lang]; }
 
 function unlockAudio() {
-  unlockVoice();
   // iOS ยอมให้พูดได้ก็ต่อเมื่อ speak() ครั้งแรกเกิดตอนผู้ใช้แตะ — พูดประโยคเงียบๆ ไว้ก่อน แล้วรายชื่อเสียงจะโหลดตามมา
   if (!speechWarmed && 'speechSynthesis' in window) {
     speechWarmed = true;
@@ -627,20 +626,21 @@ function startLoop(name) {
 // ประโยคที่ประกอบสดๆ (เช่น "แมวน้ำ ชอบ กุ้ง กับ พริก") ต่อจากคลิปย่อยเป็นคำๆ ถ้าหาไม่ครบค่อยใช้เสียงในเครื่อง
 const VOICE_DIR = 'assets/voice/th/';
 let voiceClips = null;       // ข้อความ → ชื่อไฟล์
-let voicePlayer = null;      // <audio> ตัวเดียว ปลดล็อกตอนแตะครั้งแรก แล้วเปลี่ยน src ใช้ซ้ำ (iOS ยอมเล่นนอก gesture)
+const voiceBuffers = new Map();   // ชื่อไฟล์ → AudioBuffer (ถอดรหัสแล้ว)
+let voiceSource = null;      // คลิปที่กำลังเล่น
 fetch(`${VOICE_DIR}manifest.json`).then((response) => response.json()).then((clips) => { voiceClips = clips; }).catch(() => {});
 
-function unlockVoice() {
-  if (voicePlayer) return;
-  voicePlayer = new Audio();
-  voicePlayer.preload = 'auto';
-  voicePlayer.setAttribute('playsinline', '');
-  const first = voiceClips && Object.values(voiceClips)[0];
-  if (!first) { voicePlayer = null; return; }
-  // play() แล้ว pause() ทันทีในจังหวะแตะ = ปลดล็อกโดยไม่มีเสียงหลุด (iOS ไม่สน volume/muted)
-  voicePlayer.src = VOICE_DIR + first;
-  voicePlayer.play().catch(() => {});
-  voicePlayer.pause();
+// เล่นคลิปผ่าน Web Audio ตัวเดียวกับเสียงเอฟเฟกต์ — ถ้าใช้ <audio> แยก iOS จะสลับโหมดเสียงแล้วเอฟเฟกต์ (ปั่น/อบ) เงียบไป
+// และ AudioContext ปลดล็อกแล้วตั้งแต่แตะครั้งแรก ไม่ต้องปลดล็อกเพิ่ม
+async function voiceBuffer(file) {
+  if (voiceBuffers.has(file)) return voiceBuffers.get(file);
+  const promise = fetch(VOICE_DIR + file).then((response) => response.arrayBuffer()).then((bytes) => new Promise((resolve, reject) => {
+    // iOS Safari รุ่นเก่าใช้ decodeAudioData แบบ callback เท่านั้น
+    const result = audioCtx.decodeAudioData(bytes, resolve, reject);
+    if (result && result.then) result.then(resolve, reject);
+  })).catch((error) => { voiceBuffers.delete(file); throw error; });
+  voiceBuffers.set(file, promise);
+  return promise;
 }
 
 // หาคลิปให้ทั้งประโยค: ตรงทั้งข้อความก่อน ไม่งั้นแบ่งตามช่องว่างแล้วจับคู่วลีที่ยาวที่สุดไปเรื่อยๆ
@@ -663,28 +663,26 @@ function clipsFor(text) {
 }
 
 // เล่นคลิปต่อกัน คืน true เมื่อเล่นจบ / false เมื่อเล่นไม่ได้ (ให้ไปใช้เสียงในเครื่องแทน)
-function playClips(files, generation) {
-  return new Promise((resolve) => {
-    if (!voicePlayer) return resolve(false);
-    const player = voicePlayer;
-    let index = 0;
-    let timer = null;
-    const cleanup = () => {
-      clearTimeout(timer);
-      player.onended = player.onerror = null;
-    };
-    const next = () => {
-      cleanup();
-      if (generation !== speechGeneration) return resolve(true);
-      if (index >= files.length) return resolve(true);
-      player.onended = next;
-      player.onerror = () => { cleanup(); resolve(index === 0 ? false : true); };
-      timer = setTimeout(next, 15000);
-      player.src = VOICE_DIR + files[index++];
-      player.play().catch(() => { cleanup(); resolve(false); });
-    };
-    next();
-  });
+async function playClips(files, generation) {
+  unlockAudio();
+  if (!audioCtx) return false;
+  for (const file of files) {
+    if (generation !== speechGeneration) return true;
+    let buffer;
+    try { buffer = await voiceBuffer(file); } catch { return false; }
+    if (generation !== speechGeneration) return true;
+    if (audioCtx.state !== 'running') { try { await audioCtx.resume(); } catch {} }
+    await new Promise((resolve) => {
+      const source = audioCtx.createBufferSource();
+      source.buffer = buffer;
+      source.connect(audioCtx.destination);
+      const timer = setTimeout(resolve, buffer.duration * 1000 + 500);
+      source.onended = () => { clearTimeout(timer); resolve(); };
+      voiceSource = source;
+      source.start();
+    });
+  }
+  return true;
 }
 
 function speak(text) {
@@ -738,7 +736,7 @@ function stopSpeech() {
   speechGeneration++;
   speechCancelledAt = Date.now();
   window.speechSynthesis?.cancel();
-  if (voicePlayer) { voicePlayer.onended = voicePlayer.onerror = null; voicePlayer.pause(); }
+  if (voiceSource) { try { voiceSource.stop(); } catch {} voiceSource = null; }
   speechQueue = Promise.resolve();
 }
 
