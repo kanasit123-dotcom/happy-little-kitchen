@@ -1395,7 +1395,7 @@ RENDERERS.prep = (current) => {
     item.classList.add('prepared');
     app.querySelector(`.queue-item[data-index="${index}"]`)?.classList.add('done');
     SFX.plip();
-    await speak(`${local(INGREDIENTS[id])} ${t(`${INGREDIENTS[id].prep}Done`)}`);
+    await speak(t(`${INGREDIENTS[id].prep}Done`));   // ชื่อของเพิ่งพูดไปตอนบอกโจทย์แล้ว ไม่ต้องซ้ำ
     index++;
     if (index >= queue.length) return next();
     hits = 0;
