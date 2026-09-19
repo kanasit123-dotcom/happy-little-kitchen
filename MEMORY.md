@@ -34,6 +34,16 @@ Real play on the iPad mini found three bugs, all fixed in v26: Thai speech was s
 
 The user listened to demos and chose Microsoft Neural **Premwadee** (female) over Niwat and the iOS Kanya voice; all Thai prompts are now shipped as MP3 clips (`design/voice.py`, ~3 MB, cached offline). They also asked to drop finger-drawn frosting in the decorate step ("ตกแต่งปกติก็พอ หรือถ้ามีซอสก็ทาซอส"): decorate = toppings + plate colour, sauce pens only where a recipe has sauce; the spread cooking steps stay. If they later dislike rubbing cream on the cupcake/cake, turn those into a tap-to-frost step.
 
+## Status at hand-off (2026-09-19 evening, live v30)
+
+Session summary (all deployed, `tests/app.cjs` green locally and against the live URL):
+- v26 iPad fixes: explicit `utterance.voice` for Thai, serve layout wraps on tablets, no orphaned drag ghost on a two-finger touch.
+- v27 recorded Thai speech (Premwadee via `design/voice.py`), decorate step without finger frosting (sauce pens only where a recipe has sauce).
+- v28 prep step says only "หั่นแล้ว/แตกแล้ว" (the ingredient name was just spoken).
+- v29 clips play through Web Audio, not `<audio>` (an `<audio>` element silenced the cooking loops on iOS).
+- v30 clip silence trimmed and stitched words scheduled back-to-back.
+Open questions for the user: whether cupcake/cake frosting should become tap-to-frost instead of rubbing; whether any other prompt sounds repetitive. Same voice pipeline now lives in game-lilly (v35) — keep the two `design/voice.py` scripts in step when improving one.
+
 ## Status at hand-off (2026-09-19, live v25)
 
 Everything below is deployed at https://kanasit123-dotcom.github.io/happy-little-kitchen/ and covered by `tests/app.cjs` (run it locally and against the live URL after every deploy):
