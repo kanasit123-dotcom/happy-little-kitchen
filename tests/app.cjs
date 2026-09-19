@@ -100,6 +100,24 @@ const path = require('node:path');
       await page.screenshot({ path: path.join(output, `${name}-mobile.png`), fullPage: true });
     };
 
+    // iPad แนวตั้ง/แนวนอน และจอใหญ่: จานกับเพื่อนทุกคนต้องอยู่ในจอครบ (เคยล้นขวาจนเห็นเพื่อนไม่ครบบน iPad)
+    const serveFits = async (tag) => {
+      for (const [width, height] of [[768, 950], [834, 1100], [1024, 660], [1280, 900]]) {
+        await page.setViewportSize({ width, height });
+        await page.waitForTimeout(80);
+        const outside = await page.evaluate(() => [...document.querySelectorAll('#dish, .friend-btn')].filter((element) => {
+          const r = element.getBoundingClientRect();
+          return r.left < 0 || r.right > innerWidth + .5;
+        }).length);
+        assert.equal(outside, 0, `serve screen (${tag}) fits ${width}x${height}`);
+        const wide = await page.evaluate(() => [...document.querySelectorAll('#app *')].filter((element) => element.getBoundingClientRect().right > innerWidth + .5).map((element) => `${element.className} ${Math.round(element.getBoundingClientRect().right)}`));
+        assert.deepEqual(wide, [], `serve screen (${tag}) has no sideways scroll at ${width}px`);
+        await page.screenshot({ path: path.join(output, `serve-${tag}-${width}.png`) });
+      }
+      await page.setViewportSize({ width: 390, height: 844 });
+      await page.waitForTimeout(80);
+    };
+
     // แก้ขั้นปัจจุบันตามชนิด แล้วรอให้เกมไปขั้นถัดไป
     const solveStep = async (recipe) => {
       const stepElement = page.locator('#step');
@@ -269,6 +287,24 @@ const path = require('node:path');
         // ทุกเพื่อนมีป้ายของที่ชอบ ❤ และไม่ชอบ ✕ ใต้ตัว
         assert.equal(await page.locator('.friend-btn .prefs i.love img').count(), await page.locator('.friend-btn').count());
         assert.equal(await page.locator('.friend-btn .prefs i.hate img').count(), await page.locator('.friend-btn').count());
+        if (recipe === 'omelet') {
+          // นิ้วที่สองแตะอาหารระหว่างลาก ต้องไม่ทิ้งรูปค้างไว้บนจอ (บั๊กที่เจอบน iPad: ไข่เจียวลอยค้างจนถึงหน้าครัว)
+          const stuck = await page.evaluate(() => {
+            const food = document.querySelector('#feed-food');
+            const r = food.getBoundingClientRect();
+            const at = (id, x, y, type) => food.dispatchEvent(new PointerEvent(type, { pointerId: id, pointerType: 'touch', isPrimary: id === 1, clientX: x, clientY: y, bubbles: true, cancelable: true, button: 0 }));
+            const cx = r.left + r.width / 2;
+            const cy = r.top + r.height / 2;
+            at(1, cx, cy, 'pointerdown');
+            window.dispatchEvent(new PointerEvent('pointermove', { pointerId: 1, pointerType: 'touch', clientX: cx + 30, clientY: cy - 30, bubbles: true }));
+            at(2, cx + 10, cy + 10, 'pointerdown');           // นิ้วที่สอง
+            window.dispatchEvent(new PointerEvent('pointerup', { pointerId: 2, pointerType: 'touch', clientX: cx + 10, clientY: cy + 10, bubbles: true }));
+            window.dispatchEvent(new PointerEvent('pointerup', { pointerId: 1, pointerType: 'touch', clientX: cx + 30, clientY: cy - 30, bubbles: true }));
+            return document.querySelectorAll('.drag-ghost').length;
+          });
+          assert.equal(stuck, 0, 'no drag ghost left behind after a two-finger touch');
+          await page.locator('#dish').evaluate((dish) => dish.classList.remove('awaiting-drop', 'drop-miss'));
+        }
         if (recipe === 'cupcake') {
           assert.equal(await page.locator('#feed-food').evaluate((element) => getComputedStyle(element).userSelect), 'none');
           const foodBox = await page.locator('#feed-food').boundingBox();
@@ -375,6 +411,7 @@ const path = require('node:path');
     assert.equal(await page.locator('.friend-btn').first().getAttribute('data-friend'), saved.order.friend);
     assert.equal(await page.evaluate(() => document.querySelector('#app').scrollWidth > innerWidth), false, 'serve screen with 4 friends fits');
     await page.screenshot({ path: path.join(output, 'serve-four-mobile.png'), fullPage: true });
+    await serveFits('four');
     await page.locator('#back').click();
 
     // ครัวอิสระ: ใส่อะไรก็ได้ → เลือกเครื่อง → จานลึกลับ → แต่ง (ท็อปปิ้งทั้งหมด เลื่อนได้) → เสิร์ฟ
@@ -532,7 +569,7 @@ const path = require('node:path');
     await page.locator('#back').click();
 
     await page.waitForFunction(() => navigator.serviceWorker.controller);
-    assert.ok((await page.evaluate(() => caches.keys())).includes('happy-little-kitchen-v25'));
+    assert.ok((await page.evaluate(() => caches.keys())).includes('happy-little-kitchen-v26'));
     await context.setOffline(true);
     await page.reload();
     await page.locator('.recipe-card').first().waitFor();

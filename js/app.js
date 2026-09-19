@@ -352,6 +352,23 @@ let currentPrompt = '';
 let audioCtx = null;
 let speechQueue = Promise.resolve();
 let speechGeneration = 0;
+let speechCancelledAt = 0;
+let speechWarmed = false;
+let voices = [];
+function refreshVoices() { if ('speechSynthesis' in window) voices = window.speechSynthesis.getVoices(); }
+if ('speechSynthesis' in window) {
+  refreshVoices();
+  window.speechSynthesis.addEventListener('voiceschanged', refreshVoices);
+}
+// iPhone/iPad ไม่สนใจ utterance.lang ถ้าไม่ได้ตั้ง voice เอง — ข้อความไทยเลยถูกส่งให้เสียงอังกฤษแล้วเงียบ
+// ต้องเลือกเสียงให้ตรงภาษาเอง (เอาเสียงที่ติดมากับเครื่องก่อน ไม่ต้องรอโหลด)
+function findVoice(lang) {
+  if (!voices.length) refreshVoices();
+  const norm = (value) => value.toLowerCase().replace('_', '-');
+  const same = voices.filter((voice) => norm(voice.lang).startsWith(lang.slice(0, 2).toLowerCase()));
+  const exact = same.filter((voice) => norm(voice.lang) === lang.toLowerCase());
+  return exact.find((voice) => voice.localService) || exact[0] || same.find((voice) => voice.localService) || same[0] || null;
+}
 
 const FOLDERS = { state: 'states', dish: 'dishes', ing: 'ingredients', tool: 'tools', appliance: 'appliances', top: 'toppings', friend: 'friends' };
 // แปลง 'kind:key' (ไม่มีคำนำหน้า = state) เป็นที่อยู่รูป
@@ -422,6 +439,16 @@ function t(key) { return COPY[state.lang][key]; }
 function local(value) { return value[state.lang]; }
 
 function unlockAudio() {
+  // iOS ยอมให้พูดได้ก็ต่อเมื่อ speak() ครั้งแรกเกิดตอนผู้ใช้แตะ — พูดประโยคเงียบๆ ไว้ก่อน แล้วรายชื่อเสียงจะโหลดตามมา
+  if (!speechWarmed && 'speechSynthesis' in window) {
+    speechWarmed = true;
+    try {
+      const warm = new SpeechSynthesisUtterance(' ');
+      warm.volume = 0;
+      window.speechSynthesis.speak(warm);
+    } catch {}
+    refreshVoices();
+  }
   const AudioContextClass = window.AudioContext || window.webkitAudioContext;
   if (!AudioContextClass) return;
   if (!audioCtx) audioCtx = new AudioContextClass();
@@ -602,7 +629,10 @@ function speak(text) {
   speechQueue = speechQueue.then(() => new Promise((resolve) => {
     if (!state.sound || generation !== speechGeneration) return resolve();
     const utterance = new SpeechSynthesisUtterance(text);
-    utterance.lang = language === 'th' ? 'th-TH' : 'en-US';
+    const lang = language === 'th' ? 'th-TH' : 'en-US';
+    const voice = findVoice(lang);
+    if (voice) utterance.voice = voice;
+    utterance.lang = voice?.lang || lang;
     utterance.rate = language === 'th' ? .88 : .9;
     utterance.pitch = 1.08;
     let settled = false;
@@ -615,14 +645,21 @@ function speak(text) {
     const timeout = setTimeout(finish, Math.max(3000, text.length * 220));
     utterance.onend = finish;
     utterance.onerror = finish;
-    window.speechSynthesis.resume();
-    window.speechSynthesis.speak(utterance);
+    // เรียก speak() ติดกับ cancel() ทันที iOS/Chrome จะทำประโยคหาย → เว้นนิดหนึ่ง
+    setTimeout(() => {
+      if (generation !== speechGeneration) return finish();
+      try {
+        window.speechSynthesis.resume();
+        window.speechSynthesis.speak(utterance);
+      } catch { finish(); }
+    }, Math.max(0, 60 - (Date.now() - speechCancelledAt)));
   }));
   return speechQueue;
 }
 
 function stopSpeech() {
   speechGeneration++;
+  speechCancelledAt = Date.now();
   window.speechSynthesis?.cancel();
   speechQueue = Promise.resolve();
 }
@@ -838,6 +875,7 @@ function showHome() {
   if (activeRecipe) stopSpeech();
   activeRecipe = null;
   step = 0;
+  removeGhosts();
   app.innerHTML = `<div class="app-shell">
     ${topbar(t('title'))}
     <section class="home">
@@ -916,6 +954,7 @@ function dots() {
 function screen(content, prompt) {
   const recipe = RECIPES[activeRecipe];
   const current = currentStep();
+  removeGhosts();
   app.innerHTML = `<div class="app-shell play-screen">
     ${topbar(`<img class="title-icon" src="${dishSrc(activeRecipe)}" alt=""> ${local(recipe.name)}`, true)}
     ${dots()}
@@ -942,6 +981,14 @@ function renderStep() {
 }
 
 // ---------------------------------------------------------------- ท่าพื้นฐาน: ลาก/แตะของไปวาง
+// รูปที่ลอยตามนิ้วอยู่บน body ไม่ใช่ใน #app — ถ้าจอเปลี่ยนหรือ pointerup หายไป (iPad) ต้องเก็บกวาดเอง
+const DRAG_STALE_MS = 15000;
+function removeGhosts(all = true) {
+  document.querySelectorAll('.drag-ghost').forEach((ghost) => {
+    if (all || Date.now() - Number(ghost.dataset.at || 0) > DRAG_STALE_MS) ghost.remove();
+  });
+}
+
 function bindDragChoice(button, options) {
   let active = null;
   let ignoreClick = false;
@@ -965,6 +1012,12 @@ function bindDragChoice(button, options) {
     if (button.disabled || button.classList.contains('used')) return;
     event.preventDefault();
     window.getSelection()?.removeAllRanges();
+    if (active) {
+      // นิ้วที่สอง (หรือฝ่ามือ) แตะซ้ำระหว่างลาก: ไม่เริ่มใหม่ ไม่งั้นรูปที่ลอยตามนิ้วแรกจะค้างอยู่บนจอ
+      if (event.pointerId === active.pointerId || Date.now() - active.at < DRAG_STALE_MS) return;
+      clear();
+    }
+    removeGhosts(false);
     const pointerId = event.pointerId;
     const startX = event.clientX;
     const startY = event.clientY;
@@ -986,6 +1039,7 @@ function bindDragChoice(button, options) {
         ghost.style.width = `${rect.width}px`;
         ghost.style.height = `${rect.height}px`;
         ghost.setAttribute('aria-hidden', 'true');
+        ghost.dataset.at = active.at;
         document.body.appendChild(ghost);
         active.ghost = ghost;
         button.classList.add('drag-source');
@@ -1013,7 +1067,7 @@ function bindDragChoice(button, options) {
       if (active && cancelEvent.pointerId === pointerId) clear();
     };
 
-    active = { moved: false, ghost: null, move, up, cancel, pointerId };
+    active = { moved: false, ghost: null, move, up, cancel, pointerId, at: Date.now() };
     try { button.setPointerCapture?.(pointerId); } catch {}
     window.addEventListener('pointermove', move, { passive: false });
     window.addEventListener('pointerup', up);
@@ -2192,7 +2246,7 @@ RENDERERS.serve = () => {
   const prompt = t('serve');
   const order = ensureOrder();
   const diners = pickDiners();
-  screen(`<div class="stage-zone">
+  screen(`<div class="stage-zone serve-zone">
       <div class="serve-layout">${stageHTML({ plate: true })}<div class="customer-grid">
         ${diners.map((id) => `<button class="friend-btn" data-friend="${id}" aria-label="${prefsSpeech(id)}">
           <img class="portrait" src="${friendSrc(id)}" alt="${local(FRIENDS[id].name)}">${id === order.friend ? orderBubbleHTML(order) : ''}${prefsHTML(id)}

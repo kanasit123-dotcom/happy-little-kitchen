@@ -26,6 +26,10 @@ The user generates art in Gemini themselves; the AI writes prompts, cuts backgro
 
 Market research (Toca Kitchen 2, Dr. Panda Restaurant, Sago Mini) showed the strongest hooks are character reactions and "a friend asks for a dish". The kitchen now has a daily order bubble, four reactions (love / yum / sneeze / full — all positive or funny, never disappointed), and eight extra friends that unlock at 3, 6, 10, 14, 18, 22, 26, 30 feedings. Done 2026-09-18: slicing/cracking prep step, finger-drawn frosting, 10 toppings per recipe (37 topping images), drawn expression art for all eleven friends. 2026-09-18 (later): the user asked for recipes to follow real cooking (more than three ingredients, real step order), so every recipe now has its own step list with new gestures (pour, flip, spread, sprinkle, shape, scoop/ladle, blanch, lid, slice, candles). Keep new recipes in this style: each step is one short gesture with a spoken cue, and every intermediate state has its own picture. Done 2026-09-18 (evening): synthesized sound effects, the creations book with photos, and the free kitchen (sandbox). Feedback from play: sauce must stay on the food (paint is masked to the base picture) and tools should sit next to what they act on (grater at the pizza's corner). Art prompts for all of these are in `design/PROMPTS-gemini-2.md`.
 
+## iPad feedback (2026-09-19, v26)
+
+Real play on the iPad mini found three bugs, all fixed in v26: Thai speech was silent on iPhone and iPad (iOS ignores `utterance.lang` unless `utterance.voice` is set — game-lilly already did this), the serve screen overflowed sideways so not all friends were visible (layout now wraps on tablets), and a finished omelet stayed floating over the home page (a second finger during the feeding drag orphaned the drag ghost). Keep speech voice selection and the ghost sweep when touching those areas.
+
 ## Status at hand-off (2026-09-19, live v25)
 
 Everything below is deployed at https://kanasit123-dotcom.github.io/happy-little-kitchen/ and covered by `tests/app.cjs` (run it locally and against the live URL after every deploy):
