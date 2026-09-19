@@ -26,6 +26,15 @@ The user generates art in Gemini themselves; the AI writes prompts, cuts backgro
 
 Market research (Toca Kitchen 2, Dr. Panda Restaurant, Sago Mini) showed the strongest hooks are character reactions and "a friend asks for a dish". The kitchen now has a daily order bubble, four reactions (love / yum / sneeze / full — all positive or funny, never disappointed), and eight extra friends that unlock at 3, 6, 10, 14, 18, 22, 26, 30 feedings. Done 2026-09-18: slicing/cracking prep step, finger-drawn frosting, 10 toppings per recipe (37 topping images), drawn expression art for all eleven friends. 2026-09-18 (later): the user asked for recipes to follow real cooking (more than three ingredients, real step order), so every recipe now has its own step list with new gestures (pour, flip, spread, sprinkle, shape, scoop/ladle, blanch, lid, slice, candles). Keep new recipes in this style: each step is one short gesture with a spoken cue, and every intermediate state has its own picture. Done 2026-09-18 (evening): synthesized sound effects, the creations book with photos, and the free kitchen (sandbox). Feedback from play: sauce must stay on the food (paint is masked to the base picture) and tools should sit next to what they act on (grater at the pizza's corner). Art prompts for all of these are in `design/PROMPTS-gemini-2.md`.
 
+## Status at hand-off (2026-09-19, live v25)
+
+Everything below is deployed at https://kanasit123-dotcom.github.io/happy-little-kitchen/ and covered by `tests/app.cjs` (run it locally and against the live URL after every deploy):
+
+- 9 recipes with real cooking steps (16 step types), 11 friends with drawn faces for love / yum / sneeze / full, likes and dislikes with ♥/✕ badges, daily order bubble, unlocks at 3…30 feedings, free kitchen with 20 real result foods and burnt-if-over-held, creations book with photos, synthesized sound, parent page (hold 👪 2 s) with stats and reset, zoom lock, scrollable friends row, auto-update when a new build is deployed.
+- Art pipeline: `design/PROMPTS-gemini*.md` (1–4 all done) + `design/blobs.py` (`--grid`, `--grow`) + `design/cutout.py`. Gemini output goes to `assets/incoming/` (git-ignored). Prompts still unused: section C of `PROMPTS-gemini-2.md` (yuck faces) and the optional new-recipe / plate ideas.
+- Open feedback to watch for: whether feeding drags work on the child's iPhone after v23+ (could not reproduce; zoom was the likely cause), whether the longer step lists stay fun for a 5-year-old, and whether the ~200 px free-kitchen result pictures look sharp enough on iPad (ask for the 4×5 sheet at 2K if not).
+- Ideas queued but not started: new recipes (popcorn, donut, fried rice, cocoa, rice ball), choose-a-plate step, two-player feeding, progress transfer code between devices, smaller first download (~26 MB).
+
 ## Characters
 
 Preferred friends include the seal, turtle, and rabbit already used here. The unlockable friends (cat, penguin, fox, unicorn, dolphin, butterfly, octopus, squirrel) reuse the game-lilly art, resized to 480 px. Avoid adding bears, pigs, hippos, dogs, koalas, or teddy bears.
