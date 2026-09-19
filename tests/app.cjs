@@ -20,7 +20,7 @@ const path = require('node:path');
     // เสียงไทยใช้คลิปที่อัดไว้ (assets/voice/th) — แตะเพื่อนแล้วประโยค "ชอบ...ไม่ชอบ..." ต้องประกอบจากหลายคลิป
     const voiceRequests = [];
     page.on('request', (request) => { if (/assets\/voice\/th\/[0-9a-f]+\.mp3/.test(request.url())) voiceRequests.push(request.url()); });
-    await page.waitForFunction(() => navigator.serviceWorker.controller);   // ติดตั้งครั้งแรกหน้าจะโหลดใหม่เอง รอให้นิ่งก่อน
+    await page.waitForFunction(() => navigator.serviceWorker.controller, null, { timeout: 180000 });   // ติดตั้งครั้งแรก (โหลดรูปทั้งหมด) หน้าจะโหลดใหม่เอง รอให้นิ่งก่อน
     await page.waitForTimeout(1500);
     await page.locator('.friend-peek.buddy').first().click();
     await page.waitForFunction(() => performance.getEntriesByType('resource').filter((entry) => /voice\/th\/[0-9a-f]+\.mp3/.test(entry.name)).length >= 3, null, { timeout: 15000 });
