@@ -307,7 +307,7 @@ const COPY = {
   th: {
     title: 'ครัวจิ๋วแสนสนุก', subtitle: 'เลือกของอร่อย แล้วลงมือทำเลย', language: '🇹🇭 ไทย',
     home: 'กลับหน้าครัว', listen: 'ฟังอีกครั้ง', add: 'ลากของลงไป หรือแตะของแล้วแตะเป้าหมาย',
-    cut: 'ปาดนิ้วหั่น', crack: 'แตะให้แตก', cutDone: 'หั่นแล้ว', crackDone: 'แตกแล้ว', prepDone: 'เตรียมเสร็จแล้ว', draw: 'ลากนิ้วบนอาหารเพื่อวาดครีม',
+    cut: 'ปาดนิ้วหั่น', crack: 'แตะให้แตก', cutDone: 'หั่นแล้ว', crackDone: 'แตกแล้ว', prepDone: 'เตรียมเสร็จแล้ว', draw: 'ลากนิ้วบนอาหารเพื่อทาซอส',
     mixHint: { stir: 'ลากวนๆ ในชามจนแถบเต็ม', whisk: 'ลากไปมาเร็วๆ จนแถบเต็ม', roll: 'ลากซ้ายขวาจนแถบเต็ม', spread: 'ลากไปมาให้ทั่วจนแถบเต็ม' },
     start: 'เริ่มเลย', hold: 'กดค้าง', decorate: 'ตกแต่งได้ตามใจ',
     done: 'เสร็จแล้ว', serve: 'ลากอาหารไปหาเพื่อน ป้อนได้หลายคน', again: 'ทำอีกจาน', gallery: 'สมุดผลงาน', place: 'แตะจุดบนอาหาร หรือลากไปวาง',
@@ -324,7 +324,7 @@ const COPY = {
   en: {
     title: 'Happy Little Kitchen', subtitle: 'Pick a treat and make it your way', language: '🇬🇧 ENG',
     home: 'Back to the kitchen', listen: 'Listen again', add: 'Drag it in, or tap an item then tap the target',
-    cut: 'Swipe to slice the', crack: 'Tap to crack the', cutDone: 'sliced', crackDone: 'cracked', prepDone: 'All prepped', draw: 'Drag on the food to draw frosting',
+    cut: 'Swipe to slice the', crack: 'Tap to crack the', cutDone: 'sliced', crackDone: 'cracked', prepDone: 'All prepped', draw: 'Drag on the food to add sauce',
     mixHint: { stir: 'Drag in circles until the bar is full', whisk: 'Drag back and forth until the bar is full', roll: 'Drag left and right until the bar is full', spread: 'Drag all over until the bar is full' },
     start: 'Start', hold: 'Hold', decorate: 'Decorate it your way',
     done: 'All done', serve: 'Drag food to friends. You can feed more than one', again: 'Make another', gallery: 'My cookbook', place: 'Tap the food or drag to place it',
@@ -439,6 +439,7 @@ function t(key) { return COPY[state.lang][key]; }
 function local(value) { return value[state.lang]; }
 
 function unlockAudio() {
+  unlockVoice();
   // iOS ยอมให้พูดได้ก็ต่อเมื่อ speak() ครั้งแรกเกิดตอนผู้ใช้แตะ — พูดประโยคเงียบๆ ไว้ก่อน แล้วรายชื่อเสียงจะโหลดตามมา
   if (!speechWarmed && 'speechSynthesis' in window) {
     speechWarmed = true;
@@ -621,13 +622,90 @@ function startLoop(name) {
   };
 }
 
+// ---------------------------------------------------------------- เสียงพูดไทยที่อัดไว้ล่วงหน้า
+// เสียงไทยในเครื่อง (iOS Kanya) ไม่ชัด เลยอัดทุกประโยคด้วยเสียง Microsoft Neural (design/voice.py) ไว้ใน assets/voice/th/
+// ประโยคที่ประกอบสดๆ (เช่น "แมวน้ำ ชอบ กุ้ง กับ พริก") ต่อจากคลิปย่อยเป็นคำๆ ถ้าหาไม่ครบค่อยใช้เสียงในเครื่อง
+const VOICE_DIR = 'assets/voice/th/';
+let voiceClips = null;       // ข้อความ → ชื่อไฟล์
+let voicePlayer = null;      // <audio> ตัวเดียว ปลดล็อกตอนแตะครั้งแรก แล้วเปลี่ยน src ใช้ซ้ำ (iOS ยอมเล่นนอก gesture)
+fetch(`${VOICE_DIR}manifest.json`).then((response) => response.json()).then((clips) => { voiceClips = clips; }).catch(() => {});
+
+function unlockVoice() {
+  if (voicePlayer) return;
+  voicePlayer = new Audio();
+  voicePlayer.preload = 'auto';
+  voicePlayer.setAttribute('playsinline', '');
+  const first = voiceClips && Object.values(voiceClips)[0];
+  if (!first) { voicePlayer = null; return; }
+  // play() แล้ว pause() ทันทีในจังหวะแตะ = ปลดล็อกโดยไม่มีเสียงหลุด (iOS ไม่สน volume/muted)
+  voicePlayer.src = VOICE_DIR + first;
+  voicePlayer.play().catch(() => {});
+  voicePlayer.pause();
+}
+
+// หาคลิปให้ทั้งประโยค: ตรงทั้งข้อความก่อน ไม่งั้นแบ่งตามช่องว่างแล้วจับคู่วลีที่ยาวที่สุดไปเรื่อยๆ
+function clipsFor(text) {
+  if (!voiceClips) return null;
+  if (voiceClips[text]) return [voiceClips[text]];
+  const tokens = text.split(/\s+/).filter((token) => token && token !== '·');
+  const files = [];
+  let i = 0;
+  while (i < tokens.length) {
+    let used = 0;
+    for (let n = tokens.length - i; n > 0; n--) {
+      const file = voiceClips[tokens.slice(i, i + n).join(' ')];
+      if (file) { files.push(file); used = n; break; }
+    }
+    if (!used) return null;
+    i += used;
+  }
+  return files;
+}
+
+// เล่นคลิปต่อกัน คืน true เมื่อเล่นจบ / false เมื่อเล่นไม่ได้ (ให้ไปใช้เสียงในเครื่องแทน)
+function playClips(files, generation) {
+  return new Promise((resolve) => {
+    if (!voicePlayer) return resolve(false);
+    const player = voicePlayer;
+    let index = 0;
+    let timer = null;
+    const cleanup = () => {
+      clearTimeout(timer);
+      player.onended = player.onerror = null;
+    };
+    const next = () => {
+      cleanup();
+      if (generation !== speechGeneration) return resolve(true);
+      if (index >= files.length) return resolve(true);
+      player.onended = next;
+      player.onerror = () => { cleanup(); resolve(index === 0 ? false : true); };
+      timer = setTimeout(next, 15000);
+      player.src = VOICE_DIR + files[index++];
+      player.play().catch(() => { cleanup(); resolve(false); });
+    };
+    next();
+  });
+}
+
 function speak(text) {
   currentPrompt = text;
   if (!state.sound || !('speechSynthesis' in window)) return Promise.resolve();
   const generation = speechGeneration;
   const language = state.lang;
-  speechQueue = speechQueue.then(() => new Promise((resolve) => {
-    if (!state.sound || generation !== speechGeneration) return resolve();
+  speechQueue = speechQueue.then(async () => {
+    if (!state.sound || generation !== speechGeneration) return;
+    if (language === 'th') {
+      const files = clipsFor(text);
+      if (files && await playClips(files, generation)) return;
+      if (generation !== speechGeneration) return;
+    }
+    await synthesize(text, language, generation);
+  });
+  return speechQueue;
+}
+
+function synthesize(text, language, generation) {
+  return new Promise((resolve) => {
     const utterance = new SpeechSynthesisUtterance(text);
     const lang = language === 'th' ? 'th-TH' : 'en-US';
     const voice = findVoice(lang);
@@ -653,14 +731,14 @@ function speak(text) {
         window.speechSynthesis.speak(utterance);
       } catch { finish(); }
     }, Math.max(0, 60 - (Date.now() - speechCancelledAt)));
-  }));
-  return speechQueue;
+  });
 }
 
 function stopSpeech() {
   speechGeneration++;
   speechCancelledAt = Date.now();
   window.speechSynthesis?.cancel();
+  if (voicePlayer) { voicePlayer.onended = voicePlayer.onerror = null; voicePlayer.pause(); }
   speechQueue = Promise.resolve();
 }
 
@@ -2120,7 +2198,9 @@ RENDERERS.decorate = (current) => {
   const recipe = RECIPES[activeRecipe];
   if (current.base) stage.base = art(current.base);
   const pens = current.pens || [];
-  const prompt = current.say ? local(current.say) : current.nodraw ? t('decorate') : `${t('decorate')} · ${t('draw')}`;
+  // ลากนิ้ววาดได้เฉพาะเมื่อมีซอส/ปากกาให้ทา (ไข่เจียว) — ขั้นตกแต่งทั่วไปแค่วางท็อปปิ้งกับเลือกสีจาน
+  const drawing = pens.length > 0 && !current.before && !current.nodraw;
+  const prompt = current.say ? local(current.say) : drawing ? `${t('decorate')} · ${t('draw')}` : t('decorate');
   let pen = pens[0] || null;
   const swatchesHTML = pens.length ? pens.map((key, i) => `<button class="topping-btn pen-btn ${i === 0 ? 'selected' : ''}" data-pen="${key}" aria-label="${local(PENS[key])}"><img src="${art(PENS[key].art)}" alt=""></button>`).join('')
     : current.before ? '' : COLORS.map((color) => `<button class="swatch ${color === creation.color ? 'selected' : ''}" data-color="${color}" style="background:${color}" aria-label="color"></button>`).join('');
@@ -2133,7 +2213,7 @@ RENDERERS.decorate = (current) => {
   const dish = app.querySelector('#dish');
   const promptElement = app.querySelector('#prompt');
   let selectedTop = null;
-  const isDrawing = (current.before || current.nodraw) ? (() => { syncPaint(dish); return () => false; })() : bindPainting(dish, { color: () => (pen ? PENS[pen].color : creation.color), width: 5.5 });
+  const isDrawing = drawing ? bindPainting(dish, { color: () => PENS[pen].color, width: 5.5 }) : (() => { syncPaint(dish); return () => false; })();
   const selectTopping = (button) => {
     selectedTop = button.dataset.top;
     app.querySelectorAll('.topping-btn').forEach((item) => item.classList.toggle('selected', item === button));

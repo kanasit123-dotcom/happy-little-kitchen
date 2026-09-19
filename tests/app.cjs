@@ -17,6 +17,14 @@ const path = require('node:path');
     page.on('response', (response) => { if (response.status() === 404) missing404.push(response.url()); });
     await page.goto(base);
     await page.locator('.recipe-card').first().waitFor();
+    // เสียงไทยใช้คลิปที่อัดไว้ (assets/voice/th) — แตะเพื่อนแล้วประโยค "ชอบ...ไม่ชอบ..." ต้องประกอบจากหลายคลิป
+    const voiceRequests = [];
+    page.on('request', (request) => { if (/assets\/voice\/th\/[0-9a-f]+\.mp3/.test(request.url())) voiceRequests.push(request.url()); });
+    await page.waitForFunction(() => navigator.serviceWorker.controller);   // ติดตั้งครั้งแรกหน้าจะโหลดใหม่เอง รอให้นิ่งก่อน
+    await page.waitForTimeout(1500);
+    await page.locator('.friend-peek.buddy').first().click();
+    await page.waitForFunction(() => performance.getEntriesByType('resource').filter((entry) => /voice\/th\/[0-9a-f]+\.mp3/.test(entry.name)).length >= 3, null, { timeout: 15000 });
+    assert.ok(new Set(voiceRequests).size >= 3, `friend likes/dislikes are spoken from several clips (${new Set(voiceRequests).size})`);
     await page.locator('#sound').click();
     const RECIPES = ['omelet', 'pizza', 'noodles', 'cupcake', 'cookie', 'cake', 'icecream', 'toast', 'smoothie'];
     assert.equal(await page.locator('.recipe-card').count(), 9);
@@ -258,26 +266,35 @@ const path = require('node:path');
           await page.locator('#dish').click({ position: { x: 135, y: 100 } });
         }
         assert.equal(await page.locator('#dish img.topping').count(), 1);
+        const paintedPixels = () => page.locator('#dish canvas.frosting').evaluate((canvas) => {
+          const data = canvas.getContext('2d').getImageData(0, 0, canvas.width, canvas.height).data;
+          let count = 0;
+          for (let i = 3; i < data.length; i += 4) if (data[i] > 0) count++;
+          return count;
+        });
         if (recipe === 'cake') {
-          // ลากนิ้วบนจาน = วาดครีม (ไม่วางท็อปปิ้ง) และวางได้เกิน 8 ชิ้น พอถึง 30 ชิ้นเก่าสุดหายไป
+          // ขั้นตกแต่งไม่มีวาดครีมด้วยนิ้วแล้ว: ลากบนจานไม่วาดอะไร แค่วางท็อปปิ้งตรงที่ปล่อยนิ้ว; วางได้เกิน 8 ชิ้น พอถึง 30 ชิ้นเก่าสุดหายไป
+          const before = await paintedPixels();
           const dishBox = await page.locator('#dish').boundingBox();
           await page.mouse.move(dishBox.x + dishBox.width * .3, dishBox.y + dishBox.height * .5);
           await page.mouse.down();
           await page.mouse.move(dishBox.x + dishBox.width * .7, dishBox.y + dishBox.height * .55, { steps: 10 });
           await page.mouse.up();
-          assert.equal(await page.locator('#dish img.topping').count(), 1);
-          const painted = await page.locator('#dish canvas.frosting').evaluate((canvas) => {
-            const data = canvas.getContext('2d').getImageData(0, 0, canvas.width, canvas.height).data;
-            let count = 0;
-            for (let i = 3; i < data.length; i += 4) if (data[i] > 0) count++;
-            return count;
-          });
-          assert.ok(painted > 500, `frosting was drawn (${painted} px)`);
+          assert.equal(await page.locator('#dish img.topping').count(), 2);
+          assert.equal(await paintedPixels(), before, 'dragging on the cake draws nothing');
           for (let i = 0; i < 34; i++) await page.locator('#dish').click({ position: { x: 60 + (i % 5) * 12, y: 60 + (i % 7) * 10 } });
           assert.equal(await page.locator('#dish img.topping').count(), 30);
         }
         if (recipe === 'omelet') {
+          // ไข่เจียวมีซอสให้ทา: ลากนิ้วบนจาน = ทาซอส
           assert.equal(await page.locator('.pen-btn').count(), 2, 'omelet has ketchup and mayo pens');
+          const before = await paintedPixels();
+          const dishBox = await page.locator('#dish').boundingBox();
+          await page.mouse.move(dishBox.x + dishBox.width * .35, dishBox.y + dishBox.height * .5);
+          await page.mouse.down();
+          await page.mouse.move(dishBox.x + dishBox.width * .65, dishBox.y + dishBox.height * .5, { steps: 10 });
+          await page.mouse.up();
+          assert.ok((await paintedPixels()) > before + 300, 'sauce was drawn on the omelet');
         }
         await shot(`decorate-${recipe}`);
         await page.locator('#done').click();
@@ -569,7 +586,7 @@ const path = require('node:path');
     await page.locator('#back').click();
 
     await page.waitForFunction(() => navigator.serviceWorker.controller);
-    assert.ok((await page.evaluate(() => caches.keys())).includes('happy-little-kitchen-v26'));
+    assert.ok((await page.evaluate(() => caches.keys())).includes('happy-little-kitchen-v27'));
     await context.setOffline(true);
     await page.reload();
     await page.locator('.recipe-card').first().waitFor();

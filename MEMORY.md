@@ -30,6 +30,10 @@ Market research (Toca Kitchen 2, Dr. Panda Restaurant, Sago Mini) showed the str
 
 Real play on the iPad mini found three bugs, all fixed in v26: Thai speech was silent on iPhone and iPad (iOS ignores `utterance.lang` unless `utterance.voice` is set — game-lilly already did this), the serve screen overflowed sideways so not all friends were visible (layout now wraps on tablets), and a finished omelet stayed floating over the home page (a second finger during the feeding drag orphaned the drag ghost). Keep speech voice selection and the ghost sweep when touching those areas.
 
+## v27 (2026-09-19): recorded Thai voice, no finger frosting
+
+The user listened to demos and chose Microsoft Neural **Premwadee** (female) over Niwat and the iOS Kanya voice; all Thai prompts are now shipped as MP3 clips (`design/voice.py`, ~3 MB, cached offline). They also asked to drop finger-drawn frosting in the decorate step ("ตกแต่งปกติก็พอ หรือถ้ามีซอสก็ทาซอส"): decorate = toppings + plate colour, sauce pens only where a recipe has sauce; the spread cooking steps stay. If they later dislike rubbing cream on the cupcake/cake, turn those into a tap-to-frost step.
+
 ## Status at hand-off (2026-09-19, live v25)
 
 Everything below is deployed at https://kanasit123-dotcom.github.io/happy-little-kitchen/ and covered by `tests/app.cjs` (run it locally and against the live URL after every deploy):
