@@ -632,13 +632,26 @@ fetch(`${VOICE_DIR}manifest.json`).then((response) => response.json()).then((cli
 
 // เล่นคลิปผ่าน Web Audio ตัวเดียวกับเสียงเอฟเฟกต์ — ถ้าใช้ <audio> แยก iOS จะสลับโหมดเสียงแล้วเอฟเฟกต์ (ปั่น/อบ) เงียบไป
 // และ AudioContext ปลดล็อกแล้วตั้งแต่แตะครั้งแรก ไม่ต้องปลดล็อกเพิ่ม
+// ตัดความเงียบหัวท้ายคลิป — ไฟล์จาก TTS มีช่วงเงียบราว 0.5 วิ ทั้งสองข้าง ต่อคำเป็นประโยคแล้วจะได้ไม่เว้นวรรคยาว
+function trimmedClip(buffer) {
+  const data = buffer.getChannelData(0);
+  const threshold = .012;
+  let start = 0;
+  let end = data.length - 1;
+  while (start < end && Math.abs(data[start]) < threshold) start++;
+  while (end > start && Math.abs(data[end]) < threshold) end--;
+  const pad = Math.round(buffer.sampleRate * .04);
+  const from = Math.max(0, start - pad) / buffer.sampleRate;
+  const to = Math.min(data.length, end + pad) / buffer.sampleRate;
+  return { buffer, offset: from, duration: Math.max(.05, to - from) };
+}
 async function voiceBuffer(file) {
   if (voiceBuffers.has(file)) return voiceBuffers.get(file);
   const promise = fetch(VOICE_DIR + file).then((response) => response.arrayBuffer()).then((bytes) => new Promise((resolve, reject) => {
     // iOS Safari รุ่นเก่าใช้ decodeAudioData แบบ callback เท่านั้น
     const result = audioCtx.decodeAudioData(bytes, resolve, reject);
     if (result && result.then) result.then(resolve, reject);
-  })).catch((error) => { voiceBuffers.delete(file); throw error; });
+  })).then(trimmedClip).catch((error) => { voiceBuffers.delete(file); throw error; });
   voiceBuffers.set(file, promise);
   return promise;
 }
@@ -666,22 +679,25 @@ function clipsFor(text) {
 async function playClips(files, generation) {
   unlockAudio();
   if (!audioCtx) return false;
-  for (const file of files) {
-    if (generation !== speechGeneration) return true;
-    let buffer;
-    try { buffer = await voiceBuffer(file); } catch { return false; }
-    if (generation !== speechGeneration) return true;
-    if (audioCtx.state !== 'running') { try { await audioCtx.resume(); } catch {} }
-    await new Promise((resolve) => {
-      const source = audioCtx.createBufferSource();
-      source.buffer = buffer;
-      source.connect(audioCtx.destination);
-      const timer = setTimeout(resolve, buffer.duration * 1000 + 500);
-      source.onended = () => { clearTimeout(timer); resolve(); };
-      voiceSource = source;
-      source.start();
-    });
-  }
+  let clips;
+  try { clips = await Promise.all(files.map(voiceBuffer)); } catch { return false; }   // โหลดทุกคำก่อน จะได้ต่อกันไม่สะดุด
+  if (generation !== speechGeneration) return true;
+  if (audioCtx.state !== 'running') { try { await audioCtx.resume(); } catch {} }
+  const gap = files.length > 1 ? .09 : 0;
+  let at = audioCtx.currentTime + .02;
+  const sources = clips.map((clip) => {
+    const source = audioCtx.createBufferSource();
+    source.buffer = clip.buffer;
+    source.connect(audioCtx.destination);
+    source.start(at, clip.offset, clip.duration);
+    at += clip.duration + gap;
+    return source;
+  });
+  voiceSource = { stop() { sources.forEach((source) => { try { source.stop(); } catch {} }); } };
+  await new Promise((resolve) => {
+    const timer = setTimeout(resolve, (at - audioCtx.currentTime) * 1000 + 300);
+    sources[sources.length - 1].onended = () => { clearTimeout(timer); resolve(); };
+  });
   return true;
 }
 
