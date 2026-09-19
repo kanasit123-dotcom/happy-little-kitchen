@@ -2508,6 +2508,19 @@ document.addEventListener('selectstart', (event) => event.preventDefault());
 document.addEventListener('touchstart', (event) => {
   if (event.touches.length > 1) event.preventDefault();
 }, { passive: false });
+// แตะรัวสองครั้ง = Safari ซูม (double-tap zoom) → ยกเลิก default ของแตะที่สอง แล้วยิง click ให้เองปุ่มจะได้ยังติด
+let lastTap = { at: 0, x: 0, y: 0 };
+document.addEventListener('touchend', (event) => {
+  if (event.touches.length) return;
+  const touch = event.changedTouches[0];
+  const now = Date.now();
+  const quick = now - lastTap.at < 350 && Math.hypot(touch.clientX - lastTap.x, touch.clientY - lastTap.y) < 40;
+  lastTap = { at: now, x: touch.clientX, y: touch.clientY };
+  if (!quick || event.cancelable === false) return;
+  event.preventDefault();
+  const target = document.elementFromPoint(touch.clientX, touch.clientY);
+  target?.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true, clientX: touch.clientX, clientY: touch.clientY }));
+}, { passive: false });
 // iOS Safari เด้งหน้าขึ้นลงตอนลาก (rubber band) — กันไว้ ยกเว้นตอนเนื้อหาล้นจอจริงๆ ให้เลื่อนได้
 document.addEventListener('touchmove', (event) => {
   if (event.touches.length > 1) { event.preventDefault(); return; }
