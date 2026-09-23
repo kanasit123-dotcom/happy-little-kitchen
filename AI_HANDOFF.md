@@ -12,6 +12,7 @@ Before changing code, read `README.md`, `MEMORY.md`, `index.html`, `css/app.css`
 
 - Use picture-first controls and large touch targets for mobile and iPad.
 - Do not add scores, countdowns, advertisements, subscriptions, or wrong-answer pressure.
+- Exception (2026-09-23), restaurant/market mode only: a non-matching math answer gets a gentle retry and, on the second miss, the guided walkthrough. No red, ✕, sad faces, buzz sounds, miss counters or penalties. See `RESTAURANT-MATH-PLAN.md` section 0 before working on the shop; shop data uses its own key `happy-little-kitchen-shop-v1`.
 - Spoken prompts must finish before the next spoken prompt or automatic step transition.
 - Ingredients support real drag-and-drop, or tap an ingredient followed by tapping the bowl.
 - Each recipe carries its own `steps` list (`RECIPES[x].steps`) that mirrors real cooking. Step types and their renderers live in `RENDERERS` in `js/app.js`: prep (cut/crack), add (drag into bowl/pot/blender), mix (tool gesture), cook (hold appliance), pour (hold the source to tilt), flip (swipe up), move (drag N times: plate, ladle, scoops), dip (hold to blanch), spread (rub until coverage), sprinkle (tap the grater), shape (tap the tray), lid (drag the lid), slice (swipe), candles (place → light → blow), decorate, serve. Art references are `kind:key` strings (`state:` default → `assets/states/`).

@@ -12,6 +12,9 @@
     tool-whisk.png       -> assets/tools/whisk.png         320px
     top-cherry.png       -> assets/toppings/cherry.png     192px
     friend-cat.jpg       -> assets/friends/cat.png         800px
+    coin-10.png          -> assets/coins/10.png            256px
+    shop-tray.png        -> assets/shop/tray.png           512px
+    decor-lamp.png       -> assets/decor/lamp.png          400px
 
 หลักการ: flood fill จากขอบรูปเข้ามา เก็บเฉพาะพื้นที่สีขาวที่ "ต่อกับขอบ" เป็นพื้นหลัง
 ส่วนสีขาวที่อยู่ในตัวละคร (ท้อง หน้า) ไม่โดนเพราะไม่ต่อกับขอบ
@@ -35,6 +38,9 @@ KINDS = {
     'top': ('toppings', 256),
     'friend': ('friends', 800),
     'state': ('states', 512),
+    'coin': ('coins', 256),
+    'shop': ('shop', 512),
+    'decor': ('decor', 400),
 }
 WHITE = 238         # ทุก channel >= ค่านี้ถือว่าเป็นพื้นขาว (JPEG มี noise นิดหน่อย)
 MARGIN = 0.04       # ขอบว่างรอบตัวละคร (สัดส่วนของด้าน)

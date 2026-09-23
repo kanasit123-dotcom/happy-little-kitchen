@@ -9,6 +9,7 @@
 - Thai and English are both welcome. Keep a visible language switch.
 - Picture-first controls, large touch targets, and short spoken prompts are preferred for children who are still learning to read.
 - Never add scores, countdowns, wrong-answer states, advertisements, subscriptions, or pressure to continue.
+  Exception agreed with the user on 2026-09-23, **restaurant and market mode only**: a math answer that does not match may get a gentle retry (soft shake, "ลองนับอีกครั้งนะ", a picture hint; the second miss opens the guided walkthrough). Never a red colour, ✕, sad face, buzz sound, on-screen miss counter, lost money or a changed customer. Everywhere else the original rule stands.
 - Let every spoken prompt finish before advancing to the next prompt or game step.
 - Support direct taps and touch dragging on iPad and iPhone Safari. Feedback from real play (2026-09-17): no small caps on decorations (topping cap is 30, oldest is replaced), drag ghosts must be picture-only and source-sized, the page must not bounce, and mixing should be a varied gesture rather than repeated tapping.
 - Finished food can be fed to several friends, with each friend accepting one serving per dish.
@@ -52,6 +53,12 @@ Everything below is deployed at https://kanasit123-dotcom.github.io/happy-little
 - Art pipeline: `design/PROMPTS-gemini*.md` (1–4 all done) + `design/blobs.py` (`--grid`, `--grow`) + `design/cutout.py`. Gemini output goes to `assets/incoming/` (git-ignored). Prompts still unused: section C of `PROMPTS-gemini-2.md` (yuck faces) and the optional new-recipe / plate ideas.
 - Open feedback to watch for: whether feeding drags work on the child's iPhone after v23+ (could not reproduce; zoom was the likely cause), whether the longer step lists stay fun for a 5-year-old, and whether the ~200 px free-kitchen result pictures look sharp enough on iPad (ask for the 4×5 sheet at 2K if not).
 - Ideas queued but not started: new recipes (popcorn, donut, fried rice, cocoa, rice ball), choose-a-plate step, two-player feeding, progress transfer code between devices, smaller first download (~26 MB).
+
+## Restaurant and market (planned 2026-09-23, not built yet)
+
+Full plan: `RESTAURANT-MATH-PLAN.md` in this repo (section 0 lists the agreed decisions D1–D5). In short: friends come to a shop counter to buy food the child has cooked; the child picks the items, takes the money and gives change with real coins (1/2/5/10 baht coins, 20-baht note). Each order practises at most one math skill, chosen by level. The price of every sale goes into a coin bank (seal-shaped, never a pig) and the child spends it at a market on shop decorations, where they pay and count the change they get back. Market guardrails: decorations cost 5–20 baht, always on sale, no timed offers, no random boxes, money never goes negative, nothing is lost.
+
+Shop data lives under its own localStorage key `happy-little-kitchen-shop-v1`, never inside `happy-little-kitchen-v1` (`loadState()` drops unknown fields and a parse error there would wipe the gallery). Build order: a small playable slice first (levels 1–3, numbers up to 10, change by counting on with coins), then wait for real-play feedback before porting the column-arithmetic engine from game-lilly. Art prompts: `design/PROMPTS-gemini-5.md` (coins, notes and price tags are drawn blank; the game overlays the numbers).
 
 ## Characters
 
