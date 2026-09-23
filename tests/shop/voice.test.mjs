@@ -2,7 +2,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { PRODUCTS } from '../../js/shop/core.js';
+import { PRODUCTS, DECOR } from '../../js/shop/core.js';
 
 const root = new URL('../../', import.meta.url);
 const manifest = JSON.parse(readFileSync(new URL('assets/voice/th/manifest.json', root), 'utf8'));
@@ -66,6 +66,24 @@ test('every sentence the shop can say is covered by recorded clips', () => {
   for (const n of [0, 7, 99, 100, 101, 135, 200, 999, 1000, 1001, 2345, 9999]) sentences.push(`${th('bank')} ${spokenNumber(n)} ${th('baht')}`);
   for (const key of ['hello', 'pick', 'pickCount', 'letsCount', 'short', 'over', 'moneyShort', 'exact', 'full', 'thanks', 'welcomeBack', 'empty', 'cookWhich', 'levelUp']) sentences.push(th(key));
   sentences.push(`${th('short')} ${th('letsCount')}`);
+  // ตลาด
+  const decorName = (id) => {
+    const match = ui.match(new RegExp(`\n  ${id}: \{ th: '([^']*)'`, 'g'));
+    assert.ok(match && match.length, `DECOR_NAMES.${id}`);
+    return match[match.length - 1].match(/th: '([^']*)'/)[1];
+  };
+  for (const [id, { price }] of Object.entries(DECOR)) {
+    const name = decorName(id);
+    sentences.push(`${name} ${th('priceWord')} ${price} ${th('baht')}`);
+    sentences.push(`${name} ${th('placed')}`, `${name} ${th('stored')}`);
+    for (let missing = 1; missing < price; missing++) sentences.push(`${name} ${th('priceWord')} ${price} ${th('baht')} ${th('saveMore')} ${missing} ${th('baht')} ${th('please')}`);
+    sentences.push(`${th('payExact')} ${price} ${th('baht')}`);
+    const paidWith = price < 10 ? 10 : 20;
+    sentences.push(`${th('payWith')} ${paidWith} ${th('baht')}`, `${th('costs')} ${price} ${th('iGive')} ${paidWith} ${th('baht')}`);
+    for (let n = 1; n <= 19; n++) sentences.push(`${th('gotChange')} ${n} ${th('baht')}`);
+    sentences.push(`${th('countFrom')} ${price} ${th('upTo')} ${paidWith} ${th('please')}`);
+  }
+  for (const key of ['marketHello', 'pickGoods', 'payAny', 'howMuch', 'thanksBuy', 'allBought']) sentences.push(th(key));
   sentences.push(copy('toShop'), copy('shelfFull'), copy('shop'));
   const missing = sentences.filter((text) => !covered(text));
   assert.deepEqual(missing, []);

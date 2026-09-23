@@ -45,8 +45,12 @@ const KITCHEN_KEY = 'happy-little-kitchen-v1';
       await page.locator('#shop').click();
       await page.locator('.shop #desk .stock-card, .shop #desk .coins, .shop .cook-card').first().waitFor();
     };
+    // ตลาด → ร้าน → หน้าครัว (ปุ่มย้อนในตลาดพากลับร้านก่อน)
     const backHome = async () => {
-      await page.locator('#back').click();
+      for (let i = 0; i < 3 && !(await page.locator('#shop').count()); i++) {
+        await page.locator('#back').click();
+        await page.waitForTimeout(150);
+      }
       await page.locator('#shop').waitFor();
     };
 
@@ -274,6 +278,95 @@ const KITCHEN_KEY = 'happy-little-kitchen-v1';
     assert.equal((await readShop()).stock.cookie, 6);
     assert.equal((await readShop()).activeOrder?.lines[0].recipe, 'cookie', 'a customer comes for the new cookies');
 
+    // --- ตลาด: เอาเงินในกระปุกไปซื้อของแต่งร้าน
+    const setMoney = async (piggy, ordersDone) => {
+      const current = await readShop();
+      current.piggy = piggy;
+      current.ordersDone = ordersDone;
+      current.totals.sales = piggy + current.totals.spent;
+      current.totals.customerPaid = current.totals.sales + current.totals.changeGiven;
+      current.activePurchase = null;
+      await writeShop(current);
+    };
+    const openMarket = async () => {
+      await backHome();
+      await openShop();
+      await page.locator('#bank').click();
+      await page.locator('.market .goods-card').first().waitFor();
+    };
+    // ระดับ 1: จ่ายเกินได้ คนขายทอนให้เอง
+    await setMoney(40, 1);
+    await openMarket();
+    assert.equal(await page.locator('.goods-card').count(), 10);
+    await fits('market');
+    await shot('market');
+    await page.locator('[data-item="plant"]').click();
+    await page.locator('#purse .coin').first().waitFor();
+    await fits('market-pay');
+    await page.locator('#purse .coin[data-v="10"]').click();
+    await page.locator('#buy-more').waitFor({ timeout: 15000 });
+    await shot('market-bought');
+    shop = await readShop();
+    assert.deepEqual(shop.decor.owned, ['plant']);
+    assert.equal(shop.piggy, 32);
+    assert.equal(shop.transactions[0].type, 'buy');
+    assert.equal(shop.transactions[0].change, 2, 'seller gave 2 baht back');
+    // ระดับ 2: ต้องจ่ายพอดี — จ่ายเกินลูกค้า(คนขาย)ทำหน้าตกใจ แล้วขอความช่วยเหลือ
+    await setMoney(32, 5);
+    await openMarket();
+    await page.locator('[data-item="lamp"]').click();
+    await page.locator('#purse .coin[data-v="20"]').click();
+    await page.waitForFunction(() => document.querySelector('#mark')?.classList.contains('over'));
+    assert.equal((await readShop()).decor.owned.includes('lamp'), false);
+    await page.locator('#counter .coin').first().click();
+    await page.locator('#help').click();
+    assert.equal(await page.locator('#purse .coin.hint').getAttribute('data-v'), '10');
+    await page.locator('#purse .coin.hint').click();
+    await page.locator('#buy-more').waitFor({ timeout: 15000 });
+    shop = await readShop();
+    assert.equal(shop.piggy, 22);
+    assert.equal(shop.transactions[0].usedHelp, true);
+    // ระดับ 3: จ่ายเหรียญ 10 แล้วตอบว่าต้องได้เงินทอนเท่าไร (พรม 9 บาท → ทอน 1)
+    await setMoney(22, 10);
+    await openMarket();
+    await page.locator('[data-item="rug"]').click();
+    await page.locator('#purse .coin.hint[data-v="10"]').click();
+    await page.locator('#choices .choice').first().waitFor();
+    await fits('market-change');
+    await shot('market-change');
+    const wrong = page.locator('#choices .choice:not([data-n="1"])');
+    await wrong.first().click();
+    await page.waitForFunction(() => document.querySelector('#mark')?.classList.contains('show'));
+    await page.locator('#choices .choice:not([data-n="1"])').first().click();
+    await page.locator('#line').waitFor();
+    await shot('market-change-help');
+    await page.locator('#choices .choice[data-n="1"]').click();
+    await page.locator('#counter .coin[data-v="1"]').waitFor();   // คนขายวางเหรียญ 1 บาทให้ พร้อมนับต่อ
+    await page.locator('#buy-more').waitFor({ timeout: 15000 });
+    shop = await readShop();
+    assert.equal(shop.piggy, 13);
+    assert.equal(shop.transactions[0].paid, 10);
+    assert.equal(shop.transactions[0].change, 1);
+    // เงินไม่พอ: บอกว่าต้องเก็บอีกเท่าไร ไม่เริ่มซื้อ
+    await page.locator('#buy-more').click();
+    await page.locator('[data-item="awning"]').click();
+    await page.locator('.order-bubble .need img').first().waitFor();
+    assert.equal(await page.locator('.order-bubble .qty').innerText(), '+5');
+    assert.equal((await readShop()).activePurchase, null);
+    // ของที่มีแล้ว: แตะเพื่อเก็บเข้ากล่อง / เอาออกมาแต่ง
+    await page.locator('[data-item="plant"]').click();
+    await page.waitForFunction((key) => !JSON.parse(localStorage.getItem(key)).decor.placed.plant, SHOP_KEY);
+    await page.locator('[data-item="plant"]').click();
+    await page.waitForFunction((key) => JSON.parse(localStorage.getItem(key)).decor.placed.plant === 'plant', SHOP_KEY);
+    shop = await readShop();
+    assert.equal(shop.piggy, shop.totals.sales - shop.totals.spent);
+    // กลับร้าน: ของแต่งที่ซื้ออยู่ในร้าน
+    await page.locator('#to-shop').click();
+    await page.locator('.shop:not(.market) #decor').waitFor();
+    assert.equal(await page.locator('#decor .decor').count(), 3);
+    await fits('shop-decorated');
+    await shot('decorated');
+
     // --- ทุกขนาดจอ: ไม่ล้นด้านข้าง
     for (const [width, height] of [[390, 844], [768, 950], [834, 1100], [1024, 660], [1280, 900]]) {
       await page.setViewportSize({ width, height });
@@ -322,7 +415,7 @@ const KITCHEN_KEY = 'happy-little-kitchen-v1';
 
     assert.deepEqual(missing.filter((url) => !url.endsWith('favicon.ico')), [], 'no missing files');
     assert.deepEqual(errors, []);
-    console.log('PASS shop: first visit with seeded cookies, count/collect/change with gentle retries and help, reload keeps the order, sells once, cooking restocks once, parent stats and reset, broken shop data, kitchen save untouched, all screen sizes.');
+    console.log('PASS shop: first visit with seeded cookies, count/collect/change with gentle retries and help, reload keeps the order, sells once, cooking restocks once, market at levels 1-3 with decorations, parent stats and reset, broken shop data, kitchen save untouched, all screen sizes.');
   } finally {
     await browser.close();
   }

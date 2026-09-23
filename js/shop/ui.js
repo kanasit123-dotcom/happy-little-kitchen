@@ -4,7 +4,7 @@
 // ตอบไม่ตรง: สั่นเบาๆ + คำใบ้ (ไม่มีสีแดง ไม่มี ✕ ไม่หักอะไร) ครั้งที่สองเปิดโหมดช่วย (guided) ให้เอง
 const V = new URL(import.meta.url).search;
 const core = await import(`./core.js${V}`);
-const { SHOP_KEY, PRODUCTS, CHANGE_COINS } = core;
+const { SHOP_KEY, PRODUCTS, CHANGE_COINS, DECOR } = core;
 const BROKEN_KEY = 'happy-little-kitchen-shop-broken';
 
 // ทุกคำที่ต้องพูดต้องเป็น th: '…' ของตัวเอง — design/voice.py อัดเสียงจากตรงนี้ แล้วเกมต่อคำเป็นประโยค
@@ -46,8 +46,42 @@ const TXT = {
   shelfFull: { th: 'ชั้นเต็มแล้ว', en: 'The shelf is full' },
   levelUp: { th: 'ร้านเก่งขึ้นแล้ว', en: 'Your shop leveled up!' },
   close: { th: 'ปิด', en: 'Close' },
-  one: { th: 'เอ็ด', en: 'one' }
+  one: { th: 'เอ็ด', en: 'one' },
+  // ตลาด (เด็กเป็นคนซื้อ)
+  market: { th: 'ตลาด', en: 'Market' },
+  marketHello: { th: 'สวัสดีจ้า มาซื้อของแต่งร้านกันไหม', en: 'Hello! Would you like something for your shop?' },
+  pickGoods: { th: 'แตะของที่อยากได้', en: 'Tap what you would like' },
+  priceWord: { th: 'ราคา', en: 'costs' },
+  saveMore: { th: 'เก็บเงินอีก', en: 'Save up' },
+  myPurse: { th: 'กระเป๋าของหนู', en: 'My purse' },
+  payAny: { th: 'แตะเหรียญจ่ายเงินได้เลย', en: 'Tap coins to pay' },
+  payExact: { th: 'หยิบเหรียญจ่ายให้พอดี', en: 'Pay exactly' },
+  payWith: { th: 'จ่ายด้วย', en: 'Pay with' },
+  iGive: { th: 'บาท หนูให้', en: 'baht. I give' },
+  howMuch: { th: 'ต้องได้เงินทอนกี่บาทนะ', en: 'How much change should I get?' },
+  gotChange: { th: 'ทอน', en: 'Your change is' },
+  pay: { th: 'จ่ายเงิน', en: 'Pay' },
+  thanksBuy: { th: 'ขอบคุณที่มาซื้อนะ', en: 'Thank you for shopping!' },
+  placed: { th: 'เอาไปแต่งร้านแล้ว', en: 'It is in your shop now' },
+  stored: { th: 'เก็บเข้ากล่องแล้ว', en: 'Put away in the box' },
+  allBought: { th: 'ซื้อครบทุกอย่างแล้ว เก่งมาก', en: 'You bought everything. Well done!' },
+  buyMore: { th: 'ซื้ออีก', en: 'Buy more' },
+  backShop: { th: 'กลับร้าน', en: 'Back to the shop' }
 };
+// ชื่อของแต่งร้าน (ต้องมี th ของตัวเองให้ voice.py อัดเสียง)
+const DECOR_NAMES = {
+  balloons: { th: 'ลูกโป่ง', en: 'Balloons' },
+  flowers: { th: 'แจกันดอกไม้', en: 'Flowers' },
+  bunting: { th: 'ธงราว', en: 'Bunting' },
+  plant: { th: 'ต้นไม้', en: 'Plant' },
+  rug: { th: 'พรม', en: 'Rug' },
+  lamp: { th: 'โคมไฟ', en: 'Lamp' },
+  tablecloth: { th: 'โต๊ะ', en: 'Table' },
+  chair: { th: 'เก้าอี้', en: 'Chair' },
+  sign: { th: 'ป้ายร้าน', en: 'Shop sign' },
+  awning: { th: 'กันสาด', en: 'Awning' }
+};
+const SELLER = 'squirrel';
 // ชื่อสินค้าภาษาอังกฤษแบบหลายชิ้น (ภาษาไทยใช้ชื่อเมนูเดิมของเกมครัว)
 const MANY = { cookie: 'cookies', cupcake: 'cupcakes', pizza: 'slices of pizza' };
 const ONE = { cookie: 'cookie', cupcake: 'cupcake', pizza: 'slice of pizza' };
@@ -57,6 +91,9 @@ let shop = null;
 let run = 0;          // เลขรอบของหน้าจอ — ออกจากร้าน/เปลี่ยนภาษาแล้วงาน async เก่าหยุดเอง
 let busy = false;     // ระหว่างเล่นแอนิเมชันจบออร์เดอร์ ไม่รับแตะ
 let pay = null;       // สิ่งที่วางบนเคาน์เตอร์ตอนรับเงิน/ทอน (ไม่ต้องเก็บ reload แล้วเริ่มขั้นนี้ใหม่)
+let view = 'shop';    // 'shop' = ขายของ, 'market' = ไปซื้อของแต่งร้าน
+// งานคณิตที่กำลังทำอยู่ (ออร์เดอร์ในร้าน หรือการซื้อที่ตลาด) — ใช้ร่วมกันตอนตอบไม่ตรง/ขอความช่วยเหลือ
+const task = () => (view === 'market' ? shop.activePurchase : shop.activeOrder);
 
 const $ = (selector) => document.querySelector(`.shop ${selector}`);
 const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -117,6 +154,7 @@ export function open(apiIn) {
   api = apiIn;
   shop = load();
   save();
+  view = 'shop';
   renderShell();
   resume();
 }
@@ -124,6 +162,7 @@ export function open(apiIn) {
 export function rerender() {
   if (!api) return;
   api.stopSpeech();
+  if (view === 'market') { openMarket(); return; }
   renderShell();
   resume();
 }
@@ -152,18 +191,19 @@ function renderShell() {
     ${api.topbar(`<img class="title-icon" src="assets/shop/bank.png" alt=""> ${tx('title')}`, true)}
     <div class="prompt" id="prompt"></div>
     <section class="shop-stage">
-      <button class="bank" id="bank" aria-label="${tx('bank')}"><img src="assets/shop/bank.png" alt=""><b id="piggy">${shop.piggy}</b></button>
+      <div class="decor-layer" id="decor" aria-hidden="true">${decorHTML()}</div>
+      <button class="bank" id="bank" aria-label="${tx('market')}"><img src="assets/shop/bank.png" alt=""><b id="piggy">${shop.piggy}</b><i class="bag"><img src="assets/shop/bag.png" alt=""></i></button>
       <div class="customer-spot" id="spot"></div>
     </section>
     <section class="shop-desk" id="desk"></section>
   </div>`;
   api.bindTopbar(() => { leave(); api.showHome(); });
+  // กระปุก = ประตูไปตลาด (ซื้อของแต่งร้านด้วยเงินที่ขายได้)
   $('#bank').onclick = () => {
+    if (busy) return;
     api.unlockAudio();
     api.tone(700, .12);
-    api.flash($('#bank'), 'wave', 600);
-    api.stopSpeech();
-    say(lines.bank(shop.piggy));
+    openMarket();
   };
 }
 
@@ -336,7 +376,7 @@ function giveCounted() {
 
 // ตอบไม่ตรง: ลูกค้าทำหน้าสงสัย/ตกใจ + คำใบ้ ครั้งที่สองเปิดโหมดช่วยให้เอง
 function miss(kind, text, redraw) {
-  const order = shop.activeOrder;
+  const order = task();
   order.math.attempts++;
   react(kind);
   api.stopSpeech();
@@ -353,7 +393,7 @@ function miss(kind, text, redraw) {
 }
 
 function askHelp(redraw) {
-  const order = shop.activeOrder;
+  const order = task();
   order.math.guided = true;
   order.math.usedHelp = true;
   save();
@@ -663,4 +703,315 @@ function showCookChoices() {
   layer.addEventListener('click', (event) => { if (event.target === layer) close(); });
   api.stopSpeech();
   say(tx('cookWhich'));
+}
+
+// ---------------------------------------------------------------- ของแต่งร้าน (วางตามจุดที่กำหนดของแต่ละชิ้น)
+function decorHTML() {
+  return Object.keys(DECOR).filter((id) => shop.decor.placed[id]).map((id) => `<img class="decor decor-${id}" src="assets/decor/${id}.png" alt="">`).join('');
+}
+const decorName = (id) => DECOR_NAMES[id][api.lang()];
+
+// ---------------------------------------------------------------- ตลาด: เด็กเป็นคนซื้อ จ่ายเงิน รับเงินทอน
+function openMarket() {
+  run++;
+  pay = null;
+  busy = false;
+  view = 'market';
+  api.stopSpeech();
+  document.querySelectorAll('.flying-coin').forEach((coin) => coin.remove());
+  api.app.innerHTML = `<div class="app-shell play-screen shop market">
+    ${api.topbar(`<img class="title-icon" src="assets/shop/bag.png" alt=""> ${tx('market')}`, true)}
+    <div class="prompt" id="prompt"></div>
+    <section class="shop-stage">
+      <div class="bank" aria-hidden="true"><img src="assets/shop/bank.png" alt=""><b id="piggy">${shop.piggy}</b></div>
+      <div class="customer-spot" id="spot">
+        <div class="order-bubble" id="bubble"></div>
+        <div class="customer-wrap"><img class="customer arrive" id="customer" src="${api.friendSrc(SELLER)}" alt=""><span class="mark" id="mark"></span></div>
+      </div>
+    </section>
+    <section class="shop-desk" id="desk"></section>
+  </div>`;
+  api.bindTopbar(backToShop);
+  if (shop.activePurchase) enterPurchase(run);
+  else showGoods(run, true);
+}
+
+function backToShop() {
+  run++;
+  pay = null;
+  busy = false;
+  view = 'shop';
+  api.stopSpeech();
+  renderShell();
+  resume();
+}
+
+async function showGoods(id, greet = false) {
+  if (id !== run) return;
+  busy = false;
+  pay = null;
+  $('#customer').src = api.friendSrc(SELLER);
+  $('#bubble').innerHTML = '<img class="bubble-icon" src="assets/shop/bag.png" alt="">';
+  const everything = Object.keys(DECOR).every((item) => shop.decor.owned.includes(item));
+  $('#desk').innerHTML = `<div class="goods">${Object.entries(DECOR).map(([item, { price }]) => {
+    const owned = shop.decor.owned.includes(item);
+    return `<button class="goods-card ${owned ? 'owned' : ''} ${owned && !shop.decor.placed[item] ? 'stored' : ''} ${!owned && shop.piggy < price ? 'dear' : ''}" data-item="${item}" aria-label="${decorName(item)}">
+      <img src="assets/decor/${item}.png" alt="">${owned ? '<i class="owned-mark">✓</i>' : `<span class="price-chip">${price}</span>`}</button>`;
+  }).join('')}</div>
+    <div class="desk-actions"><button class="action-btn" id="to-shop">🏪 ${tx('backShop')}</button></div>`;
+  $('#desk').querySelectorAll('[data-item]').forEach((button) => { button.onclick = () => tapGoods(button); });
+  $('#to-shop').onclick = () => { api.tone(620); backToShop(); };
+  const prompt = everything ? tx('allBought') : tx('pickGoods');
+  setPrompt(prompt);
+  if (greet) {
+    await say(tx('marketHello'));
+    if (id !== run) return;
+    await say(lines.bank(shop.piggy));
+    if (id !== run) return;
+  }
+  say(prompt);
+}
+
+function tapGoods(button) {
+  if (busy) return;
+  api.unlockAudio();
+  const item = button.dataset.item;
+  const { price } = DECOR[item];
+  api.stopSpeech();
+  if (shop.decor.owned.includes(item)) {
+    // ของที่มีแล้ว: แตะเพื่อเอาออกมาแต่ง / เก็บเข้ากล่อง
+    shop = core.toggleDecor(shop, item);
+    save();
+    api.sfx.plip();
+    showGoods(run);
+    say(`${decorName(item)} ${shop.decor.placed[item] ? tx('placed') : tx('stored')}`);
+    return;
+  }
+  if (shop.piggy < price) {
+    // เงินยังไม่พอ: บอกเบาๆ ว่าต้องเก็บอีกเท่าไร (ไม่มีนาฬิกา ไม่เร่ง)
+    nudge(button);
+    const missing = price - shop.piggy;
+    $('#bubble').innerHTML = `<img class="bubble-item" src="assets/decor/${item}.png" alt=""><span class="need">${core.greedyCoins(missing, [10, 5, 2, 1]).map((value) => `<img src="${coinSrc(value)}" alt="">`).join('')}</span><b class="qty">+${missing}</b>`;
+    say(`${decorName(item)} ${tx('priceWord')} ${price} ${tx('baht')} ${tx('saveMore')} ${missing} ${tx('baht')} ${tx('please')}`);
+    return;
+  }
+  const purchase = core.makePurchase(shop, item);
+  if (!purchase) return;
+  shop = core.startPurchase(shop, purchase);
+  save();
+  api.tone(620);
+  enterPurchase(run);
+}
+
+async function enterPurchase(id) {
+  if (id !== run) return;
+  const purchase = shop.activePurchase;
+  const name = decorName(purchase.item);
+  pay = { placed: [], answered: false, change: [] };
+  $('#bubble').innerHTML = `<img class="bubble-item" src="assets/decor/${purchase.item}.png" alt=""><span class="price-tag"><img src="assets/shop/pricetag.png" alt=""><b>${purchase.price}</b></span>`;
+  if (purchase.mode === 'change') {
+    renderPayBig();
+    const prompt = `${tx('payWith')} ${purchase.paidWith} ${tx('baht')}`;
+    setPrompt(prompt);
+    await say(`${name} ${tx('priceWord')} ${purchase.price} ${tx('baht')}`);
+    if (id !== run) return;
+    say(prompt);
+    return;
+  }
+  renderPay();
+  const prompt = purchase.mode === 'exact' ? `${tx('payExact')} ${purchase.price} ${tx('baht')}` : tx('payAny');
+  setPrompt(prompt);
+  await say(`${name} ${tx('priceWord')} ${purchase.price} ${tx('baht')}`);
+  if (id !== run) return;
+  say(prompt);
+}
+
+// จ่ายจากกระเป๋าของหนู: ระดับ 1 จ่ายเกินได้ (คนขายทอนให้), ระดับ 2–3 ต้องพอดี
+function renderPay() {
+  const purchase = shop.activePurchase;
+  const purse = purchase.purse;
+  const sum = core.coinSum(pay.placed.map((i) => purse[i]));
+  const free = purse.map((_, i) => i).filter((i) => !pay.placed.includes(i));
+  const hint = purchase.math.guided ? (core.exactSubset(free.map((i) => purse[i]), purchase.price - sum) || []) : [];
+  const hinted = new Set(hint.map((k) => free[k]));
+  const exact = purchase.mode === 'exact';
+  $('#desk').innerHTML = `
+    <div class="money-row">
+      <div class="purse-zone"><span class="zone-label"><img src="assets/shop/purse.png" alt="">${tx('myPurse')}</span><div class="coins" id="purse">
+        ${purse.map((value, i) => (pay.placed.includes(i) ? '<span class="coin-gap"></span>' : coinHTML(value, `data-i="${i}"`))).join('')}
+      </div></div>
+      <div class="counter-zone"><div class="running" id="running">${sum}<small>/${purchase.price}</small></div><div class="coins" id="counter">
+        ${pay.placed.map((i, k) => coinHTML(purse[i], `data-k="${k}"`)).join('')}
+      </div></div>
+    </div>
+    <div class="desk-actions">
+      ${exact && !purchase.math.guided ? `<button class="action-btn help-btn" id="help">💡 ${tx('help')}</button>` : ''}
+      <button class="action-btn primary" id="give" ${pay.placed.length ? '' : 'disabled'}>🤲 ${tx('pay')}</button>
+    </div>`;
+  $('#purse').querySelectorAll('.coin').forEach((coin) => {
+    if (hinted.has(Number(coin.dataset.i))) coin.classList.add('hint');
+    coin.onclick = () => payCoin(Number(coin.dataset.i));
+  });
+  $('#counter').querySelectorAll('.coin').forEach((coin) => {
+    coin.onclick = () => {
+      if (busy) return;
+      pay.placed.splice(Number(coin.dataset.k), 1);
+      api.sfx.swish();
+      renderPay();
+    };
+  });
+  if ($('#help')) $('#help').onclick = () => askHelp(renderPay);
+  $('#give').onclick = () => {
+    if (busy) return;
+    const now = core.coinSum(pay.placed.map((i) => purse[i]));
+    if (now >= purchase.price && (!exact || now === purchase.price)) return paidMarket(run, now);
+    if (!exact) { api.stopSpeech(); react('short'); say(tx('moneyShort')); return; }
+    const verdict = core.judge(purchase.price, now);
+    miss(verdict, verdict === 'over' ? tx('moneyOver') : tx('moneyShort'), renderPay);
+  };
+}
+
+function payCoin(index) {
+  if (busy || pay.placed.includes(index)) return;
+  api.unlockAudio();
+  const purchase = shop.activePurchase;
+  pay.placed.push(index);
+  api.sfx.clunk();
+  renderPay();
+  $('#counter .coin:last-child')?.classList.add('pop');
+  const sum = core.coinSum(pay.placed.map((i) => purchase.purse[i]));
+  api.stopSpeech();
+  if (purchase.mode === 'free') {
+    say(String(sum));
+    if (sum >= purchase.price) paidMarket(run, sum);
+    return;
+  }
+  const verdict = core.judge(purchase.price, sum);
+  if (verdict === 'exact') { say(String(sum)); paidMarket(run, sum); return; }
+  if (verdict === 'over') { miss('over', `${sum} ${tx('moneyOver')}`, renderPay); return; }
+  say(String(sum));
+}
+
+// ระดับ 3: จ่ายเหรียญ 10 / แบงก์ 20 แล้วตอบว่าต้องได้เงินทอนกี่บาท
+function renderPayBig() {
+  const purchase = shop.activePurchase;
+  const { price, paidWith } = purchase;
+  if (!pay.answered && !pay.given) {
+    $('#desk').innerHTML = `
+      <div class="money-row single">
+        <div class="purse-zone"><span class="zone-label"><img src="assets/shop/purse.png" alt="">${tx('myPurse')}</span><div class="coins" id="purse">${coinHTML(paidWith, 'data-big="1"')}</div></div>
+      </div>`;
+    const big = $('#purse .coin');
+    big.classList.add('hint');
+    big.onclick = () => giveBig();
+    return;
+  }
+  $('#desk').innerHTML = `
+    <div class="money-row">
+      <div class="paid-zone"><span class="zone-label">${tx('pay')}</span><div class="coins">${coinHTML(paidWith, 'tabindex="-1" disabled')}</div></div>
+      <div class="counter-zone"><span class="zone-label">${tx('gotChange')}</span><div class="coins" id="counter">${pay.change.map((value) => coinHTML(value, 'tabindex="-1" disabled')).join('')}</div></div>
+    </div>
+    ${purchase.math.guided && !pay.answered ? `<div class="numberline" id="line" aria-hidden="true"><b>${price}</b>${Array.from({ length: paidWith - price }, (_, i) => `<i>${price + i + 1}</i>`).join('')}</div>` : ''}
+    ${pay.answered ? '' : `<div class="choices" id="choices">${purchase.choices.map((n) => `<button class="choice" data-n="${n}">${n}</button>`).join('')}</div>`}
+    <div class="desk-actions">${!pay.answered && !purchase.math.guided ? `<button class="action-btn help-btn" id="help">💡 ${tx('help')}</button>` : ''}</div>`;
+  $('#desk').querySelectorAll('[data-n]').forEach((button) => { button.onclick = () => chooseChange(Number(button.dataset.n), button); });
+  if ($('#help')) $('#help').onclick = () => askHelp(renderPayBig);
+}
+
+async function giveBig() {
+  if (busy) return;
+  api.unlockAudio();
+  const purchase = shop.activePurchase;
+  pay.given = true;
+  api.sfx.clunk();
+  renderPayBig();
+  api.stopSpeech();
+  const id = run;
+  await say(`${tx('costs')} ${purchase.price} ${tx('iGive')} ${purchase.paidWith} ${tx('baht')}`);
+  if (id !== run) return;
+  setPrompt(tx('howMuch'));
+  say(tx('howMuch'));
+}
+
+async function chooseChange(n, button) {
+  if (busy) return;
+  const purchase = shop.activePurchase;
+  api.stopSpeech();
+  if (n !== purchase.change) {
+    nudge(button);
+    miss(n < purchase.change ? 'short' : 'over', lines.changeHow(purchase.price, purchase.paidWith), renderPayBig);
+    return;
+  }
+  busy = true;
+  const id = run;
+  pay.answered = true;
+  api.sfx.ding();
+  renderPayBig();
+  await say(`${tx('gotChange')} ${n} ${tx('baht')}`);
+  // คนขายวางเงินทอนทีละเหรียญ พร้อมนับต่อจากราคา
+  let running = purchase.price;
+  for (const value of core.greedyCoins(purchase.change, [5, 2, 1])) {
+    if (id !== run) return;
+    pay.change.push(value);
+    running += value;
+    api.sfx.clunk();
+    renderPayBig();
+    $('#counter .coin:last-child')?.classList.add('pop');
+    await Promise.all([wait(350), say(String(running))]);
+  }
+  if (id !== run) return;
+  busy = false;
+  finishPurchase(id, purchase.paidWith);
+}
+
+async function paidMarket(id, given) {
+  if (busy) return;
+  busy = true;
+  const purchase = shop.activePurchase;
+  await wait(250);
+  if (id !== run) return;
+  api.sfx.ding();
+  if (given > purchase.price) {
+    // ระดับ 1 จ่ายเกิน: คนขายทอนให้เอง นับต่อให้ฟัง
+    const change = given - purchase.price;
+    await say(`${tx('gotChange')} ${change} ${tx('baht')}`);
+    if (id !== run) return;
+  } else {
+    await say(tx('exact'));
+    if (id !== run) return;
+  }
+  busy = false;
+  finishPurchase(id, given);
+}
+
+async function finishPurchase(id, given) {
+  if (id !== run || busy) return;
+  busy = true;
+  const purchase = shop.activePurchase;
+  const result = core.commitPurchase(shop, purchase, { paid: given });
+  if (!result.committed) {
+    shop.activePurchase = null;
+    save();
+    showGoods(run);
+    return;
+  }
+  shop = result.shop;
+  save();
+  $('#piggy').textContent = shop.piggy;
+  $('#customer').src = api.friendSrc(SELLER, 'love');
+  $('#customer').classList.add('happy');
+  $('#bubble').innerHTML = `<img class="bubble-item" src="assets/decor/${purchase.item}.png" alt=""><span class="heart">♥</span>`;
+  api.confetti();
+  setPrompt(`${decorName(purchase.item)} ${tx('placed')}`);
+  $('#desk').innerHTML = `<div class="bought"><img class="bought-item" src="assets/decor/${purchase.item}.png" alt=""></div>
+    <div class="desk-actions">
+      <button class="action-btn" id="buy-more">🛍️ ${tx('buyMore')}</button>
+      <button class="action-btn primary" id="to-shop">🏪 ${tx('backShop')}</button>
+    </div>`;
+  $('#buy-more').onclick = () => { api.tone(620); showGoods(run); };
+  $('#to-shop').onclick = () => { api.tone(620); backToShop(); };
+  await say(tx('thanksBuy'));
+  if (id !== run) return;
+  say(`${decorName(purchase.item)} ${tx('placed')}`);
+  busy = false;
 }

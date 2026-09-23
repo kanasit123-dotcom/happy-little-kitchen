@@ -18,6 +18,20 @@ export const TRANSACTIONS_MAX = 100;
 export const COIN_VALUES = [1, 2, 5, 10];
 export const CHANGE_COINS = [1, 2, 5];     // ลิ้นชักเหรียญทอน (มีไม่จำกัด)
 
+// ของแต่งร้านที่ตลาด: ราคา 5–20 บาท ขาย 1–3 ออร์เดอร์ก็ซื้อได้ 1 ชิ้น มีขายตลอด ไม่มีสุ่ม ไม่หมดอายุ
+export const DECOR = {
+  balloons: { price: 5 },
+  flowers: { price: 6 },
+  bunting: { price: 7 },
+  plant: { price: 8 },
+  rug: { price: 9 },
+  lamp: { price: 10 },
+  tablecloth: { price: 12 },
+  chair: { price: 14 },
+  sign: { price: 15 },
+  awning: { price: 18 }
+};
+
 // ปลดล็อกตามจำนวนออร์เดอร์ที่ขายสำเร็จ ไม่ลดระดับ ไม่อิงความแม่นยำ — ระดับ 4 ขึ้นไปมาใน Phase 5
 export const LEVELS = [
   { level: 1, unlock: 0, checkpoints: ['count'] },
@@ -77,6 +91,7 @@ export function freshShop() {
     lastRestockId: null,
     lastOrderKey: null,
     lastCustomer: null,
+    lastPurchaseMode: null,
     recent: [],
     transactions: [],
     decor: { owned: [], placed: {} }
@@ -115,17 +130,23 @@ export function normalizeShop(raw) {
     order.math = { attempts: nonNeg(order.math?.attempts), usedHelp: order.math?.usedHelp === true, guided: order.math?.guided === true };
     order.payment.changeCoins = [];
   }
+  shop.activePurchase = validPurchase(raw.activePurchase) ? clone(raw.activePurchase) : null;
+  if (shop.activePurchase) shop.activePurchase.math = { attempts: nonNeg(raw.activePurchase.math?.attempts), usedHelp: raw.activePurchase.math?.usedHelp === true, guided: raw.activePurchase.math?.guided === true };
   shop.lastRestockId = typeof raw.lastRestockId === 'string' ? raw.lastRestockId : null;
   shop.recent = Array.isArray(raw.recent) ? raw.recent.filter((kind) => typeof kind === 'string').slice(-2) : [];
   shop.lastOrderKey = typeof raw.lastOrderKey === 'string' ? raw.lastOrderKey : null;
   shop.lastCustomer = typeof raw.lastCustomer === 'string' ? raw.lastCustomer : null;
+  shop.lastPurchaseMode = typeof raw.lastPurchaseMode === 'string' ? raw.lastPurchaseMode : null;
   shop.transactions = Array.isArray(raw.transactions)
     ? raw.transactions.filter((entry) => entry && typeof entry.id === 'string').slice(0, TRANSACTIONS_MAX)
     : [];
-  shop.decor = {
-    owned: Array.isArray(raw.decor?.owned) ? raw.decor.owned.filter((id) => typeof id === 'string') : [],
-    placed: raw.decor?.placed && typeof raw.decor.placed === 'object' ? { ...raw.decor.placed } : {}
-  };
+  const owned = Array.isArray(raw.decor?.owned) ? [...new Set(raw.decor.owned.filter((id) => DECOR[id]))] : [];
+  const placed = {};
+  for (const [slot, id] of Object.entries(raw.decor?.placed && typeof raw.decor.placed === 'object' ? raw.decor.placed : {})) {
+    if (slot === id && owned.includes(id)) placed[slot] = id;
+  }
+  shop.decor = { owned, placed };
+  if (shop.activePurchase && owned.includes(shop.activePurchase.item)) shop.activePurchase = null;
   return shop;
 }
 
@@ -299,6 +320,105 @@ export function addStock(shop, recipe, restockId) {
   next.stock[recipe] += added;
   if (restockId) next.lastRestockId = restockId;
   return { shop: next, added, reason: added ? null : 'full' };
+}
+
+// ---------------------------------------------------------------- ตลาด: เด็กเป็นคนซื้อ
+function validPurchase(purchase) {
+  if (!purchase || typeof purchase !== 'object' || typeof purchase.id !== 'string' || !DECOR[purchase.item]) return false;
+  if (!['free', 'exact', 'change'].includes(purchase.mode) || !isInt(purchase.price) || purchase.price !== DECOR[purchase.item].price) return false;
+  if (!Array.isArray(purchase.purse) || !purchase.purse.every((coin) => [1, 2, 5, 10, 20].includes(coin))) return false;
+  if (purchase.mode === 'change') return [10, 20].includes(purchase.paidWith) && purchase.paidWith > purchase.price;
+  return true;
+}
+
+// กระเป๋าเงินของเด็กที่ตลาด: เงินในกระปุกแตกเป็นเหรียญ โดยมีชุดที่จ่ายพอดีกับของชิ้นนี้ได้เสมอ
+// (เงินเยอะก็โชว์แค่ไม่กี่เหรียญ ไม่ต้องเทกระปุกทั้งหมดออกมา)
+export function marketPurse(piggy, price) {
+  if (piggy < price) return greedyCoins(piggy);
+  const exact = greedyCoins(price, [10, 5, 2, 1]);
+  const extra = greedyCoins(piggy - price).slice(0, 3);
+  return [...exact, ...extra].sort((x, y) => y - x);
+}
+
+// ตัวเลือกคำตอบ "ต้องได้เงินทอนกี่บาท" 3 ตัว มีคำตอบถูก 1 ตัว ไม่ซ้ำกัน ไม่ติดลบ
+export function changeChoices(change, random = Math.random) {
+  const options = new Set([change]);
+  const near = [change - 1, change + 1, change - 2, change + 2, change + 3].filter((n) => n > 0 && n <= 19 && n !== change);
+  while (options.size < 3 && near.length) options.add(near.splice(Math.floor(random() * near.length), 1)[0]);
+  return [...options].sort((x, y) => x - y);
+}
+
+// เริ่มซื้อของ 1 ชิ้น: ระดับ 1 จ่ายอิสระ (จ่ายเกินคนขายทอนให้เอง), ระดับ 2 จ่ายพอดี,
+// ระดับ 3 สลับจ่ายพอดี กับจ่ายเหรียญ 10/แบงก์ 20 แล้วตอบว่าต้องได้เงินทอนเท่าไร
+export function makePurchase(shop, item, { random = Math.random, now = Date.now() } = {}) {
+  const decor = DECOR[item];
+  if (!decor || shop.decor.owned.includes(item) || shop.piggy < decor.price) return null;
+  const price = decor.price;
+  let mode = shop.level >= 3 ? 'change' : shop.level === 2 ? 'exact' : 'free';
+  const paidWith = price < 10 ? 10 : 20;
+  if (mode === 'change' && (shop.piggy < paidWith || price >= paidWith || shop.lastPurchaseMode === 'change')) mode = 'exact';
+  const purchase = {
+    id: `buy-${now.toString(36)}-${Math.floor(random() * 1e6).toString(36)}`,
+    item,
+    price,
+    mode,
+    purse: mode === 'change' ? [paidWith] : marketPurse(shop.piggy, price),
+    math: { attempts: 0, usedHelp: false, guided: false },
+    createdAt: now
+  };
+  if (mode === 'change') {
+    purchase.paidWith = paidWith;
+    purchase.change = paidWith - price;
+    purchase.choices = changeChoices(purchase.change, random);
+  }
+  return purchase;
+}
+
+export function startPurchase(shop, purchase) {
+  const next = clone(shop);
+  next.activePurchase = purchase ? clone(purchase) : null;
+  return next;
+}
+
+// ซื้อสำเร็จ: atomic เหมือนการขาย (idempotency key = purchase.id) เงินไม่ติดลบ ของชิ้นเดิมซื้อซ้ำไม่ได้
+export function commitPurchase(shop, purchase, { paid, now = Date.now() } = {}) {
+  if (!validPurchase(purchase)) return { shop, committed: false, reason: 'invalid' };
+  if (shop.transactions.some((entry) => entry.id === purchase.id)) return { shop, committed: false, reason: 'duplicate' };
+  if (shop.decor.owned.includes(purchase.item)) return { shop, committed: false, reason: 'owned' };
+  if (shop.piggy < purchase.price) return { shop, committed: false, reason: 'money' };
+  const given = purchase.mode === 'change' ? purchase.paidWith : paid;
+  if (!isInt(given) || given < purchase.price) return { shop, committed: false, reason: 'payment' };
+  if (purchase.mode === 'exact' && given !== purchase.price) return { shop, committed: false, reason: 'payment' };
+  const next = clone(shop);
+  next.piggy -= purchase.price;
+  next.totals.spent += purchase.price;
+  next.purchasesDone += 1;
+  next.decor.owned = [...next.decor.owned, purchase.item];
+  next.decor.placed = { ...next.decor.placed, [purchase.item]: purchase.item };
+  next.lastPurchaseMode = purchase.mode;
+  next.transactions = [{
+    id: purchase.id,
+    type: 'buy',
+    item: purchase.item,
+    price: purchase.price,
+    paid: given,
+    change: given - purchase.price,
+    mode: purchase.mode,
+    attempts: purchase.math?.attempts || 0,
+    usedHelp: purchase.math?.usedHelp === true,
+    at: now
+  }, ...next.transactions].slice(0, TRANSACTIONS_MAX);
+  next.activePurchase = null;
+  return { shop: next, committed: true };
+}
+
+// เอาของแต่งออกมาวาง/เก็บเข้ากล่อง (ของที่ซื้อแล้วเท่านั้น)
+export function toggleDecor(shop, item) {
+  if (!shop.decor.owned.includes(item)) return shop;
+  const next = clone(shop);
+  if (next.decor.placed[item]) delete next.decor.placed[item];
+  else next.decor.placed[item] = item;
+  return next;
 }
 
 export function canRestock(shop, recipe) {
