@@ -1,5 +1,6 @@
 const STORE_KEY = 'happy-little-kitchen-v1';
 const LEGACY_STORE_KEY = 'lilly-playhouse-v1';
+const SHOP_KEY = 'happy-little-kitchen-shop-v1';   // ร้านของหนูเก็บแยก key (js/shop/core.js) ไม่ปนกับเซฟครัว
 
 // ชื่อ key ทุกตาราง = ชื่อไฟล์รูปใน assets/<กลุ่ม>/<key>.png
 // prep = ต้องเตรียมก่อนใส่: 'cut' ปาดนิ้วหั่น 3 ครั้ง, 'crack' แตะ 2 ครั้งให้แตก → รูปเปลี่ยนเป็น prepared
@@ -319,7 +320,9 @@ const COPY = {
     likesWord: 'ชอบ', hatesWord: 'ไม่ชอบ', parent: 'ผู้ปกครอง', parentHold: 'กดค้าง 2 วินาที', stats: 'สถิติ', madeCount: 'จานที่ทำ', servedCount: 'ป้อนเพื่อน', friendsCount: 'เพื่อนที่มาแล้ว', ordersCount: 'ทำตามที่เพื่อนขอ',
     resetAll: 'รีเซ็ตทั้งหมด (กดค้าง)', resetBook: 'ล้างสมุดผลงาน (กดค้าง)', resetDone: 'รีเซ็ตแล้ว เริ่มใหม่ได้เลย', resetNote: 'รีเซ็ตแล้วเพื่อนจะกลับไปเหลือ 3 ตัว สมุดผลงานว่าง', version: 'เวอร์ชัน',
     mixed: { stir: 'เข้ากันดีแล้ว', whisk: 'ฟูกำลังดี', roll: 'แบนสวยเลย', spread: 'ทาทั่วแล้ว' },
-    freeTitle: 'ครัวอิสระ ✨ ทำอะไรก็ได้', mystery: 'ได้จานลึกลับแล้ว!', pickMachine: 'กดค้างให้เครื่องทำงาน ปล่อยเมื่อแถบเต็ม', burnt: 'โอ๊ะ ไหม้แล้ว! ก็ยังกินได้นะ', freeAdd: 'แตะของที่อยากใส่ ลงชามได้เลย'
+    freeTitle: 'ครัวอิสระ ✨ ทำอะไรก็ได้', mystery: 'ได้จานลึกลับแล้ว!', pickMachine: 'กดค้างให้เครื่องทำงาน ปล่อยเมื่อแถบเต็ม', burnt: 'โอ๊ะ ไหม้แล้ว! ก็ยังกินได้นะ', freeAdd: 'แตะของที่อยากใส่ ลงชามได้เลย',
+    shop: 'ร้านของหนู', toShop: 'เอาไปวางขายที่ร้านกัน', gotStock: 'ได้', piece: 'ชิ้น', shelfFull: 'ชั้นเต็มแล้ว',
+    shopSold: 'ขายของ', shopBank: 'เงินในกระปุก', resetShop: 'ล้างร้าน (กดค้าง)'
   },
   en: {
     title: 'Happy Little Kitchen', subtitle: 'Pick a treat and make it your way', language: '🇬🇧 ENG',
@@ -336,7 +339,9 @@ const COPY = {
     likesWord: 'likes', hatesWord: 'does not like', parent: 'Parents', parentHold: 'Hold for 2 seconds', stats: 'Stats', madeCount: 'Dishes made', servedCount: 'Friends fed', friendsCount: 'Friends unlocked', ordersCount: 'Orders completed',
     resetAll: 'Reset everything (hold)', resetBook: 'Clear the cookbook (hold)', resetDone: 'Reset done, start fresh', resetNote: 'Resetting goes back to three friends and an empty cookbook', version: 'Version',
     mixed: { stir: 'Perfectly mixed', whisk: 'Nice and fluffy', roll: 'Rolled out nicely', spread: 'All spread out' },
-    freeTitle: 'Free kitchen ✨ make anything', mystery: 'A mystery dish!', pickMachine: 'Hold to run the machine, let go when the bar is full', burnt: 'Oops, it burned! Still tasty', freeAdd: 'Tap anything you want to put in the bowl'
+    freeTitle: 'Free kitchen ✨ make anything', mystery: 'A mystery dish!', pickMachine: 'Hold to run the machine, let go when the bar is full', burnt: 'Oops, it burned! Still tasty', freeAdd: 'Tap anything you want to put in the bowl',
+    shop: 'My shop', toShop: 'Let us sell them in the shop', gotStock: 'We made', piece: '', shelfFull: 'The shelf is full',
+    shopSold: 'Orders sold', shopBank: 'Money in the bank', resetShop: 'Clear the shop (hold)'
   }
 };
 
@@ -344,6 +349,7 @@ const app = document.querySelector('#app');
 let state = loadState();
 saveState(); // เขียนกลับทันที ผลงานเก่าจะได้อยู่ในรูปแบบใหม่
 let activeRecipe = null;
+let session = null;      // บริบทของการทำอาหารรอบนี้ เช่น { destination: 'stock', restockId } ตอนทำไปเติมร้าน
 let step = 0;
 let creation = null;
 let stage = null;        // ของบนเวทีระหว่างทำ: { base, bits, slices, candles }
@@ -771,6 +777,7 @@ function bindTopbar(onBack) {
     if (activeRecipe) renderStep();
     else if (app.querySelector('.book')) showBook();
     else if (app.querySelector('.parent')) showParent();
+    else if (app.querySelector('.shop')) loadShop().then((shop) => shop.rerender());
     else showHome();
   };
   app.querySelector('#language').onclick = () => {
@@ -871,6 +878,7 @@ const version = () => (document.querySelector('script[src*="v="]')?.getAttribute
 function showParent() {
   activeRecipe = null;
   const unlocked = unlockedFriends().length;
+  const shopData = readShop();
   app.innerHTML = `<div class="app-shell play-screen">
     ${topbar(`👪 ${t('parent')}`, true)}
     <section class="parent">
@@ -879,9 +887,12 @@ function showParent() {
         <div class="stat"><b>${state.served}</b><span>${t('servedCount')}</span></div>
         <div class="stat"><b>${unlocked} / ${Object.keys(FRIENDS).length}</b><span>${t('friendsCount')}</span></div>
         <div class="stat"><b>${state.ordersDone}</b><span>${t('ordersCount')}</span></div>
+        <div class="stat"><b>${shopData?.ordersDone || 0}</b><span>🏪 ${t('shopSold')}</span></div>
+        <div class="stat"><b>${shopData?.piggy || 0}</b><span>🪙 ${t('shopBank')}</span></div>
       </div>
       <p class="note">${t('resetNote')}</p>
       <button class="action-btn hold-btn" id="reset-book"><i></i><span>🖼️ ${t('resetBook')}</span></button>
+      <button class="action-btn hold-btn" id="reset-shop"><i></i><span>🏪 ${t('resetShop')}</span></button>
       <button class="action-btn danger hold-btn" id="reset-all"><i></i><span>🔄 ${t('resetAll')}</span></button>
       <p class="note small">${t('version')} v${version()} · ${t('parentHold')}</p>
     </section>
@@ -893,9 +904,15 @@ function showParent() {
     showParent();
     speak(t('resetDone'));
   });
+  bindHold(app.querySelector('#reset-shop'), () => {
+    try { localStorage.removeItem(SHOP_KEY); } catch {}
+    showParent();
+    speak(t('resetDone'));
+  });
   bindHold(app.querySelector('#reset-all'), () => {
     state = { lang: state.lang, sound: state.sound, gallery: [], served: 0, made: 0, ordersDone: 0, order: null };
     saveState();
+    try { localStorage.removeItem(SHOP_KEY); } catch {}
     showParent();
     speak(t('resetDone'));
   });
@@ -966,6 +983,7 @@ function friendsRowHTML() {
 function showHome() {
   if (activeRecipe) stopSpeech();
   activeRecipe = null;
+  session = null;
   step = 0;
   removeGhosts();
   app.innerHTML = `<div class="app-shell">
@@ -977,7 +995,10 @@ function showHome() {
           <img class="recipe-icon" src="${dishSrc(id)}" alt=""><b>${local(recipe.name)}</b>
         </button>`).join('')}
       </div>
-      <button class="free-card" data-recipe="free" aria-label="${local(RECIPES.free.name)}"><img src="${dishSrc('free')}" alt=""><b>${t('freeTitle')}</b></button>
+      <div class="home-extras">
+        <button class="free-card" data-recipe="free" aria-label="${local(RECIPES.free.name)}"><img src="${dishSrc('free')}" alt=""><b>${t('freeTitle')}</b></button>
+        <button class="free-card shop-card" id="shop" aria-label="${t('shop')}"><img src="assets/shop/bank.png" alt=""><b>${t('shop')}</b></button>
+      </div>
       ${galleryHTML()}
       ${friendsRowHTML()}
     </section>
@@ -986,6 +1007,13 @@ function showHome() {
   bindHold(app.querySelector('#parent'), showParent);
   const book = app.querySelector('#book');
   if (book) book.onclick = () => { tone(620); showBook(); };
+  app.querySelector('#shop').onclick = async () => {
+    unlockAudio();
+    tone(620);
+    loadShop().catch(() => {});   // โหลดโมดูลระหว่างพูด
+    await speak(t('shop'));
+    openShop();
+  };
   const orderButton = app.querySelector('#order');
   if (orderButton) {
     orderButton.onclick = async () => {
@@ -1024,14 +1052,44 @@ function showHome() {
   });
 }
 
-function startRecipe(id) {
+function startRecipe(id, context = null) {
   activeRecipe = id;
+  session = context;
   step = 0;
   creation = { recipe: id, color: '#ef6f61', toppings: [], friend: null, at: Date.now() };
   stage = { base: dishSrc(id), bits: [], slices: 0, candles: [], free: [], tint: null };
   paint = document.createElement('canvas');
   paint.width = paint.height = 512;
   renderStep();
+}
+
+// ---------------------------------------------------------------- ร้านของหนู (js/shop/)
+// โหลดเฉพาะตอนเปิดร้าน ต่อ ?v= เดียวกับไฟล์นี้ — sw.js ตอบจาก cache ก่อน ถ้าไม่มี ?v= อาจได้ไฟล์ร้านรุ่นเก่าปนกับ app.js รุ่นใหม่
+const MODULE_VERSION = new URL(import.meta.url).search;
+let shopModule = null;
+function loadShop() {
+  if (!shopModule) shopModule = import(`./shop/ui.js${MODULE_VERSION}`).catch((error) => { shopModule = null; throw error; });
+  return shopModule;
+}
+function shopApi() {
+  return {
+    app, lang: () => state.lang, speak, stopSpeech, tone, sfx: SFX, confetti, popup, flash, unlockAudio,
+    topbar, bindTopbar, friendSrc, dishSrc, showHome, startRecipe,
+    friendName: (id) => local(FRIENDS[id].name),
+    recipeName: (id) => local(RECIPES[id].name),
+    customers: () => unlockedFriends()
+  };
+}
+async function openShop() {
+  if (activeRecipe) stopSpeech();
+  activeRecipe = null;
+  session = null;
+  removeGhosts();
+  const shop = await loadShop();
+  shop.open(shopApi());
+}
+function readShop() {
+  try { return JSON.parse(localStorage.getItem(SHOP_KEY)) || null; } catch { return null; }
 }
 
 function currentSteps() { return RECIPES[activeRecipe].steps; }
@@ -2336,7 +2394,37 @@ function popup(html, spoken) {
   });
 }
 
+// ทำอาหารไปเติมร้าน: จบแล้วเอาขึ้นชั้นขาย แทนหน้าป้อนเพื่อน (ขั้นตอนทำอาหารเหมือนเดิมทุกอย่าง)
+let stockSavedFor = null;
+async function finishForStock() {
+  const recipe = activeRecipe;
+  const { restockId } = session;
+  let result;
+  try { result = (await loadShop()).restock(recipe, restockId); } catch { return showHome(); }
+  if (activeRecipe !== recipe) return;
+  const prompt = result.added ? `${t('gotStock')} ${local(RECIPES[recipe].name)} ${result.added} ${t('piece')}`.trim() : t('shelfFull');
+  screen(`<div class="stage-zone stock-zone">
+      ${stageHTML({ plate: true })}
+      <div class="stock-batch" aria-hidden="true">${Array.from({ length: result.added }, (_, i) => `<img src="${dishSrc(recipe)}" alt="" style="--i:${i}">`).join('')}</div>
+      <button class="action-btn primary" id="to-shop">🏪 ${t('toShop')}</button>
+    </div>`, prompt);
+  const dish = app.querySelector('#dish');
+  syncPaint(dish);
+  app.querySelector('#to-shop').onclick = () => { tone(620); openShop(); };
+  // เก็บรูปลงสมุดผลงานครั้งเดียว (ไม่นับเป็นการป้อนเพื่อน)
+  if (stockSavedFor !== creation) {
+    stockSavedFor = creation;
+    await Promise.all([...dish.querySelectorAll('img')].map((img) => (img.complete ? null : new Promise((resolve) => { img.onload = img.onerror = resolve; }))));
+    state.gallery.unshift({ ...creation, friends: [], photo: snapshot(dish) });
+    state.gallery = state.gallery.slice(0, GALLERY_MAX);
+    state.made++;
+    saveState();
+  }
+  speak(t('toShop'));
+}
+
 RENDERERS.serve = () => {
+  if (session?.destination === 'stock') return finishForStock();
   const prompt = t('serve');
   const order = ensureOrder();
   const diners = pickDiners();
@@ -2543,10 +2631,10 @@ if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' }).then((registration) => registration.update().catch(() => {})).catch(() => {});
   navigator.serviceWorker.addEventListener('controllerchange', () => {
     if (!navigator.serviceWorker.controller) return;   // ครั้งแรกที่ติดตั้ง ไม่ต้องโหลดใหม่
-    if (activeRecipe) reloadWhenIdle = true; else location.reload();
+    if (activeRecipe || app.querySelector('.shop')) reloadWhenIdle = true; else location.reload();
   });
   document.addEventListener('visibilitychange', () => {
-    if (document.visibilityState === 'visible' && reloadWhenIdle && !activeRecipe) location.reload();
+    if (document.visibilityState === 'visible' && reloadWhenIdle && !activeRecipe && !app.querySelector('.shop')) location.reload();
   });
   const originalShowHome = showHome;
   showHome = () => { if (reloadWhenIdle) { location.reload(); return; } originalShowHome(); };

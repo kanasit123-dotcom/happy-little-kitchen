@@ -586,7 +586,8 @@ const path = require('node:path');
     await page.locator('#back').click();
 
     await page.waitForFunction(() => navigator.serviceWorker.controller);
-    assert.ok((await page.evaluate(() => caches.keys())).includes('happy-little-kitchen-v31'));
+    const cacheName = fs.readFileSync(path.join(__dirname, '..', 'sw.js'), 'utf8').match(/const CACHE = '([^']+)'/)[1];   // ตามเวอร์ชันใน sw.js ไม่ต้องแก้เทสทุกครั้งที่ bump
+    assert.ok((await page.evaluate(() => caches.keys())).includes(cacheName), cacheName);
     await context.setOffline(true);
     await page.reload();
     await page.locator('.recipe-card').first().waitFor();

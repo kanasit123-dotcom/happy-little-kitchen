@@ -2,7 +2,7 @@
 เก็บที่ assets/voice/th/<hash>.mp3 + manifest.json (ข้อความ → ไฟล์) เกมจะเล่นไฟล์นี้แทนเสียงในเครื่อง
 
 ใช้:  pip install edge-tts   แล้ว   python design/voice.py
-สร้างเฉพาะประโยคที่ยังไม่มีไฟล์ — เพิ่มข้อความไทยใน js/app.js แล้วรันซ้ำได้เลย
+สร้างเฉพาะประโยคที่ยังไม่มีไฟล์ — เพิ่มข้อความไทยใน js/app.js หรือ js/shop/*.js แล้วรันซ้ำได้เลย (อัดตัวเลข 0–100 ให้ด้วย)
 """
 import asyncio
 import hashlib
@@ -24,7 +24,16 @@ def collect():
     block = src[src.index('const COPY = {'):]
     block = block[block.index('th: {'):block.index('\n  en: {')]
     texts.update(re.findall(STRING, block))
-    return sorted(t.replace("\\'", "'") for t in texts if THAI.search(t))
+    # ร้านของหนู (js/shop/*.js): ทุกคำที่พูดอยู่ใน th: '…' เหมือนกัน
+    for path in sorted((ROOT / 'js' / 'shop').glob('*.js')):
+        texts.update(re.findall(r"th: " + STRING, path.read_text(encoding='utf-8')))
+    texts = {t.replace("\\'", "'") for t in texts if THAI.search(t)}
+    # ตัวเลข 0–100 ให้ร้านต่อเป็นประโยค เช่น "ทั้งหมด 14 บาท" หรือนับต่อ "8" "9" "10"
+    texts.update(str(n) for n in range(0, 101))
+    # เงินในกระปุกเกิน 100: หลักร้อย/พันถ้วน แล้วต่อด้วยเศษ 1–99 (js/shop/ui.js spokenNumber)
+    texts.update(str(n * 100) for n in range(2, 10))
+    texts.update(str(n * 1000) for n in range(1, 10))
+    return sorted(texts)
 
 
 def spoken(text):

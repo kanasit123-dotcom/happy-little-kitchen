@@ -54,11 +54,13 @@ Everything below is deployed at https://kanasit123-dotcom.github.io/happy-little
 - Open feedback to watch for: whether feeding drags work on the child's iPhone after v23+ (could not reproduce; zoom was the likely cause), whether the longer step lists stay fun for a 5-year-old, and whether the ~200 px free-kitchen result pictures look sharp enough on iPad (ask for the 4×5 sheet at 2K if not).
 - Ideas queued but not started: new recipes (popcorn, donut, fried rice, cocoa, rice ball), choose-a-plate step, two-player feeding, progress transfer code between devices, smaller first download (~26 MB).
 
-## Restaurant and market (planned 2026-09-23, not built yet)
+## Restaurant and market (planned 2026-09-23; shop levels 1–3 + restocking live in v32)
 
 Full plan: `RESTAURANT-MATH-PLAN.md` in this repo (section 0 lists the agreed decisions D1–D5). In short: friends come to a shop counter to buy food the child has cooked; the child picks the items, takes the money and gives change with real coins (1/2/5/10 baht coins, 20-baht note). Each order practises at most one math skill, chosen by level. The price of every sale goes into a coin bank (seal-shaped, never a pig) and the child spends it at a market on shop decorations, where they pay and count the change they get back. Market guardrails: decorations cost 5–20 baht, always on sale, no timed offers, no random boxes, money never goes negative, nothing is lost.
 
 Shop data lives under its own localStorage key `happy-little-kitchen-shop-v1`, never inside `happy-little-kitchen-v1` (`loadState()` drops unknown fields and a parse error there would wipe the gallery). Build order: a small playable slice first (levels 1–3, numbers up to 10, change by counting on with coins), then wait for real-play feedback before porting the column-arithmetic engine from game-lilly. Art prompts: `design/PROMPTS-gemini-5.md` (coins, notes and price tags are drawn blank; the game overlays the numbers).
+
+v32 (2026-09-23) shipped Phases 1+2 together: "ร้านของหนู" card next to the free kitchen, levels 1–3 (count the food / take exact money from the customer's purse / give change by counting on), gentle retries with a guided mode, the seal coin bank, restocking by cooking (the recipe plays as usual, then the batch goes on the shelf and the photo into the book without counting as feeding), shop stats and a clear-shop button on the parent page. Not built yet: the market (Phase 3), the column-arithmetic engine and levels 4–6. Waiting for Lilly's first real play before going further.
 
 ## Characters
 

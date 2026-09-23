@@ -44,6 +44,16 @@ Before changing code, read `README.md`, `MEMORY.md`, `index.html`, `css/app.css`
 - The finished food can be dragged to multiple friends. Each friend may be fed once per dish.
 - Keep Thai and English behavior equivalent.
 
+## Restaurant ("ร้านของหนู", v32)
+
+- Plan and agreed decisions: `RESTAURANT-MATH-PLAN.md` (section 0 first). Code: `js/shop/core.js` (pure logic and settings, no DOM, no localStorage — tested by `node --test "tests/shop/*.test.mjs"`), `js/shop/ui.js` (screens), `css/shop.css`. `app.js` loads the shop with `import("./shop/ui.js" + MODULE_VERSION)` and passes an `api` object (speak, topbar, friendSrc, startRecipe…); `ui.js` imports `core.js` the same way. Every shop module URL must carry the same `?v=` as `app.js` and be listed in `sw.js` exactly like that, because the worker answers from cache first.
+- Shop data lives under `happy-little-kitchen-shop-v1` (never inside the kitchen save). A parse error moves the old value to `happy-little-kitchen-shop-broken` and starts a fresh shop with six cookies.
+- One order = customer arrives → pick food onto the tray → price → payment → thanks; `order.status` (`arriving`/`picking`/`paying`) is saved after each step so a reload returns to the same customer. The sale is committed once by `core.commitSale()` (idempotency key = `order.id`), which moves stock, the bank (`piggy`) and totals in one write.
+- Each order has exactly one checkpoint chosen by level: `count` (level 1), `collect` (level 2), `change` (level 3). A non-matching answer shows `?`/`!` on the customer and a spoken hint; the second one switches to guided mode (numbered tray slots, glowing coins, a number line); 💡 opens guided mode at once. No red, no ✕, nothing taken away.
+- Restocking: `startRecipe(id, { destination: 'stock', restockId })`; when the recipe reaches its `serve` step, `finishForStock()` adds one batch (`PRODUCTS[x].batch`, capped at 12 per product, once per `restockId`), saves the photo to the book (`made`++ but not `served`) and offers the way back to the shop.
+- Voice: every spoken shop word is a `th: '…'` literal in `js/shop/ui.js`; `design/voice.py` also records 0–100 plus round hundreds/thousands. `tests/shop/voice.test.mjs` fails if any sentence the shop can build is not covered by clips.
+- E2E: `node tests/shop.cjs` (blocks the service worker, turns sound off, uses `tests/fixtures/kitchen-save-v31.json` and checks the kitchen save is untouched).
+
 ## Important Files
 
 - `js/app.js`: data tables (`INGREDIENTS`, `TOOLS`, `APPLIANCES`, `RECIPES`), translations, state, audio queue, game steps, touch interactions, feeding animation. Every table key doubles as the PNG file name under `assets/<group>/`, so adding a recipe means adding art files plus one `RECIPES` entry.
