@@ -12,7 +12,7 @@
   min-height: 0;
 }
 
-.shop-stage {
+.shop .shop-stage {
   position: relative;
   flex: 1;
   min-height: 150px;
@@ -22,36 +22,36 @@
   padding: 4px 12px 0;
 }
 
-.bank { position: absolute; top: 2px; right: max(10px, env(safe-area-inset-right)); width: 78px; padding: 0; border: 0; background: none; cursor: pointer; z-index: 2; }
-.bank img { width: 100%; height: auto; filter: drop-shadow(0 5px 3px rgba(36,56,71,.2)); }
-.bank b { position: absolute; left: 50%; bottom: -4px; transform: translateX(-50%); min-width: 38px; padding: 1px 8px; border-radius: 999px; background: var(--yellow); border: 3px solid white; color: var(--ink); font-size: 1.05rem; font-weight: 900; box-shadow: 0 3px 0 rgba(36,56,71,.15); }
-.bank.pop { animation: shop-pop .45s cubic-bezier(.2,1.6,.4,1); }
+.shop .bank { position: absolute; top: 2px; right: max(10px, env(safe-area-inset-right)); width: 78px; padding: 0; border: 0; background: none; cursor: pointer; z-index: 2; }
+.shop .bank img { width: 100%; height: auto; filter: drop-shadow(0 5px 3px rgba(36,56,71,.2)); }
+.shop .bank b { position: absolute; left: 50%; bottom: -4px; transform: translateX(-50%); min-width: 38px; padding: 1px 8px; border-radius: 999px; background: var(--yellow); border: 3px solid white; color: var(--ink); font-size: 1.05rem; font-weight: 900; box-shadow: 0 3px 0 rgba(36,56,71,.15); }
+.shop .bank.pop { animation: shop-pop .45s cubic-bezier(.2,1.6,.4,1); }
 
-.customer-spot { display: flex; align-items: flex-end; justify-content: center; gap: 6px; max-width: 100%; }
-.customer-wrap { position: relative; flex: none; }
-.customer { display: block; height: clamp(110px, 22vh, 260px); width: auto; filter: drop-shadow(0 8px 6px rgba(36,56,71,.2)); transform-origin: 50% 100%; }
-.customer.arrive { animation: shop-arrive .8s cubic-bezier(.2,1.3,.4,1) both; }
-.customer.puzzled { animation: shop-tilt .7s ease-in-out; }
-.customer.surprised { animation: shop-hop .5s ease-out; }
-.customer.happy { animation: happy .6s ease-in-out 3; }
+.shop .customer-spot { display: flex; align-items: flex-end; justify-content: center; gap: 6px; max-width: 100%; }
+.shop .customer-wrap { position: relative; flex: none; }
+.shop .customer { display: block; height: clamp(110px, 22vh, 260px); width: auto; filter: drop-shadow(0 8px 6px rgba(36,56,71,.2)); transform-origin: 50% 100%; }
+.shop .customer.arrive { animation: shop-arrive .8s cubic-bezier(.2,1.3,.4,1) both; }
+.shop .customer.puzzled { animation: shop-tilt .7s ease-in-out; }
+.shop .customer.surprised { animation: shop-hop .5s ease-out; }
+.shop .customer.happy { animation: happy .6s ease-in-out 3; }
 
-.mark { position: absolute; top: -8px; right: -6px; width: 44px; height: 44px; display: grid; place-items: center; border-radius: 50%; background: white; border: 3px solid var(--sky); color: var(--sky); font-size: 1.8rem; font-weight: 900; opacity: 0; transform: scale(.4); transition: opacity .2s, transform .25s cubic-bezier(.2,1.6,.4,1); box-shadow: 0 4px 0 rgba(36,56,71,.12); }
-.mark.show { opacity: 1; transform: scale(1); }
-.mark.over { border-color: var(--yellow); color: var(--yellow-dark); }
+.shop .mark { position: absolute; top: -8px; right: -6px; width: 44px; height: 44px; display: grid; place-items: center; border-radius: 50%; background: white; border: 3px solid var(--sky); color: var(--sky); font-size: 1.8rem; font-weight: 900; opacity: 0; transform: scale(.4); transition: opacity .2s, transform .25s cubic-bezier(.2,1.6,.4,1); box-shadow: 0 4px 0 rgba(36,56,71,.12); }
+.shop .mark.show { opacity: 1; transform: scale(1); }
+.shop .mark.over { border-color: var(--yellow); color: var(--yellow-dark); }
 
-.order-bubble { position: relative; align-self: center; margin-bottom: 18%; display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 2px 4px; max-width: min(210px, 48vw); padding: 8px 10px; border-radius: 16px; background: var(--paper); border: 4px solid white; box-shadow: var(--shadow); animation: pop-in .35s cubic-bezier(.2,1.4,.4,1) both; }
-.order-bubble::after { content: ''; position: absolute; right: -12px; bottom: 16px; border: 8px solid transparent; border-left: 12px solid white; }
-.order-bubble .want { display: flex; flex-wrap: wrap; justify-content: center; gap: 2px; }
-.order-bubble .want img { width: 38px; height: 38px; object-fit: contain; }
-.order-bubble .qty { font-size: 1.5rem; font-weight: 900; color: var(--mint-dark); }
-.order-bubble.done { padding: 10px 18px; }
-.order-bubble .heart { font-size: 2.4rem; color: var(--coral); animation: shop-pop .6s ease-in-out infinite alternate; }
-.empty-bubble img { width: 78px; height: auto; opacity: .8; }
-.price-tag { position: relative; width: 66px; height: 66px; display: grid; place-items: center; animation: pop-in .35s cubic-bezier(.2,1.4,.4,1) both; }
-.price-tag img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; }
-.price-tag b { position: relative; margin: 14% 0 0 -8%; font-size: 1.5rem; font-weight: 900; color: var(--ink); }
+.shop .order-bubble { position: relative; align-self: center; margin-bottom: 18%; display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 2px 4px; max-width: min(210px, 48vw); padding: 8px 10px; border-radius: 16px; background: var(--paper); border: 4px solid white; box-shadow: var(--shadow); animation: pop-in .35s cubic-bezier(.2,1.4,.4,1) both; }
+.shop .order-bubble::after { content: ''; position: absolute; right: -12px; bottom: 16px; border: 8px solid transparent; border-left: 12px solid white; }
+.shop .order-bubble .want { display: flex; flex-wrap: wrap; justify-content: center; gap: 2px; }
+.shop .order-bubble .want img { width: 38px; height: 38px; object-fit: contain; }
+.shop .order-bubble .qty { font-size: 1.5rem; font-weight: 900; color: var(--mint-dark); }
+.shop .order-bubble.done { padding: 10px 18px; }
+.shop .order-bubble .heart { font-size: 2.4rem; color: var(--coral); animation: shop-pop .6s ease-in-out infinite alternate; }
+.shop .empty-bubble img { width: 78px; height: auto; opacity: .8; }
+.shop .price-tag { position: relative; width: 66px; height: 66px; display: grid; place-items: center; animation: pop-in .35s cubic-bezier(.2,1.4,.4,1) both; }
+.shop .price-tag img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; }
+.shop .price-tag b { position: relative; margin: 14% 0 0 -8%; font-size: 1.5rem; font-weight: 900; color: var(--ink); }
 
-.shop-desk {
+.shop .shop-desk {
   width: min(100%, 760px);
   align-self: center;
   display: flex;
@@ -64,84 +64,84 @@
   border-radius: 16px 16px 0 0;
   box-shadow: 0 -6px 18px rgba(36,56,71,.12);
 }
-.shop-desk:empty { display: none; }
+.shop .shop-desk:empty { display: none; }
 
-.desk-row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 10px; align-items: stretch; }
-.desk-actions { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
-.desk-actions:empty { display: none; }
-.action-btn.help-btn { background: #fff3c4; color: var(--ink); box-shadow: 0 6px 0 var(--yellow-dark); }
-.action-btn.big { min-height: 64px; padding: 0 28px; font-size: 1.3rem; }
+.shop .desk-row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 10px; align-items: stretch; }
+.shop .desk-actions { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+.shop .desk-actions:empty { display: none; }
+.shop .action-btn.help-btn { background: #fff3c4; color: var(--ink); box-shadow: 0 6px 0 var(--yellow-dark); }
+.shop .action-btn.big { min-height: 64px; padding: 0 28px; font-size: 1.3rem; }
 
 /* ชั้นขนม: การ์ดละเมนู + จำนวนที่เหลือ */
-.shelf { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
-.stock-card { position: relative; min-width: 0; min-height: 62px; display: grid; place-items: center; padding: 4px; border: 3px solid white; border-radius: 10px; background: #fff3dc; box-shadow: 0 4px 0 rgba(36,56,71,.12); cursor: pointer; color: var(--ink); }
-.stock-card img { width: min(52px, 100%); height: 48px; object-fit: contain; }
-.stock-card b { position: absolute; top: -6px; right: -6px; min-width: 26px; height: 26px; padding: 0 5px; display: grid; place-items: center; border-radius: 999px; background: var(--mint); color: white; border: 2px solid white; font-size: .95rem; font-weight: 900; }
-.stock-card.empty { opacity: .45; }
-.stock-card.empty b { background: var(--ink-soft); }
-.stock-card:active { transform: translateY(3px); box-shadow: 0 1px 0 rgba(36,56,71,.12); }
-.stock-card.more { background: #eef8f4; border-style: dashed; border-color: var(--mint); color: var(--mint-dark); }
-.stock-card.more span { font-size: 1.6rem; font-weight: 900; line-height: 1; }
-.stock-card.more small { font-size: .8rem; font-weight: 800; }
+.shop .shelf { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
+.shop .stock-card { position: relative; min-width: 0; min-height: 62px; display: grid; place-items: center; padding: 4px; border: 3px solid white; border-radius: 10px; background: #fff3dc; box-shadow: 0 4px 0 rgba(36,56,71,.12); cursor: pointer; color: var(--ink); }
+.shop .stock-card img { width: min(52px, 100%); height: 48px; object-fit: contain; }
+.shop .stock-card b { position: absolute; top: -6px; right: -6px; min-width: 26px; height: 26px; padding: 0 5px; display: grid; place-items: center; border-radius: 999px; background: var(--mint); color: white; border: 2px solid white; font-size: .95rem; font-weight: 900; }
+.shop .stock-card.empty { opacity: .45; }
+.shop .stock-card.empty b { background: var(--ink-soft); }
+.shop .stock-card:active { transform: translateY(3px); box-shadow: 0 1px 0 rgba(36,56,71,.12); }
+.shop .stock-card.more { background: #eef8f4; border-style: dashed; border-color: var(--mint); color: var(--mint-dark); }
+.shop .stock-card.more span { font-size: 1.6rem; font-weight: 900; line-height: 1; }
+.shop .stock-card.more small { font-size: .8rem; font-weight: 800; }
 
 /* ถาดเสิร์ฟ */
-.tray { position: relative; min-height: 132px; display: grid; place-items: center; padding: 14% 10%; background: url('../assets/shop/tray.png') center / contain no-repeat; }
-.tray.ready { animation: shop-pop .45s cubic-bezier(.2,1.6,.4,1); }
-.tray-items { display: flex; flex-wrap: wrap; align-content: center; justify-content: center; gap: 2px; max-width: 100%; }
-.tray-item { position: relative; width: 44px; height: 44px; padding: 0; border: 0; background: none; cursor: pointer; }
-.tray-item img { width: 100%; height: 100%; object-fit: contain; filter: drop-shadow(0 3px 2px rgba(36,56,71,.18)); }
-.slot { position: relative; width: 44px; height: 44px; display: grid; place-items: center; border: 3px dashed var(--mint); border-radius: 50%; color: var(--mint-dark); background: rgba(255,255,255,.6); }
-.slot i, .slot.filled i { font-style: normal; font-weight: 900; font-size: 1rem; }
-.slot.next { border-color: var(--yellow-dark); background: #fff7d6; animation: shop-glow 1s ease-in-out infinite alternate; }
-.slot.filled { border-style: solid; background: white; }
-.slot.filled i { position: absolute; right: -6px; bottom: -6px; width: 20px; height: 20px; border-radius: 50%; background: var(--mint); color: white; font-size: .75rem; display: grid; place-items: center; }
-.slot.filled.extra { opacity: .55; border-color: var(--yellow); }
-.pop { animation: shop-pop .35s cubic-bezier(.2,1.6,.4,1); }
-.nudge { animation: shop-nudge .35s ease-in-out; }
+.shop .tray { position: relative; min-height: 132px; display: grid; place-items: center; padding: 14% 10%; background: url('../assets/shop/tray.png') center / contain no-repeat; }
+.shop .tray.ready { animation: shop-pop .45s cubic-bezier(.2,1.6,.4,1); }
+.shop .tray-items { display: flex; flex-wrap: wrap; align-content: center; justify-content: center; gap: 2px; max-width: 100%; }
+.shop .tray-item { position: relative; width: 44px; height: 44px; padding: 0; border: 0; background: none; cursor: pointer; }
+.shop .tray-item img { width: 100%; height: 100%; object-fit: contain; filter: drop-shadow(0 3px 2px rgba(36,56,71,.18)); }
+.shop .slot { position: relative; width: 44px; height: 44px; display: grid; place-items: center; border: 3px dashed var(--mint); border-radius: 50%; color: var(--mint-dark); background: rgba(255,255,255,.6); }
+.shop .slot i, .shop .slot.filled i { font-style: normal; font-weight: 900; font-size: 1rem; }
+.shop .slot.next { border-color: var(--yellow-dark); background: #fff7d6; animation: shop-glow 1s ease-in-out infinite alternate; }
+.shop .slot.filled { border-style: solid; background: white; }
+.shop .slot.filled i { position: absolute; right: -6px; bottom: -6px; width: 20px; height: 20px; border-radius: 50%; background: var(--mint); color: white; font-size: .75rem; display: grid; place-items: center; }
+.shop .slot.filled.extra { opacity: .55; border-color: var(--yellow); }
+.shop .pop { animation: shop-pop .35s cubic-bezier(.2,1.6,.4,1); }
+.shop .nudge { animation: shop-nudge .35s ease-in-out; }
 
 /* เหรียญ: ขนาดต่างกันแบบของจริง ตัวเลขใส่ทับด้วย CSS */
-.coins { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; justify-content: center; min-height: 58px; }
-.coin { --size: 52px; position: relative; flex: none; width: var(--size); height: var(--size); padding: 0; border: 0; background: none; cursor: pointer; touch-action: manipulation; }
-.coin img { width: 100%; height: 100%; object-fit: contain; pointer-events: none; filter: drop-shadow(0 3px 2px rgba(36,56,71,.2)); }
-.coin b { position: absolute; inset: 0; display: grid; place-items: center; font-size: calc(var(--size) * .44); font-weight: 900; color: var(--ink); text-shadow: 0 0 3px white, 0 0 3px white, 0 0 6px white; pointer-events: none; }
-.coin.v1 { --size: 44px; }
-.coin.v2 { --size: 50px; }
-.coin.v5 { --size: 56px; }
-.coin.v10 { --size: 64px; }
-.coin.v20 { --size: 84px; }
-.coin.v20 b { color: #2f6b3d; }
-.coin:disabled { cursor: default; }
-.coin.hint { animation: shop-glow .9s ease-in-out infinite alternate; }
+.shop .coins { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; justify-content: center; min-height: 58px; }
+.shop .coin { --size: 52px; position: relative; flex: none; width: var(--size); height: var(--size); padding: 0; border: 0; background: none; cursor: pointer; touch-action: manipulation; }
+.shop .coin img { width: 100%; height: 100%; object-fit: contain; pointer-events: none; filter: drop-shadow(0 3px 2px rgba(36,56,71,.2)); }
+.shop .coin b { position: absolute; inset: 0; display: grid; place-items: center; font-size: calc(var(--size) * .44); font-weight: 900; color: var(--ink); text-shadow: 0 0 3px white, 0 0 3px white, 0 0 6px white; pointer-events: none; }
+.shop .coin.v1 { --size: 44px; }
+.shop .coin.v2 { --size: 50px; }
+.shop .coin.v5 { --size: 56px; }
+.shop .coin.v10 { --size: 64px; }
+.shop .coin.v20 { --size: 84px; }
+.shop .coin.v20 b { color: #2f6b3d; }
+.shop .coin:disabled { cursor: default; }
+.shop .coin.hint { animation: shop-glow .9s ease-in-out infinite alternate; }
 /* วงแหวนนิ่งๆ ด้วย — ถ้าปิดการเคลื่อนไหว (reduced motion) คำใบ้ต้องยังเห็นอยู่ */
-.coin.hint::after { content: ''; position: absolute; inset: -5px; border-radius: 50%; border: 4px solid var(--yellow); pointer-events: none; }
-.coin.drop-in { animation: shop-drop .45s cubic-bezier(.2,1.4,.4,1) both; animation-delay: var(--d, 0ms); }
-.coin-gap { width: 8px; }
+.shop .coin.hint::after { content: ''; position: absolute; inset: -5px; border-radius: 50%; border: 4px solid var(--yellow); pointer-events: none; }
+.shop .coin.drop-in { animation: shop-drop .45s cubic-bezier(.2,1.4,.4,1) both; animation-delay: var(--d, 0ms); }
+.shop .coin-gap { width: 8px; }
 
-.money-row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 10px; }
-.purse-zone, .counter-zone, .paid-zone { position: relative; min-width: 0; padding: 22px 6px 6px; border-radius: 12px; background: #fff3dc; border: 3px solid white; box-shadow: inset 0 2px 6px rgba(36,56,71,.08); }
-.counter-zone { background: #e6f5ef; }
-.counter-zone.wide { padding-top: 8px; }
-.zone-label { position: absolute; top: 3px; left: 8px; display: flex; align-items: center; gap: 4px; font-size: .8rem; font-weight: 800; color: var(--ink-soft); }
-.zone-label img { width: 18px; height: 18px; object-fit: contain; }
-.running { position: absolute; top: 0; right: 8px; font-size: 1.5rem; font-weight: 900; color: var(--mint-dark); }
-.running small { font-size: .85rem; color: var(--ink-soft); }
-.drawer { position: relative; display: flex; justify-content: center; align-items: center; gap: 18px; padding: 22px 8px 8px; border-radius: 12px; background: #f3e3c7; border: 3px solid white; }
-.numberline { display: flex; justify-content: center; align-items: center; gap: 4px; flex-wrap: wrap; }
-.numberline b { min-width: 38px; height: 38px; padding: 0 6px; display: grid; place-items: center; border-radius: 10px; background: var(--mint); color: white; font-size: 1.1rem; }
-.numberline i { width: 34px; height: 34px; display: grid; place-items: center; border-radius: 50%; border: 3px dashed var(--sky); font-style: normal; font-weight: 900; color: var(--sky); background: white; }
-.numberline i.on { background: var(--sky); color: white; border-style: solid; }
+.shop .money-row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 10px; }
+.shop .purse-zone, .shop .counter-zone, .shop .paid-zone { position: relative; min-width: 0; padding: 22px 6px 6px; border-radius: 12px; background: #fff3dc; border: 3px solid white; box-shadow: inset 0 2px 6px rgba(36,56,71,.08); }
+.shop .counter-zone { background: #e6f5ef; }
+.shop .counter-zone.wide { padding-top: 8px; }
+.shop .zone-label { position: absolute; top: 3px; left: 8px; display: flex; align-items: center; gap: 4px; font-size: .8rem; font-weight: 800; color: var(--ink-soft); }
+.shop .zone-label img { width: 18px; height: 18px; object-fit: contain; }
+.shop .running { position: absolute; top: 0; right: 8px; font-size: 1.5rem; font-weight: 900; color: var(--mint-dark); }
+.shop .running small { font-size: .85rem; color: var(--ink-soft); }
+.shop .drawer { position: relative; display: flex; justify-content: center; align-items: center; gap: 18px; padding: 22px 8px 8px; border-radius: 12px; background: #f3e3c7; border: 3px solid white; }
+.shop .numberline { display: flex; justify-content: center; align-items: center; gap: 4px; flex-wrap: wrap; }
+.shop .numberline b { min-width: 38px; height: 38px; padding: 0 6px; display: grid; place-items: center; border-radius: 10px; background: var(--mint); color: white; font-size: 1.1rem; }
+.shop .numberline i { width: 34px; height: 34px; display: grid; place-items: center; border-radius: 50%; border: 3px dashed var(--sky); font-style: normal; font-weight: 900; color: var(--sky); background: white; }
+.shop .numberline i.on { background: var(--sky); color: white; border-style: solid; }
 
 .flying-coin { position: fixed; z-index: 250; width: 40px; height: 40px; pointer-events: none; transition: transform .8s cubic-bezier(.4,-.3,.6,1), opacity .8s; }
 
 /* ทำเพิ่ม */
-.cook-cards { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; width: 100%; }
-.cook-card { min-width: 0; display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 8px 4px; border: 4px solid white; border-bottom-color: var(--mint); border-radius: 10px; background: #fff; box-shadow: var(--shadow); cursor: pointer; color: var(--ink); }
-.cook-card img { width: 64px; height: 56px; object-fit: contain; }
-.cook-card b { font-size: 1.2rem; color: var(--mint-dark); }
-.cook-card small { font-size: .78rem; color: var(--ink-soft); font-weight: 700; }
-.cook-card:disabled { opacity: .45; cursor: default; }
-.cook-card:active { transform: translateY(3px); }
-.cook-popup { width: min(420px, 100%); }
+.shop .cook-cards, .shop-layer .cook-cards { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; width: 100%; }
+.shop .cook-card, .shop-layer .cook-card { min-width: 0; display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 8px 4px; border: 4px solid white; border-bottom-color: var(--mint); border-radius: 10px; background: #fff; box-shadow: var(--shadow); cursor: pointer; color: var(--ink); }
+.shop .cook-card img, .shop-layer .cook-card img { width: 64px; height: 56px; object-fit: contain; }
+.shop .cook-card b, .shop-layer .cook-card b { font-size: 1.2rem; color: var(--mint-dark); }
+.shop .cook-card small, .shop-layer .cook-card small { font-size: .78rem; color: var(--ink-soft); font-weight: 700; }
+.shop .cook-card:disabled, .shop-layer .cook-card:disabled { opacity: .45; cursor: default; }
+.shop .cook-card:active, .shop-layer .cook-card:active { transform: translateY(3px); }
+.shop .cook-popup, .shop-layer .cook-popup { width: min(420px, 100%); }
 
 /* หน้าจบการทำอาหารเพื่อเติมสต็อก */
 .stock-zone { display: flex; flex-direction: column; align-items: center; gap: 12px; }
@@ -150,52 +150,52 @@
 .stock-batch img { width: 44px; height: 44px; object-fit: contain; animation: shop-drop .4s cubic-bezier(.2,1.4,.4,1) both; animation-delay: calc(var(--i) * 120ms); }
 
 /* กระปุก = ปุ่มไปตลาด (มีถุงช้อปปิ้งเล็กๆ บอก) */
-.bank .bag { position: absolute; left: -8px; bottom: 4px; width: 30px; height: 30px; display: grid; place-items: center; border-radius: 50%; background: white; box-shadow: 0 3px 0 rgba(36,56,71,.15); }
-.bank .bag img { width: 22px; height: 22px; object-fit: contain; filter: none; }
+.shop .bank .bag { position: absolute; left: -8px; bottom: 4px; width: 30px; height: 30px; display: grid; place-items: center; border-radius: 50%; background: white; box-shadow: 0 3px 0 rgba(36,56,71,.15); }
+.shop .bank .bag img { width: 22px; height: 22px; object-fit: contain; filter: none; }
 
 /* ของแต่งร้าน: วางตามจุดประจำของแต่ละชิ้น อยู่หลังลูกค้า */
-.decor-layer { position: absolute; inset: 0; pointer-events: none; z-index: 0; }
+.shop .decor-layer { position: absolute; inset: 0; pointer-events: none; z-index: 0; }
 .shop .customer-spot { position: relative; z-index: 1; }
-.decor { position: absolute; height: auto; filter: drop-shadow(0 4px 3px rgba(36,56,71,.15)); animation: shop-drop .5s cubic-bezier(.2,1.4,.4,1) both; }
-.decor-bunting { top: 0; left: 2%; width: min(46%, 300px); }
-.decor-awning { top: 0; left: 50%; width: min(26%, 200px); }
-.decor-lamp { top: 0; left: 36%; width: min(12%, 80px); }
-.decor-sign { top: 22%; left: 56%; width: min(20%, 140px); }
-.decor-balloons { bottom: 26%; left: 1%; width: min(15%, 100px); }
-.decor-plant { bottom: 0; left: 2%; width: min(15%, 110px); }
-.decor-rug { bottom: -3%; left: 28%; width: min(44%, 300px); }
-.decor-tablecloth { bottom: 0; right: 2%; width: min(20%, 150px); }
-.decor-flowers { bottom: 24%; right: 7%; width: min(9%, 64px); }
-.decor-chair { bottom: 0; right: 22%; width: min(13%, 100px); }
+.shop .decor { position: absolute; height: auto; filter: drop-shadow(0 4px 3px rgba(36,56,71,.15)); animation: shop-drop .5s cubic-bezier(.2,1.4,.4,1) both; }
+.shop .decor-bunting { top: 0; left: 2%; width: min(46%, 300px); }
+.shop .decor-awning { top: 0; left: 50%; width: min(26%, 200px); }
+.shop .decor-lamp { top: 0; left: 36%; width: min(12%, 80px); }
+.shop .decor-sign { top: 22%; left: 56%; width: min(20%, 140px); }
+.shop .decor-balloons { bottom: 26%; left: 1%; width: min(15%, 100px); }
+.shop .decor-plant { bottom: 0; left: 2%; width: min(15%, 110px); }
+.shop .decor-rug { bottom: -3%; left: 28%; width: min(44%, 300px); }
+.shop .decor-tablecloth { bottom: 0; right: 2%; width: min(20%, 150px); }
+.shop .decor-flowers { bottom: 24%; right: 7%; width: min(9%, 64px); }
+.shop .decor-chair { bottom: 0; right: 22%; width: min(13%, 100px); }
 
 /* ตลาด */
 .app-shell.shop.market { background-image: url('../assets/market.jpg'); background-position: center 40%; }
-.bubble-icon { width: 54px; height: 54px; object-fit: contain; }
-.bubble-item { width: 64px; height: 64px; object-fit: contain; }
-.order-bubble .need { display: flex; flex-wrap: wrap; gap: 2px; justify-content: center; opacity: .55; }
-.order-bubble .need img { width: 30px; height: 30px; object-fit: contain; }
-.goods { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px; }
-.goods-card { position: relative; min-width: 0; aspect-ratio: 1; display: grid; place-items: center; padding: 4px; border: 3px solid white; border-radius: 10px; background: #fff3dc; box-shadow: 0 4px 0 rgba(36,56,71,.12); cursor: pointer; }
-.goods-card img { width: 100%; height: 100%; object-fit: contain; }
-.goods-card:active { transform: translateY(3px); box-shadow: 0 1px 0 rgba(36,56,71,.12); }
-.price-chip { position: absolute; top: -6px; right: -6px; min-width: 28px; height: 28px; padding: 0 6px; display: grid; place-items: center; border-radius: 999px; background: var(--yellow); border: 2px solid white; color: var(--ink); font-size: .95rem; font-weight: 900; }
-.goods-card.dear .price-chip { background: #f3e3c7; color: var(--ink-soft); }
-.goods-card.owned { background: #e6f5ef; }
-.goods-card.stored img { opacity: .4; }
-.owned-mark { position: absolute; top: -6px; right: -6px; width: 26px; height: 26px; display: grid; place-items: center; border-radius: 50%; background: var(--mint); color: white; border: 2px solid white; font-style: normal; font-weight: 900; font-size: .9rem; }
-.money-row.single { grid-template-columns: 1fr; }
-.choices { display: flex; justify-content: center; gap: 14px; }
-.choice { width: 72px; height: 72px; border-radius: 50%; border: 4px solid white; background: var(--sky); color: white; font-size: 2rem; font-weight: 900; box-shadow: 0 6px 0 #3f94ba; cursor: pointer; }
-.choice:active { transform: translateY(4px); box-shadow: 0 2px 0 #3f94ba; }
-.bought { display: grid; place-items: center; }
-.bought-item { width: 120px; height: 120px; object-fit: contain; animation: shop-pop .6s cubic-bezier(.2,1.6,.4,1); }
+.shop .bubble-icon { width: 54px; height: 54px; object-fit: contain; }
+.shop .bubble-item { width: 64px; height: 64px; object-fit: contain; }
+.shop .order-bubble .need { display: flex; flex-wrap: wrap; gap: 2px; justify-content: center; opacity: .55; }
+.shop .order-bubble .need img { width: 30px; height: 30px; object-fit: contain; }
+.shop .goods { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px; }
+.shop .goods-card { position: relative; min-width: 0; aspect-ratio: 1; display: grid; place-items: center; padding: 4px; border: 3px solid white; border-radius: 10px; background: #fff3dc; box-shadow: 0 4px 0 rgba(36,56,71,.12); cursor: pointer; }
+.shop .goods-card img { width: 100%; height: 100%; object-fit: contain; }
+.shop .goods-card:active { transform: translateY(3px); box-shadow: 0 1px 0 rgba(36,56,71,.12); }
+.shop .price-chip { position: absolute; top: -6px; right: -6px; min-width: 28px; height: 28px; padding: 0 6px; display: grid; place-items: center; border-radius: 999px; background: var(--yellow); border: 2px solid white; color: var(--ink); font-size: .95rem; font-weight: 900; }
+.shop .goods-card.dear .price-chip { background: #f3e3c7; color: var(--ink-soft); }
+.shop .goods-card.owned { background: #e6f5ef; }
+.shop .goods-card.stored img { opacity: .4; }
+.shop .owned-mark { position: absolute; top: -6px; right: -6px; width: 26px; height: 26px; display: grid; place-items: center; border-radius: 50%; background: var(--mint); color: white; border: 2px solid white; font-style: normal; font-weight: 900; font-size: .9rem; }
+.shop .money-row.single { grid-template-columns: 1fr; }
+.shop .choices { display: flex; justify-content: center; gap: 14px; }
+.shop .choice { width: 72px; height: 72px; border-radius: 50%; border: 4px solid white; background: var(--sky); color: white; font-size: 2rem; font-weight: 900; box-shadow: 0 6px 0 #3f94ba; cursor: pointer; }
+.shop .choice:active { transform: translateY(4px); box-shadow: 0 2px 0 #3f94ba; }
+.shop .bought { display: grid; place-items: center; }
+.shop .bought-item { width: 120px; height: 120px; object-fit: contain; animation: shop-pop .6s cubic-bezier(.2,1.6,.4,1); }
 @media (max-height: 720px) {
-  .choice { width: 62px; height: 62px; font-size: 1.7rem; }
-  .bought-item { width: 96px; height: 96px; }
+  .shop .choice { width: 62px; height: 62px; font-size: 1.7rem; }
+  .shop .bought-item { width: 96px; height: 96px; }
 }
 @media (min-width: 700px) {
-  .goods { gap: 10px; }
-  .bank .bag { width: 36px; height: 36px; }
+  .shop .goods { gap: 10px; }
+  .shop .bank .bag { width: 36px; height: 36px; }
 }
 
 @keyframes shop-arrive { from { transform: translateX(60vw) scale(.7); opacity: 0; } to { transform: none; opacity: 1; } }
@@ -210,32 +210,32 @@
 @media (max-width: 620px) {
   .home-extras .free-card { font-size: .92rem; gap: 6px; padding: 2px 8px; }
   .home-extras .free-card img { height: 36px; }
-  .bank { width: 62px; }
+  .shop .bank { width: 62px; }
 }
 @media (max-height: 720px) {
-  .customer { height: clamp(96px, 19vh, 200px); }
-  .shop-desk { gap: 8px; padding-top: 8px; }
-  .tray { min-height: 112px; }
-  .stock-card { min-height: 54px; }
-  .stock-card img { height: 40px; }
-  .coin.v1 { --size: 40px; }
-  .coin.v2 { --size: 45px; }
-  .coin.v5 { --size: 50px; }
-  .coin.v10 { --size: 56px; }
-  .action-btn.big { min-height: 56px; }
+  .shop .customer { height: clamp(96px, 19vh, 200px); }
+  .shop .shop-desk { gap: 8px; padding-top: 8px; }
+  .shop .tray { min-height: 112px; }
+  .shop .stock-card { min-height: 54px; }
+  .shop .stock-card img { height: 40px; }
+  .shop .coin.v1 { --size: 40px; }
+  .shop .coin.v2 { --size: 45px; }
+  .shop .coin.v5 { --size: 50px; }
+  .shop .coin.v10 { --size: 56px; }
+  .shop .action-btn.big { min-height: 56px; }
 }
 @media (min-width: 700px) {
-  .tray-item, .slot { width: 56px; height: 56px; }
-  .stock-card { min-height: 84px; }
-  .stock-card img { width: 72px; height: 64px; }
-  .tray { min-height: 170px; }
-  .bank { width: 92px; }
-  .order-bubble .want img { width: 48px; height: 48px; }
-  .coin.v1 { --size: 54px; }
-  .coin.v2 { --size: 60px; }
-  .coin.v5 { --size: 68px; }
-  .coin.v10 { --size: 78px; }
+  .shop .tray-item, .shop .slot { width: 56px; height: 56px; }
+  .shop .stock-card { min-height: 84px; }
+  .shop .stock-card img { width: 72px; height: 64px; }
+  .shop .tray { min-height: 170px; }
+  .shop .bank { width: 92px; }
+  .shop .order-bubble .want img { width: 48px; height: 48px; }
+  .shop .coin.v1 { --size: 54px; }
+  .shop .coin.v2 { --size: 60px; }
+  .shop .coin.v5 { --size: 68px; }
+  .shop .coin.v10 { --size: 78px; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .customer.arrive, .customer.puzzled, .customer.surprised, .customer.happy, .coin.hint, .slot.next, .coin.drop-in, .stock-batch img { animation: none; }
+  .shop .customer.arrive, .shop .customer.puzzled, .shop .customer.surprised, .shop .customer.happy, .shop .coin.hint, .shop .slot.next, .shop .coin.drop-in, .stock-batch img { animation: none; }
 }
