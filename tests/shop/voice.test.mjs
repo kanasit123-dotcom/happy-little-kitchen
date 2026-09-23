@@ -84,6 +84,24 @@ test('every sentence the shop can say is covered by recorded clips', () => {
     sentences.push(`${th('countFrom')} ${price} ${th('upTo')} ${paidWith} ${th('please')}`);
   }
   for (const key of ['marketHello', 'pickGoods', 'payAny', 'howMuch', 'thanksBuy', 'allBought']) sentences.push(th(key));
+  // ระดับ 4–6 + ตั้งเลข (js/shop/column.js)
+  const col = readFileSync(new URL('js/shop/column.js', root), 'utf8');
+  const ct = (key) => col.match(new RegExp(`\n  ${key}: \{ th: '([^']*)'`))[1];
+  for (let a = 0; a <= 20; a++) {
+    for (let b = 0; b <= 20; b++) {
+      sentences.push(`${ct('units')} ${a} ${ct('plus')} ${b} ${ct('what')}`, `${ct('tens')} ${a} ${ct('minus')} ${b} ${ct('what')}`);
+    }
+  }
+  for (const [a, b] of [[7, 7], [8, 7], [8, 5], [5, 5], [8, 8], [7, 5]]) sentences.push(`${a} ${ct('plus')} ${b} ${ct('what')}`, `${a} ${ct('plus')} ${b} ${ct('equals')} ${a + b}`);
+  for (const [a, b] of [[20, 13], [20, 15], [20, 16], [20, 10], [12, 5]]) sentences.push(`${a} ${ct('minus')} ${b} ${ct('equals')} ${a - b}`, `${a % 10} ${ct('minus')} ${b % 10} ${ct('cannot')}`, `${ct('tens')} 1 ${ct('minus')} 1 ${ct('equals')} 0`);
+  for (let n = 0; n <= 9; n++) sentences.push(`${ct('write')} ${n}`, `${ct('bundle')} ${ct('write')} ${n}`);
+  for (const key of ['carry', 'carryDown', 'bringPlus', 'bringMinus', 'borrowed', 'zero', 'tryAgain', 'glowKey']) sentences.push(ct(key));
+  for (const [id] of Object.entries(PRODUCTS)) {
+    for (let have = 2; have <= 10; have++) for (let sold = 1; sold < have && sold <= 3; sold++) sentences.push(`${th('have')} ${names[id]} ${have} ${th('piece')} ${th('sold')} ${sold} ${th('piece')} ${th('leftQ')}`);
+    for (let before = 1; before <= 11; before++) sentences.push(`${th('have')} ${names[id]} ${before} ${th('piece')} ${th('madeMore')} ${PRODUCTS[id].batch} ${th('piece')} ${th('altogetherQ')}`);
+  }
+  for (let n = 0; n <= 12; n++) sentences.push(`${th('left')} ${n} ${th('piece')}`, `${th('altogether')} ${n} ${th('piece')}`, `${th('mustGive')} ${n} ${th('baht')}`);
+  sentences.push(`${th('want')} ${names.pizza} 1 ${th('piece')} ${th('and')} ${names.cupcake} 1 ${th('piece')}`, th('thinkPrice'), th('lookPrice'));
   sentences.push(copy('toShop'), copy('shelfFull'), copy('shop'));
   const missing = sentences.filter((text) => !covered(text));
   assert.deepEqual(missing, []);

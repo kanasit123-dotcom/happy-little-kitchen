@@ -26,3 +26,27 @@ test('shop-only class names used outside .shop do not exist in the kitchen style
     assert.equal(new RegExp(`\\.${name}\\b`).test(app), false, name);
   }
 });
+
+// ทางกลับกัน: CSS ของครัวก็ต้องไม่ไปโดนของในร้าน — v35 เจอ .carry ของครัว (grid-area) ลากช่องทดของตั้งเลขไปผิดที่
+// ชื่อ class ที่ร้านใช้ (ทั้งใน shop.css และที่ ui.js/column.js ใส่ลง HTML) ห้ามซ้ำกับของครัว ยกเว้นชื่อที่ตั้งใจใช้ร่วมกัน
+const SHARED = new Set(['action-btn', 'primary', 'app-shell', 'play-screen', 'prompt', 'popup', 'popup-layer', 'popup-friend', 'free-card', 'title-icon', 'dish', 'topbar-title']);
+const classesIn = (text) => {
+  const clean = text.replace(/\/\*[\s\S]*?\*\//g, '').replace(/@keyframes[^{]*\{(?:[^{}]*\{[^{}]*\})*[^{}]*\}/g, '');
+  return new Set([...clean.matchAll(/([^{};]+)\{/g)].flatMap((match) => [...match[1].matchAll(/\.([a-zA-Z][\w-]*)/g)].map((m) => m[1])));
+};
+const kitchen = classesIn(readFileSync(new URL('../../css/app.css', import.meta.url), 'utf8'));
+
+test('shop class names never collide with kitchen class names', () => {
+  const used = new Set(classesIn(css));
+  for (const file of ['../../js/shop/ui.js', '../../js/shop/column.js']) {
+    const src = readFileSync(new URL(file, import.meta.url), 'utf8');
+    for (const [, attr] of src.matchAll(/class="([^"]*)"/g)) {
+      for (const token of attr.replace(/\$\{[^}]*\}/g, ' ').split(/\s+/)) if (/^[a-z][\w-]*$/.test(token)) used.add(token);
+      // ชื่อที่เลือกด้วยเงื่อนไขใน class="…${x ? 'a' : 'b'}…"
+      for (const [, expr] of attr.matchAll(/\$\{([^}]*)\}/g)) for (const [, name] of expr.matchAll(/'([a-z][\w-]*)'/g)) used.add(name);
+    }
+    for (const [, name] of src.matchAll(/classList\.(?:add|remove|toggle|contains)\('([\w-]+)'/g)) used.add(name);
+  }
+  const clashes = [...used].filter((name) => kitchen.has(name) && !SHARED.has(name)).sort();
+  assert.deepEqual(clashes, []);
+});

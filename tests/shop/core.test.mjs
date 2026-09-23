@@ -34,16 +34,17 @@ test('batch sizes match what the child sees while cooking', () => {
 
 test('orders never ask for more than the stock and use only products in stock', () => {
   const random = seeded(7);
-  for (let level = 1; level <= 3; level++) {
+  for (let level = 1; level <= 6; level++) {
     for (let i = 0; i < 300; i++) {
       const shop = freshShop();
       shop.level = level;
       shop.stock = { cookie: 1 + (i % 6), cupcake: i % 3, pizza: 0 };
       const order = makeOrder(shop, { customers, random });
-      const line = order.lines[0];
-      assert.ok(shop.stock[line.recipe] >= line.qty, 'within stock');
-      assert.notEqual(line.recipe, 'pizza');
-      assert.ok(line.qty >= 1 && line.qty <= 5);
+      for (const line of order.lines) {
+        assert.ok(shop.stock[line.recipe] >= line.qty, 'within stock');
+        assert.notEqual(line.recipe, 'pizza');
+        assert.ok(line.qty >= 1 && line.qty <= 5);
+      }
       assert.ok(customers.includes(order.customer));
     }
   }
@@ -180,7 +181,10 @@ test('levels unlock by completed orders and never go down', () => {
   assert.equal(levelFor(4), 1);
   assert.equal(levelFor(5), 2);
   assert.equal(levelFor(10), 3);
-  assert.equal(levelFor(500), 3);
+  assert.equal(levelFor(16), 4);
+  assert.equal(levelFor(24), 5);
+  assert.equal(levelFor(32), 6);
+  assert.equal(levelFor(500), 6);
 });
 
 test('restocking adds one batch once per restock id and stops at the shelf limit', () => {

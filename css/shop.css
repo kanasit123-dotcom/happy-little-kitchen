@@ -25,7 +25,7 @@
 .shop .bank { position: absolute; top: 2px; right: max(10px, env(safe-area-inset-right)); width: 78px; padding: 0; border: 0; background: none; cursor: pointer; z-index: 2; }
 .shop .bank img { width: 100%; height: auto; filter: drop-shadow(0 5px 3px rgba(36,56,71,.2)); }
 .shop .bank b { position: absolute; left: 50%; bottom: -4px; transform: translateX(-50%); min-width: 38px; padding: 1px 8px; border-radius: 999px; background: var(--yellow); border: 3px solid white; color: var(--ink); font-size: 1.05rem; font-weight: 900; box-shadow: 0 3px 0 rgba(36,56,71,.15); }
-.shop .bank.pop { animation: shop-pop .45s cubic-bezier(.2,1.6,.4,1); }
+.shop .bank.shop-bump { animation: shop-pop .45s cubic-bezier(.2,1.6,.4,1); }
 
 .shop .customer-spot { display: flex; align-items: flex-end; justify-content: center; gap: 6px; max-width: 100%; }
 .shop .customer-wrap { position: relative; flex: none; }
@@ -37,14 +37,14 @@
 
 .shop .mark { position: absolute; top: -8px; right: -6px; width: 44px; height: 44px; display: grid; place-items: center; border-radius: 50%; background: white; border: 3px solid var(--sky); color: var(--sky); font-size: 1.8rem; font-weight: 900; opacity: 0; transform: scale(.4); transition: opacity .2s, transform .25s cubic-bezier(.2,1.6,.4,1); box-shadow: 0 4px 0 rgba(36,56,71,.12); }
 .shop .mark.show { opacity: 1; transform: scale(1); }
-.shop .mark.over { border-color: var(--yellow); color: var(--yellow-dark); }
+.shop .mark.mark-over { border-color: var(--yellow); color: var(--yellow-dark); }
 
 .shop .order-bubble { position: relative; align-self: center; margin-bottom: 18%; display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 2px 4px; max-width: min(210px, 48vw); padding: 8px 10px; border-radius: 16px; background: var(--paper); border: 4px solid white; box-shadow: var(--shadow); animation: pop-in .35s cubic-bezier(.2,1.4,.4,1) both; }
 .shop .order-bubble::after { content: ''; position: absolute; right: -12px; bottom: 16px; border: 8px solid transparent; border-left: 12px solid white; }
 .shop .order-bubble .want { display: flex; flex-wrap: wrap; justify-content: center; gap: 2px; }
 .shop .order-bubble .want img { width: 38px; height: 38px; object-fit: contain; }
 .shop .order-bubble .qty { font-size: 1.5rem; font-weight: 900; color: var(--mint-dark); }
-.shop .order-bubble.done { padding: 10px 18px; }
+.shop .order-bubble.bubble-done { padding: 10px 18px; }
 .shop .order-bubble .heart { font-size: 2.4rem; color: var(--coral); animation: shop-pop .6s ease-in-out infinite alternate; }
 .shop .empty-bubble img { width: 78px; height: auto; opacity: .8; }
 .shop .price-tag { position: relative; width: 66px; height: 66px; display: grid; place-items: center; animation: pop-in .35s cubic-bezier(.2,1.4,.4,1) both; }
@@ -70,34 +70,34 @@
 .shop .desk-actions { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
 .shop .desk-actions:empty { display: none; }
 .shop .action-btn.help-btn { background: #fff3c4; color: var(--ink); box-shadow: 0 6px 0 var(--yellow-dark); }
-.shop .action-btn.big { min-height: 64px; padding: 0 28px; font-size: 1.3rem; }
+.shop .action-btn.btn-big { min-height: 64px; padding: 0 28px; font-size: 1.3rem; }
 
 /* ชั้นขนม: การ์ดละเมนู + จำนวนที่เหลือ */
 .shop .shelf { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
 .shop .stock-card { position: relative; min-width: 0; min-height: 62px; display: grid; place-items: center; padding: 4px; border: 3px solid white; border-radius: 10px; background: #fff3dc; box-shadow: 0 4px 0 rgba(36,56,71,.12); cursor: pointer; color: var(--ink); }
 .shop .stock-card img { width: min(52px, 100%); height: 48px; object-fit: contain; }
 .shop .stock-card b { position: absolute; top: -6px; right: -6px; min-width: 26px; height: 26px; padding: 0 5px; display: grid; place-items: center; border-radius: 999px; background: var(--mint); color: white; border: 2px solid white; font-size: .95rem; font-weight: 900; }
-.shop .stock-card.empty { opacity: .45; }
-.shop .stock-card.empty b { background: var(--ink-soft); }
+.shop .stock-card.stock-empty { opacity: .45; }
+.shop .stock-card.stock-empty b { background: var(--ink-soft); }
 .shop .stock-card:active { transform: translateY(3px); box-shadow: 0 1px 0 rgba(36,56,71,.12); }
 .shop .stock-card.more { background: #eef8f4; border-style: dashed; border-color: var(--mint); color: var(--mint-dark); }
 .shop .stock-card.more span { font-size: 1.6rem; font-weight: 900; line-height: 1; }
 .shop .stock-card.more small { font-size: .8rem; font-weight: 800; }
 
 /* ถาดเสิร์ฟ */
-.shop .tray { position: relative; min-height: 132px; display: grid; place-items: center; padding: 14% 10%; background: url('../assets/shop/tray.png') center / contain no-repeat; }
-.shop .tray.ready { animation: shop-pop .45s cubic-bezier(.2,1.6,.4,1); }
+.shop .serve-tray { position: relative; min-height: 132px; display: grid; place-items: center; padding: 14% 10%; background: url('../assets/shop/tray.png') center / contain no-repeat; }
+.shop .serve-tray.tray-ready { animation: shop-pop .45s cubic-bezier(.2,1.6,.4,1); }
 .shop .tray-items { display: flex; flex-wrap: wrap; align-content: center; justify-content: center; gap: 2px; max-width: 100%; }
 .shop .tray-item { position: relative; width: 44px; height: 44px; padding: 0; border: 0; background: none; cursor: pointer; }
 .shop .tray-item img { width: 100%; height: 100%; object-fit: contain; filter: drop-shadow(0 3px 2px rgba(36,56,71,.18)); }
-.shop .slot { position: relative; width: 44px; height: 44px; display: grid; place-items: center; border: 3px dashed var(--mint); border-radius: 50%; color: var(--mint-dark); background: rgba(255,255,255,.6); }
-.shop .slot i, .shop .slot.filled i { font-style: normal; font-weight: 900; font-size: 1rem; }
-.shop .slot.next { border-color: var(--yellow-dark); background: #fff7d6; animation: shop-glow 1s ease-in-out infinite alternate; }
-.shop .slot.filled { border-style: solid; background: white; }
-.shop .slot.filled i { position: absolute; right: -6px; bottom: -6px; width: 20px; height: 20px; border-radius: 50%; background: var(--mint); color: white; font-size: .75rem; display: grid; place-items: center; }
-.shop .slot.filled.extra { opacity: .55; border-color: var(--yellow); }
-.shop .pop { animation: shop-pop .35s cubic-bezier(.2,1.6,.4,1); }
-.shop .nudge { animation: shop-nudge .35s ease-in-out; }
+.shop .tray-slot { position: relative; width: 44px; height: 44px; display: grid; place-items: center; border: 3px dashed var(--mint); border-radius: 50%; color: var(--mint-dark); background: rgba(255,255,255,.6); }
+.shop .tray-slot i, .shop .tray-slot.filled i { font-style: normal; font-weight: 900; font-size: 1rem; }
+.shop .tray-slot.slot-next { border-color: var(--yellow-dark); background: #fff7d6; animation: shop-glow 1s ease-in-out infinite alternate; }
+.shop .tray-slot.filled { border-style: solid; background: white; }
+.shop .tray-slot.filled i { position: absolute; right: -6px; bottom: -6px; width: 20px; height: 20px; border-radius: 50%; background: var(--mint); color: white; font-size: .75rem; display: grid; place-items: center; }
+.shop .tray-slot.filled.extra { opacity: .55; border-color: var(--yellow); }
+.shop .shop-bump { animation: shop-pop .35s cubic-bezier(.2,1.6,.4,1); }
+.shop .shop-nudge { animation: shop-nudge .35s ease-in-out; }
 
 /* เหรียญ: ขนาดต่างกันแบบของจริง ตัวเลขใส่ทับด้วย CSS */
 .shop .coins { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; justify-content: center; min-height: 58px; }
@@ -123,8 +123,8 @@
 .shop .counter-zone.wide { padding-top: 8px; }
 .shop .zone-label { position: absolute; top: 3px; left: 8px; display: flex; align-items: center; gap: 4px; font-size: .8rem; font-weight: 800; color: var(--ink-soft); }
 .shop .zone-label img { width: 18px; height: 18px; object-fit: contain; }
-.shop .running { position: absolute; top: 0; right: 8px; font-size: 1.5rem; font-weight: 900; color: var(--mint-dark); }
-.shop .running small { font-size: .85rem; color: var(--ink-soft); }
+.shop .shop-running { position: absolute; top: 0; right: 8px; font-size: 1.5rem; font-weight: 900; color: var(--mint-dark); }
+.shop .shop-running small { font-size: .85rem; color: var(--ink-soft); }
 .shop .drawer { position: relative; display: flex; justify-content: center; align-items: center; gap: 18px; padding: 22px 8px 8px; border-radius: 12px; background: #f3e3c7; border: 3px solid white; }
 .shop .numberline { display: flex; justify-content: center; align-items: center; gap: 4px; flex-wrap: wrap; }
 .shop .numberline b { min-width: 38px; height: 38px; padding: 0 6px; display: grid; place-items: center; border-radius: 10px; background: var(--mint); color: white; font-size: 1.1rem; }
@@ -198,6 +198,60 @@
   .shop .bank .bag { width: 36px; height: 36px; }
 }
 
+
+/* ระดับ 4–6: ตั้งเลขในร้าน (ใช้ทั้งบนโต๊ะร้านและในหน้าต่างตั้งลบช่วย) + คำถามนับรูป */
+.shop .col-wrap, .shop-layer .col-wrap { display: flex; align-items: center; justify-content: center; gap: 10px; flex-wrap: wrap; }
+.shop .col-sum, .shop-layer .col-sum { display: grid; grid-template-columns: auto auto auto; gap: 2px 8px; align-items: center; justify-items: center; padding: 6px 16px; border-radius: 12px; background: white; border: 3px solid white; box-shadow: 0 4px 0 rgba(36,56,71,.12); font-weight: 900; }
+.shop .col-sum .col-cell, .shop-layer .col-sum .col-cell { position: relative; display: grid; place-items: center; width: 42px; height: 40px; font-size: 1.8rem; border-radius: 8px; color: var(--ink); }
+.shop .col-sum .col-spacer, .shop-layer .col-sum .col-spacer { width: 30px; }
+.shop .col-sum .col-op, .shop-layer .col-sum .col-op { color: var(--ink-soft); }
+.shop .col-sum .col-carry, .shop-layer .col-sum .col-carry { height: 24px; font-size: 1.1rem; color: var(--coral-dark); }
+.shop .col-sum .col-carry.borrowed, .shop-layer .col-sum .col-carry.borrowed { color: var(--sky); }
+.shop .col-sum .col-digit.active, .shop-layer .col-sum .col-digit.active { background: rgba(103,189,227,.2); }
+.shop .col-sum .col-digit.struck, .shop-layer .col-sum .col-digit.struck { color: var(--ink-soft); }
+.shop .col-sum .col-digit.struck::after, .shop-layer .col-sum .col-digit.struck::after { content: ''; position: absolute; left: 12%; right: 12%; top: 50%; height: 4px; border-radius: 2px; background: var(--ink-soft); transform: rotate(-14deg); }
+.shop .col-sum .col-slot, .shop-layer .col-sum .col-slot { border: 3px dashed #c9d6dd; color: var(--mint-dark); }
+.shop .col-sum .col-slot.filled, .shop-layer .col-sum .col-slot.filled { border-style: solid; border-color: var(--mint); background: #e6f5ef; }
+.shop .col-sum .col-cell.pulse, .shop-layer .col-sum .col-cell.pulse { cursor: pointer; background: #fff3c4; box-shadow: 0 0 0 4px var(--yellow); animation: shop-ring .9s ease-in-out infinite alternate; }
+.shop .col-sum .col-cell.nope, .shop-layer .col-sum .col-cell.nope { animation: shop-nudge .35s ease-in-out; }
+.shop .col-rule, .shop-layer .col-rule { grid-column: 1 / -1; width: 100%; height: 4px; border-radius: 2px; background: var(--ink); }
+.shop .col-flat, .shop-layer .col-flat { display: flex; align-items: center; gap: 8px; font-size: 2rem; font-weight: 900; color: var(--ink); }
+.shop .col-flat span, .shop-layer .col-flat span { color: var(--ink-soft); }
+.shop .col-aid, .shop-layer .col-aid { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 6px 10px; border-radius: 12px; background: #fffbe8; border: 3px dashed var(--yellow); font-weight: 900; }
+.shop .col-dots, .shop-layer .col-dots { display: flex; gap: 3px; }
+.shop .col-dots i, .shop-layer .col-dots i { width: 12px; height: 12px; border-radius: 50%; background: var(--yellow); }
+.shop .col-dots:first-of-type, .shop-layer .col-dots:first-of-type { padding: 3px; border-radius: 8px; background: rgba(103,189,227,.25); }
+.shop .entry, .shop-layer .entry { display: flex; justify-content: center; }
+.shop .entry-box, .shop-layer .entry-box { display: inline-grid; place-items: center; min-width: 64px; height: 46px; padding: 0 12px; border-radius: 10px; border: 3px dashed var(--sky); background: white; font-size: 1.8rem; font-weight: 900; color: var(--ink); }
+.shop .entry-box.correct, .shop-layer .entry-box.correct { border-style: solid; border-color: var(--mint); background: #e6f5ef; }
+.shop .entry-box.nope, .shop-layer .entry-box.nope { border-color: var(--yellow-dark); animation: shop-nudge .35s ease-in-out; }
+.shop .keypad, .shop-layer .keypad { display: grid; grid-template-columns: repeat(6, 1fr); gap: 6px; justify-content: center; max-width: 420px; margin: 0 auto; width: 100%; }
+.shop .key, .shop-layer .key { height: 44px; border: 0; border-radius: 10px; background: var(--sky); color: white; font-size: 1.4rem; font-weight: 900; box-shadow: 0 4px 0 #3f94ba; cursor: pointer; }
+.shop .key:active, .shop-layer .key:active { transform: translateY(3px); box-shadow: 0 1px 0 #3f94ba; }
+.shop .key.del, .shop-layer .key.del { background: #f3e3c7; color: var(--ink); box-shadow: 0 4px 0 #cdb58c; }
+.shop .key.glow, .shop-layer .key.glow { background: var(--yellow); color: var(--ink); box-shadow: 0 4px 0 var(--yellow-dark); animation: shop-glow .9s ease-in-out infinite alternate; }
+.shop .key.glow::after, .shop-layer .key.glow::after { content: ''; position: absolute; inset: -4px; border-radius: 12px; border: 3px solid var(--yellow-dark); pointer-events: none; }
+.shop .key, .shop-layer .key { position: relative; }
+.shop .column-popup, .shop-layer .column-popup { width: min(440px, 100%); gap: 12px; }
+.shop .want.priced, .shop-layer .want.priced { gap: 6px; }
+.shop .priced-item, .shop-layer .priced-item { position: relative; display: grid; place-items: center; }
+.shop .priced-item b, .shop-layer .priced-item b { position: absolute; right: -6px; bottom: -6px; min-width: 24px; height: 24px; padding: 0 4px; display: grid; place-items: center; border-radius: 999px; background: var(--yellow); border: 2px solid white; font-size: .9rem; font-weight: 900; color: var(--ink); }
+.shop .count-row, .shop-layer .count-row { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px; }
+.shop .pic, .shop-layer .pic { position: relative; width: 42px; height: 42px; }
+.shop .pic img, .shop-layer .pic img { width: 100%; height: 100%; object-fit: contain; }
+.shop .pic.gone, .shop-layer .pic.gone { opacity: .3; filter: grayscale(.6); }
+.shop .pic.fresh, .shop-layer .pic.fresh { filter: drop-shadow(0 0 6px rgba(244,189,63,.9)); }
+.shop .pic i, .shop-layer .pic i { position: absolute; right: -4px; bottom: -4px; width: 20px; height: 20px; display: grid; place-items: center; border-radius: 50%; background: var(--mint); color: white; font-size: .75rem; font-weight: 900; font-style: normal; }
+.shop .choice.right, .shop-layer .choice.right { background: var(--mint); box-shadow: 0 6px 0 var(--mint-dark); }
+@media (max-height: 720px) {
+  .shop .col-sum .col-cell, .shop-layer .col-sum .col-cell { width: 38px; height: 34px; font-size: 1.5rem; }
+  .shop .key, .shop-layer .key { height: 38px; }
+  .shop .entry-box, .shop-layer .entry-box { height: 40px; }
+  .shop .pic, .shop-layer .pic { width: 34px; height: 34px; }
+}
+
+/* วงแสงกระพริบแบบไม่ขยายขนาด — ช่องในตารางตั้งเลขอยู่ชิดกัน ถ้าขยายจะไปทับช่องข้างๆ จนแตะไม่ติด */
+@keyframes shop-ring { from { box-shadow: 0 0 0 3px var(--yellow); } to { box-shadow: 0 0 0 7px rgba(244,189,63,.55); } }
 @keyframes shop-arrive { from { transform: translateX(60vw) scale(.7); opacity: 0; } to { transform: none; opacity: 1; } }
 @keyframes shop-tilt { 0%, 100% { transform: rotate(0); } 25% { transform: rotate(-7deg); } 60% { transform: rotate(5deg); } }
 @keyframes shop-hop { 0%, 100% { transform: translateY(0); } 40% { transform: translateY(-16px); } }
@@ -215,20 +269,20 @@
 @media (max-height: 720px) {
   .shop .customer { height: clamp(96px, 19vh, 200px); }
   .shop .shop-desk { gap: 8px; padding-top: 8px; }
-  .shop .tray { min-height: 112px; }
+  .shop .serve-tray { min-height: 112px; }
   .shop .stock-card { min-height: 54px; }
   .shop .stock-card img { height: 40px; }
   .shop .coin.v1 { --size: 40px; }
   .shop .coin.v2 { --size: 45px; }
   .shop .coin.v5 { --size: 50px; }
   .shop .coin.v10 { --size: 56px; }
-  .shop .action-btn.big { min-height: 56px; }
+  .shop .action-btn.btn-big { min-height: 56px; }
 }
 @media (min-width: 700px) {
-  .shop .tray-item, .shop .slot { width: 56px; height: 56px; }
+  .shop .tray-item, .shop .tray-slot { width: 56px; height: 56px; }
   .shop .stock-card { min-height: 84px; }
   .shop .stock-card img { width: 72px; height: 64px; }
-  .shop .tray { min-height: 170px; }
+  .shop .serve-tray { min-height: 170px; }
   .shop .bank { width: 92px; }
   .shop .order-bubble .want img { width: 48px; height: 48px; }
   .shop .coin.v1 { --size: 54px; }
@@ -237,5 +291,5 @@
   .shop .coin.v10 { --size: 78px; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .shop .customer.arrive, .shop .customer.puzzled, .shop .customer.surprised, .shop .customer.happy, .shop .coin.hint, .shop .slot.next, .shop .coin.drop-in, .stock-batch img { animation: none; }
+  .shop .customer.arrive, .shop .customer.puzzled, .shop .customer.surprised, .shop .customer.happy, .shop .coin.hint, .shop .tray-slot.slot-next, .shop .coin.drop-in, .stock-batch img { animation: none; }
 }

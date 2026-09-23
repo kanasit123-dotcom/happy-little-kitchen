@@ -4,6 +4,7 @@
 // ตอบไม่ตรง: สั่นเบาๆ + คำใบ้ (ไม่มีสีแดง ไม่มี ✕ ไม่หักอะไร) ครั้งที่สองเปิดโหมดช่วย (guided) ให้เอง
 const V = new URL(import.meta.url).search;
 const core = await import(`./core.js${V}`);
+const column = await import(`./column.js${V}`);
 const { SHOP_KEY, PRODUCTS, CHANGE_COINS, DECOR } = core;
 const BROKEN_KEY = 'happy-little-kitchen-shop-broken';
 
@@ -46,6 +47,19 @@ const TXT = {
   shelfFull: { th: 'ชั้นเต็มแล้ว', en: 'The shelf is full' },
   levelUp: { th: 'ร้านเก่งขึ้นแล้ว', en: 'Your shop leveled up!' },
   close: { th: 'ปิด', en: 'Close' },
+  // ระดับ 4–6
+  and: { th: 'กับ', en: 'and' },
+  thinkPrice: { th: 'คิดราคารวมกันนะ', en: 'Let us add up the price' },
+  lookPrice: { th: 'ดูป้ายราคาบนขนมนะ', en: 'Look at the price tags' },
+  have: { th: 'มี', en: 'There are' },
+  sold: { th: 'ขายไป', en: 'we sold' },
+  leftQ: { th: 'เหลือกี่ชิ้น', en: 'how many are left?' },
+  left: { th: 'เหลือ', en: 'Left:' },
+  altogetherQ: { th: 'รวมเป็นกี่ชิ้น', en: 'how many altogether?' },
+  altogether: { th: 'รวมเป็น', en: 'Altogether:' },
+  madeMore: { th: 'ทำเพิ่ม', en: 'we made' },
+  columnHelp: { th: 'ตั้งลบช่วย', en: 'Work it out' },
+  mustGive: { th: 'ต้องทอน', en: 'The change is' },
   one: { th: 'เอ็ด', en: 'one' },
   // ตลาด (เด็กเป็นคนซื้อ)
   market: { th: 'ตลาด', en: 'Market' },
@@ -92,6 +106,7 @@ let run = 0;          // เลขรอบของหน้าจอ — อ�
 let busy = false;     // ระหว่างเล่นแอนิเมชันจบออร์เดอร์ ไม่รับแตะ
 let pay = null;       // สิ่งที่วางบนเคาน์เตอร์ตอนรับเงิน/ทอน (ไม่ต้องเก็บ reload แล้วเริ่มขั้นนี้ใหม่)
 let view = 'shop';    // 'shop' = ขายของ, 'market' = ไปซื้อของแต่งร้าน
+let mathJob = null;   // ตั้งเลขที่เปิดค้างอยู่ (ยกเลิกเมื่อออกจากหน้า)
 // งานคณิตที่กำลังทำอยู่ (ออร์เดอร์ในร้าน หรือการซื้อที่ตลาด) — ใช้ร่วมกันตอนตอบไม่ตรง/ขอความช่วยเหลือ
 const task = () => (view === 'market' ? shop.activePurchase : shop.activeOrder);
 
@@ -130,12 +145,12 @@ function save() {
 }
 
 // ---------------------------------------------------------------- ประโยค (ไทยต่อจากคลิปทีละวลี อังกฤษใช้เสียงเครื่อง)
+const lineWords = (line) => (th() ? `${productName(line.recipe)} ${line.qty} ${tx('piece')}` : `${line.qty} ${productName(line.recipe, line.qty)}`);
 const lines = {
-  order: (order) => {
-    const { recipe, qty } = order.lines[0];
-    return th() ? `${tx('want')} ${productName(recipe)} ${qty} ${tx('piece')}` : `${tx('want')} ${qty} ${productName(recipe, qty)}?`;
-  },
-  wrongItem: (order) => (th() ? `${tx('want')} ${productName(order.lines[0].recipe)} ${tx('please')}` : `${productName(order.lines[0].recipe, 2)}, ${tx('please')}`),
+  order: (order) => `${tx('want')} ${order.lines.map(lineWords).join(` ${tx('and')} `)}${th() ? '' : '?'}`,
+  wrongItem: (order) => (th() ? `${tx('want')} ${order.lines.map((line) => productName(line.recipe)).join(` ${tx('and')} `)} ${tx('please')}` : `${order.lines.map((line) => productName(line.recipe, 2)).join(` ${tx('and')} `)}, ${tx('please')}`),
+  remaining: (name, have, sold) => (th() ? `${tx('have')} ${name} ${have} ${tx('piece')} ${tx('sold')} ${sold} ${tx('piece')} ${tx('leftQ')}` : `${tx('have')} ${have} ${name}, ${tx('sold')} ${sold}. ${tx('leftQ')}`),
+  restock: (name, before, added) => (th() ? `${tx('have')} ${name} ${before} ${tx('piece')} ${tx('madeMore')} ${added} ${tx('piece')} ${tx('altogetherQ')}` : `${tx('have')} ${before} ${name}, ${tx('madeMore')} ${added} more. ${tx('altogetherQ')}`),
   total: (n) => `${tx('total')} ${n} ${tx('baht')}`,
   got: (n) => `${tx('got')} ${n} ${tx('baht')}`,
   collect: (n) => `${tx('collect')} ${n} ${tx('baht')}`,
@@ -159,9 +174,16 @@ export function open(apiIn) {
   resume();
 }
 
+function stopMath() {
+  mathJob?.cancel();
+  mathJob = null;
+  document.querySelector('.shop-layer')?.remove();
+}
+
 export function rerender() {
   if (!api) return;
   api.stopSpeech();
+  stopMath();
   if (view === 'market') { openMarket(); return; }
   renderShell();
   resume();
@@ -171,8 +193,8 @@ export function leave() {
   run++;
   pay = null;
   busy = false;
+  stopMath();
   api?.stopSpeech();
-  document.querySelector('.shop-layer')?.remove();
 }
 
 // เติมสต็อกหลังทำอาหารเสร็จ (เรียกจาก app.js) ครั้งเดียวต่อ restockId
@@ -214,15 +236,16 @@ function drawCustomer(order, { arrive = false, face = null } = {}) {
   drawBubble(order);
 }
 
-function drawBubble(order, { price = false, done = false } = {}) {
-  const { recipe, qty } = order.lines[0];
+function drawBubble(order, { price = false, done = false, unitPrices = false } = {}) {
   const bubble = $('#bubble');
   if (!bubble) return;
-  bubble.classList.toggle('done', done);
-  bubble.innerHTML = done
-    ? '<span class="heart">♥</span>'
-    : `<span class="want">${Array.from({ length: qty }, () => `<img src="${api.dishSrc(recipe)}" alt="">`).join('')}</span>
-       <b class="qty">×${qty}</b>
+  bubble.classList.toggle('bubble-done', done);
+  if (done) { bubble.innerHTML = '<span class="heart">♥</span>'; return; }
+  // คิดราคา: ขนมทุกชิ้นมีป้ายราคาของตัวเอง ให้เห็นว่าบวกอะไรกับอะไร
+  const items = order.lines.flatMap((line) => Array.from({ length: line.qty }, () => line));
+  bubble.innerHTML = unitPrices
+    ? `<span class="want priced">${items.map((line) => `<span class="priced-item"><img src="${api.dishSrc(line.recipe)}" alt=""><b>${line.unitPrice}</b></span>`).join('')}</span>`
+    : `${order.lines.map((line) => `<span class="want">${Array.from({ length: line.qty }, () => `<img src="${api.dishSrc(line.recipe)}" alt="">`).join('')}</span><b class="qty">×${line.qty}</b>`).join('')}
        ${price ? `<span class="price-tag"><img src="assets/shop/pricetag.png" alt=""><b>${order.total}</b></span>` : ''}`;
 }
 
@@ -232,7 +255,7 @@ function react(kind) {
   const mark = $('#mark');
   if (!customer || !mark) return;
   mark.textContent = kind === 'over' ? '!' : '?';
-  mark.className = `mark show ${kind}`;
+  mark.className = `mark show mark-${kind}`;
   customer.classList.remove('puzzled', 'surprised');
   void customer.offsetWidth;
   customer.classList.add(kind === 'over' ? 'surprised' : 'puzzled');
@@ -241,9 +264,9 @@ function react(kind) {
 
 function nudge(element) {
   if (!element) return;
-  element.classList.remove('nudge');
+  element.classList.remove('shop-nudge');
   void element.offsetWidth;
-  element.classList.add('nudge');
+  element.classList.add('shop-nudge');
   api.tone(300, .1);
 }
 
@@ -253,6 +276,7 @@ async function resume() {
   busy = false;
   pay = null;
   document.querySelectorAll('.flying-coin').forEach((coin) => coin.remove());
+  if (shop.restockQuiz) { restockQuiz(id); return; }
   if (!shop.activeOrder) {
     const order = core.makeOrder(shop, { customers: api.customers() });
     if (!order) return showEmpty(id);
@@ -279,6 +303,7 @@ async function resume() {
     if (id !== run) return;
   }
   if (order.status === 'picking') enterPicking(id);
+  else if (order.status === 'thinking') enterThinking(id);
   else enterPaying(id);
 }
 
@@ -291,28 +316,32 @@ function enterPicking(id) {
   say(prompt);
 }
 
+const wantedCount = (order, product) => order.lines.find((line) => line.recipe === product)?.qty || 0;
+const pickedCount = (order, product) => order.picked.filter((item) => item === product).length;
+const allPicked = (order) => order.lines.every((line) => pickedCount(order, line.recipe) === line.qty) && order.picked.length === core.orderQty(order);
+
 function renderPicking() {
   const order = shop.activeOrder;
-  const { recipe, qty } = order.lines[0];
+  const qty = core.orderQty(order);
   const counting = order.checkpoint === 'count';
   const slots = !counting || order.math.guided;
   const picked = order.picked;
   const trayItems = slots
     ? Array.from({ length: Math.max(qty, picked.length) }, (_, i) => (picked[i]
-      ? `<button class="tray-item slot filled ${i >= qty ? 'extra' : ''}" data-index="${i}" aria-label="${i + 1}"><img src="${api.dishSrc(picked[i])}" alt=""><i>${i + 1}</i></button>`
-      : `<span class="slot ${i === picked.length ? 'next' : ''}"><i>${i + 1}</i></span>`)).join('')
+      ? `<button class="tray-item tray-slot filled ${i >= qty ? 'extra' : ''}" data-index="${i}" aria-label="${i + 1}"><img src="${api.dishSrc(picked[i])}" alt=""><i>${i + 1}</i></button>`
+      : `<span class="tray-slot ${i === picked.length ? 'slot-next' : ''}"><i>${i + 1}</i></span>`)).join('')
     : picked.map((item, i) => `<button class="tray-item" data-index="${i}" aria-label="${i + 1}"><img src="${api.dishSrc(item)}" alt=""></button>`).join('');
   $('#desk').innerHTML = `
     <div class="desk-row">
       <div class="shelf" id="shelf">
         ${Object.keys(PRODUCTS).map((product) => {
           const left = shop.stock[product] - picked.filter((item) => item === product).length;
-          return `<button class="stock-card ${left <= 0 ? 'empty' : ''} ${product === recipe ? 'wanted' : ''}" data-product="${product}" aria-label="${productName(product)} ${left}">
+          return `<button class="stock-card ${left <= 0 ? 'stock-empty' : ''} ${wantedCount(order, product) ? 'wanted' : ''}" data-product="${product}" aria-label="${productName(product)} ${left}">
             <img src="${api.dishSrc(product)}" alt=""><b>${left}</b></button>`;
         }).join('')}
         <button class="stock-card more" id="cook-more" aria-label="${tx('cookMore')}"><span>＋</span><small>${tx('cookMore')}</small></button>
       </div>
-      <div class="tray ${slots ? 'with-slots' : ''}" id="tray"><div class="tray-items">${trayItems}</div></div>
+      <div class="serve-tray ${slots ? 'with-slots' : ''}" id="tray"><div class="tray-items">${trayItems}</div></div>
     </div>
     <div class="desk-actions">
       ${counting && !order.math.guided ? `<button class="action-btn help-btn" id="help">💡 ${tx('help')}</button>` : ''}
@@ -329,28 +358,27 @@ function tapProduct(button) {
   if (busy) return;
   api.unlockAudio();
   const order = shop.activeOrder;
-  const { recipe, qty } = order.lines[0];
   const product = button.dataset.product;
-  if (product !== recipe) {
+  if (!wantedCount(order, product)) {
     nudge(button);
     api.stopSpeech();
     say(lines.wrongItem(order));
     return;
   }
-  const left = shop.stock[product] - order.picked.filter((item) => item === product).length;
+  const left = shop.stock[product] - pickedCount(order, product);
   if (left <= 0) { nudge(button); return; }
-  const cap = order.checkpoint === 'count' && !order.math.guided ? 9 : qty;
-  if (order.picked.length >= cap) { nudge($('#tray')); return; }
+  const freeCount = order.checkpoint === 'count' && !order.math.guided;
+  if (freeCount ? order.picked.length >= 9 : pickedCount(order, product) >= wantedCount(order, product)) { nudge($('#tray')); return; }
   order.picked.push(product);
   save();
   api.sfx.plip();
   renderPicking();
-  $('#tray .tray-item:last-of-type, #tray .slot.filled:last-of-type')?.classList.add('pop');
+  $('#tray .tray-item:last-of-type')?.classList.add('shop-bump');
   api.stopSpeech();
   const counted = order.picked.length;
   // ถ้าไม่ใช่จุดนับ (หรือเปิดโหมดช่วยแล้ว) ช่องเต็ม = หยิบครบ ไปต่อเอง
   if (order.checkpoint !== 'count' || order.math.guided) {
-    if (counted === qty) { say(String(counted)); pickedAll(run); return; }
+    if (allPicked(order)) { say(String(counted)); pickedAll(run); return; }
   }
   say(String(counted));
 }
@@ -363,7 +391,7 @@ function takeBack(index) {
   api.sfx.swish();
   renderPicking();
   // โหมดช่วย: หยิบของที่เกินคืนจนพอดีช่อง ก็ไปต่อได้เลย
-  if (order.math.guided && order.picked.length === order.lines[0].qty) pickedAll(run);
+  if (order.math.guided && allPicked(order)) pickedAll(run);
 }
 
 function giveCounted() {
@@ -408,13 +436,142 @@ async function pickedAll(id) {
   busy = true;
   const order = shop.activeOrder;
   api.sfx.ding();
-  $('#tray')?.classList.add('ready');
+  $('#tray')?.classList.add('tray-ready');
   await wait(450);
+  if (id !== run) return;
+  order.status = ['price', 'remaining'].includes(order.checkpoint) ? 'thinking' : 'paying';
+  save();
+  busy = false;
+  if (order.status === 'thinking') enterThinking(id);
+  else enterPaying(id);
+}
+
+// ---------------------------------------------------------------- ระดับ 4–6: คิดราคา (ตั้งเลข) / ของเหลือบนชั้น (นับรูป)
+async function enterThinking(id) {
+  if (id !== run) return;
+  const order = shop.activeOrder;
+  if (order.checkpoint === 'remaining') {
+    renderRemaining();
+    say(lines.remaining(productName(order.lines[0].recipe, 2), order.math.problem.a, order.math.problem.b));
+    return;
+  }
+  drawBubble(order, { unitPrices: true });
+  setPrompt(tx('thinkPrice'));
+  $('#desk').innerHTML = '';
+  await say(tx('thinkPrice'));
+  if (id !== run) return;
+  mathJob = column.solveColumn($('#desk'), { problem: order.math.problem, mode: order.math.guided ? 'guided' : 'independent' }, mathHooks());
+  const result = await mathJob.done;
+  mathJob = null;
+  if (id !== run || !result.completed) return;
+  order.math.usedHelp = order.math.usedHelp || result.usedHelp;
+  order.math.attempts = Math.max(order.math.attempts, result.attempts);
+  order.status = 'paying';
+  save();
+  enterPaying(id);
+}
+
+// ของที่ตั้งเลขต้องใช้จากร้าน (เสียง ข้อความ เสียงประกอบ และปฏิกิริยาลูกค้าตอนตอบไม่ตรง)
+function mathHooks() {
+  return {
+    lang: api.lang,
+    speak: say,
+    stopSpeech: api.stopSpeech,
+    setPrompt,
+    tone: api.tone,
+    sfx: { tap: api.sfx.tick, ding: api.sfx.ding, clunk: api.sfx.clunk, plip: api.sfx.plip, swish: api.sfx.swish },
+    onMiss: (kind, attempts) => {
+      react(kind);
+      const order = task();
+      if (order) { order.math.attempts = Math.max(order.math.attempts, attempts); save(); }
+      return attempts === 1 && order?.checkpoint === 'price' ? tx('lookPrice') : null;
+    }
+  };
+}
+
+// รูปของบนชั้น: ชิ้นที่ขายไปจางลง (อยู่บนถาดแล้ว) โหมดช่วยมีเลขกำกับชิ้นที่เหลือ
+function picturesHTML(recipe, count, { faded = 0, fresh = 0, numbered = false } = {}) {
+  let n = 0;
+  return `<div class="count-row">${Array.from({ length: count }, (_, i) => {
+    const gone = i < faded;
+    const isNew = i >= count - fresh;
+    const label = numbered && !gone ? `<i>${++n}</i>` : '';
+    return `<span class="pic ${gone ? 'gone' : ''} ${isNew ? 'fresh' : ''}"><img src="${api.dishSrc(recipe)}" alt="">${label}</span>`;
+  }).join('')}</div>`;
+}
+
+function renderRemaining() {
+  const order = shop.activeOrder;
+  const { a: have, b: sold } = order.math.problem;
+  const recipe = order.lines[0].recipe;
+  setPrompt(`${have} − ${sold} = ?`);
+  $('#desk').innerHTML = `
+    ${picturesHTML(recipe, have, { faded: sold, numbered: order.math.guided })}
+    <div class="choices" id="choices">${order.math.choices.map((n) => `<button class="choice" data-n="${n}">${n}</button>`).join('')}</div>`;
+  $('#desk').querySelectorAll('[data-n]').forEach((button) => { button.onclick = () => answerRemaining(Number(button.dataset.n), button); });
+}
+
+async function answerRemaining(n, button) {
+  if (busy) return;
+  const order = shop.activeOrder;
+  const answer = order.math.problem.a - order.math.problem.b;
+  api.stopSpeech();
+  if (n !== answer) {
+    nudge(button);
+    miss(n < answer ? 'short' : 'over', tx('short'), renderRemaining);
+    return;
+  }
+  busy = true;
+  const id = run;
+  api.sfx.ding();
+  button.classList.add('right');
+  await say(`${tx('left')} ${answer} ${tx('piece')}`);
   if (id !== run) return;
   order.status = 'paying';
   save();
   busy = false;
   enterPaying(id);
+}
+
+// ระดับ 4 ขึ้นไป: กลับจากทำอาหาร ถามว่ารวมเป็นกี่ชิ้น (ไม่ใช่ออร์เดอร์ จึงไม่นับเป็นจุดคำนวณของลูกค้า)
+function restockQuiz(id) {
+  const quiz = shop.restockQuiz;
+  const total = quiz.before + quiz.added;
+  const choices = core.numberChoices(total);
+  let misses = 0;
+  $('#spot').innerHTML = `<div class="order-bubble"><img class="bubble-item" src="${api.dishSrc(quiz.recipe)}" alt=""><b class="qty">+${quiz.added}</b></div>`;
+  const draw = () => {
+    $('#desk').innerHTML = `
+      ${picturesHTML(quiz.recipe, total, { fresh: quiz.added, numbered: misses >= 2 })}
+      <div class="choices" id="choices">${choices.map((n) => `<button class="choice" data-n="${n}">${n}</button>`).join('')}</div>`;
+    $('#desk').querySelectorAll('[data-n]').forEach((button) => {
+      button.onclick = async () => {
+        if (busy || id !== run) return;
+        const n = Number(button.dataset.n);
+        api.stopSpeech();
+        if (n !== total) {
+          misses++;
+          nudge(button);
+          draw();
+          say(misses >= 2 ? `${tx('short')} ${tx('letsCount')}` : tx('short'));
+          return;
+        }
+        busy = true;
+        api.sfx.ding();
+        button.classList.add('right');
+        await say(`${tx('altogether')} ${total} ${tx('piece')}`);
+        busy = false;
+        if (id !== run) return;
+        shop.restockQuiz = null;
+        save();
+        resume();
+      };
+    });
+  };
+  draw();
+  const question = lines.restock(productName(quiz.recipe, 2), quiz.before, quiz.added);
+  setPrompt(`${quiz.before} + ${quiz.added} = ?`);
+  say(question);
 }
 
 async function enterPaying(id) {
@@ -477,7 +634,7 @@ function renderCollect() {
       <div class="purse-zone"><span class="zone-label"><img src="assets/shop/purse.png" alt="">${tx('purse')}</span><div class="coins" id="purse">
         ${purse.map((value, i) => (pay.placed.includes(i) ? '<span class="coin-gap"></span>' : coinHTML(value, `data-i="${i}"`))).join('')}
       </div></div>
-      <div class="counter-zone"><div class="running" id="running">${sum}<small>/${order.total}</small></div><div class="coins" id="counter">
+      <div class="counter-zone"><div class="shop-running" id="running">${sum}<small>/${order.total}</small></div><div class="coins" id="counter">
         ${pay.placed.map((i, k) => coinHTML(purse[i], `data-k="${k}"`)).join('')}
       </div></div>
     </div>
@@ -507,7 +664,7 @@ function placeCoin(index) {
   pay.placed.push(index);
   api.sfx.clunk();
   renderCollect();
-  $('#counter .coin:last-child')?.classList.add('pop');
+  $('#counter .coin:last-child')?.classList.add('shop-bump');
   const sum = core.coinSum(pay.placed.map((i) => order.payment.purse[i]));
   api.stopSpeech();
   const verdict = core.judge(order.total, sum);
@@ -529,18 +686,19 @@ function renderChange() {
   const price = order.total;
   const target = order.payment.paid;
   const running = price + core.coinSum(pay.coins);
-  const suggestion = order.math.guided && running < target ? core.suggestCoin(target - running) : null;
+  const suggestion = order.math.guided && running < target ? core.suggestCoin(target - running, drawerCoins(order)) : null;
   $('#desk').innerHTML = `
     <div class="money-row">
       <div class="paid-zone"><span class="zone-label">${tx('paid')}</span><div class="coins">${order.payment.offered.map((value) => coinHTML(value, 'tabindex="-1" disabled')).join('')}</div></div>
-      <div class="counter-zone"><div class="running" id="running">${running}<small>/${target}</small></div><div class="coins" id="counter">
+      <div class="counter-zone"><div class="shop-running" id="running">${running}<small>/${target}</small></div><div class="coins" id="counter">
         ${pay.coins.map((value, k) => coinHTML(value, `data-k="${k}"`)).join('')}
       </div></div>
     </div>
     ${order.math.guided ? `<div class="numberline" id="line" aria-hidden="true"><b>${price}</b>${Array.from({ length: target - price }, (_, i) => `<i class="${price + i + 1 <= running ? 'on' : ''}">${price + i + 1}</i>`).join('')}</div>` : ''}
-    <div class="drawer" id="drawer"><span class="zone-label">${tx('drawer')}</span>${CHANGE_COINS.map((value) => coinHTML(value)).join('')}</div>
+    <div class="drawer" id="drawer"><span class="zone-label">${tx('drawer')}</span>${drawerCoins(order).map((value) => coinHTML(value)).join('')}</div>
     <div class="desk-actions">
       ${order.math.guided ? '' : `<button class="action-btn help-btn" id="help">💡 ${tx('help')}</button>`}
+      ${order.math.guided && target >= 20 ? `<button class="action-btn help-btn" id="col-sub">✏️ ${tx('columnHelp')}</button>` : ''}
       <button class="action-btn primary" id="give" ${pay.coins.length ? '' : 'disabled'}>🤲 ${tx('full')}</button>
     </div>`;
   $('#drawer').querySelectorAll('.coin').forEach((coin) => {
@@ -549,12 +707,38 @@ function renderChange() {
   });
   $('#counter').querySelectorAll('.coin').forEach((coin) => { coin.onclick = () => removeChange(Number(coin.dataset.k)); });
   if ($('#help')) $('#help').onclick = () => askHelp(renderChange);
+  if ($('#col-sub')) $('#col-sub').onclick = () => columnPopup({ a: target, op: '-', b: price });
   $('#give').onclick = () => {
     if (busy) return;
     const verdict = core.judge(target, price + core.coinSum(pay.coins));
     if (verdict === 'exact') return paid(run);
     miss(verdict, verdict === 'over' ? tx('moneyOver') : tx('moneyShort'), renderChange);
   };
+}
+
+// ลิ้นชักทอน: เหรียญ 1 2 5 (ลูกค้าให้แบงก์ 20 มีเหรียญ 10 ด้วย)
+const drawerCoins = (order) => (order.payment.paid >= 20 ? [...CHANGE_COINS, 10] : CHANGE_COINS);
+
+// ตั้งลบช่วย (ระดับ 5 ขึ้นไป): เปิดตั้งเลขแบบทีละหลักในหน้าต่างซ้อน แล้วกลับมาทอนต่อ
+async function columnPopup(problem) {
+  if (busy || mathJob) return;
+  api.tone(620);
+  const layer = document.createElement('div');
+  layer.className = 'popup-layer shop-layer';
+  layer.innerHTML = '<div class="popup column-popup"><div id="col-host"></div></div>';
+  document.body.appendChild(layer);
+  api.stopSpeech();
+  const id = run;
+  mathJob = column.solveColumn(layer.querySelector('#col-host'), { problem, mode: 'guided' }, mathHooks());
+  const result = await mathJob.done;
+  mathJob = null;
+  layer.remove();
+  if (id !== run || !result.completed) return;
+  const order = shop.activeOrder;
+  order.math.usedHelp = true;
+  save();
+  setPrompt(lines.changeHow(order.total, order.payment.paid));
+  say(`${tx('mustGive')} ${result.answer} ${tx('baht')}`);
 }
 
 function addChange(value) {
@@ -564,7 +748,7 @@ function addChange(value) {
   pay.coins.push(value);
   api.sfx.clunk();
   renderChange();
-  $('#counter .coin:last-child')?.classList.add('pop');
+  $('#counter .coin:last-child')?.classList.add('shop-bump');
   const running = order.total + core.coinSum(pay.coins);
   api.stopSpeech();
   const verdict = core.judge(order.payment.paid, running);
@@ -619,7 +803,7 @@ async function finish(id) {
     await api.popup(`<img class="popup-friend" src="assets/shop/bank.png" alt=""><h2>⭐ ${tx('levelUp')}</h2>`, tx('levelUp'));
     if (id !== run) return;
   }
-  $('#desk').innerHTML = `<div class="desk-actions"><button class="action-btn primary big" id="next">▶ ${tx('next')}</button></div>`;
+  $('#desk').innerHTML = `<div class="desk-actions"><button class="action-btn primary btn-big" id="next">▶ ${tx('next')}</button></div>`;
   $('#next').onclick = () => { api.tone(620); resume(); };
   busy = false;
 }
@@ -647,9 +831,9 @@ function flyToBank() {
   }
   setTimeout(() => {
     if (piggy) piggy.textContent = shop.piggy;
-    bank.classList.remove('pop');
+    bank.classList.remove('shop-bump');
     void bank.offsetWidth;
-    bank.classList.add('pop');
+    bank.classList.add('shop-bump');
     api.sfx.ding();
   }, 900);
 }
@@ -713,6 +897,7 @@ const decorName = (id) => DECOR_NAMES[id][api.lang()];
 
 // ---------------------------------------------------------------- ตลาด: เด็กเป็นคนซื้อ จ่ายเงิน รับเงินทอน
 function openMarket() {
+  stopMath();
   run++;
   pay = null;
   busy = false;
@@ -840,7 +1025,7 @@ function renderPay() {
       <div class="purse-zone"><span class="zone-label"><img src="assets/shop/purse.png" alt="">${tx('myPurse')}</span><div class="coins" id="purse">
         ${purse.map((value, i) => (pay.placed.includes(i) ? '<span class="coin-gap"></span>' : coinHTML(value, `data-i="${i}"`))).join('')}
       </div></div>
-      <div class="counter-zone"><div class="running" id="running">${sum}<small>/${purchase.price}</small></div><div class="coins" id="counter">
+      <div class="counter-zone"><div class="shop-running" id="running">${sum}<small>/${purchase.price}</small></div><div class="coins" id="counter">
         ${pay.placed.map((i, k) => coinHTML(purse[i], `data-k="${k}"`)).join('')}
       </div></div>
     </div>
@@ -878,7 +1063,7 @@ function payCoin(index) {
   pay.placed.push(index);
   api.sfx.clunk();
   renderPay();
-  $('#counter .coin:last-child')?.classList.add('pop');
+  $('#counter .coin:last-child')?.classList.add('shop-bump');
   const sum = core.coinSum(pay.placed.map((i) => purchase.purse[i]));
   api.stopSpeech();
   if (purchase.mode === 'free') {
@@ -956,7 +1141,7 @@ async function chooseChange(n, button) {
     running += value;
     api.sfx.clunk();
     renderPayBig();
-    $('#counter .coin:last-child')?.classList.add('pop');
+    $('#counter .coin:last-child')?.classList.add('shop-bump');
     await Promise.all([wait(350), say(String(running))]);
   }
   if (id !== run) return;

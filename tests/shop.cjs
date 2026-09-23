@@ -43,7 +43,7 @@ const KITCHEN_KEY = 'happy-little-kitchen-v1';
     };
     const openShop = async () => {
       await page.locator('#shop').click();
-      await page.locator('.shop #desk .stock-card, .shop #desk .coins, .shop .cook-card').first().waitFor();
+      await page.locator('.shop #desk .stock-card, .shop #desk .coins, .shop .cook-card, .shop .count-row, .shop .col-flat, .shop .col-sum').first().waitFor();
     };
     // ตลาด → ร้าน → หน้าครัว (ปุ่มย้อนในตลาดพากลับร้านก่อน)
     const backHome = async () => {
@@ -75,10 +75,10 @@ const KITCHEN_KEY = 'happy-little-kitchen-v1';
     const qty = order.lines[0].qty;
     for (let i = 0; i < qty + 1; i++) await page.locator('[data-product="cookie"]').click();
     await page.locator('#give').click();
-    await page.waitForFunction(() => document.querySelector('#mark')?.classList.contains('over'));
+    await page.waitForFunction(() => document.querySelector('#mark')?.classList.contains('mark-over'));
     assert.equal((await readShop()).ordersDone, 0);
     assert.equal((await readShop()).activeOrder.math.attempts, 1);
-    assert.equal(await page.locator('.shop .slot').count(), 0, 'first miss keeps the child counting alone');
+    assert.equal(await page.locator('.shop .tray-slot').count(), 0, 'first miss keeps the child counting alone');
     // หยิบคืน 1 ชิ้น แล้วลองส่งแบบขาด → ครั้งที่สองเปิดโหมดช่วย (ช่องมีเลขกำกับ)
     if (qty >= 2) {
       await page.locator('#tray .tray-item').first().click();
@@ -87,7 +87,7 @@ const KITCHEN_KEY = 'happy-little-kitchen-v1';
       await page.locator('[data-product="cookie"]').click();   // สั่ง 1 ชิ้น: ลองเกินอีกรอบแทน
     }
     await page.locator('#give').click();
-    await page.locator('.shop .slot').first().waitFor();
+    await page.locator('.shop .tray-slot').first().waitFor();
     assert.equal((await readShop()).activeOrder.math.guided, true);
     await shot('guided-count');
     // ไม่มีสีแดงหรือ ✕ บนจอร้าน
@@ -135,7 +135,7 @@ const KITCHEN_KEY = 'happy-little-kitchen-v1';
     await shot('collect');
     // หยิบ 10 → เกิน (ลูกค้าทำหน้าตกใจ) แล้วหยิบคืน
     await page.locator('#purse .coin[data-v="10"]').click();
-    await page.waitForFunction(() => document.querySelector('#mark')?.classList.contains('over'));
+    await page.waitForFunction(() => document.querySelector('#mark')?.classList.contains('mark-over'));
     await page.locator('#counter .coin').first().click();
     // ขอความช่วยเหลือ → เหรียญที่ควรหยิบเรืองแสง
     await page.locator('#help').click();
@@ -169,7 +169,7 @@ const KITCHEN_KEY = 'happy-little-kitchen-v1';
     assert.equal((await page.locator('#running').innerText()).startsWith('7'), true, 'counting starts at the price');
     // วาง 5 → เกิน, หยิบคืน, วาง 1 แล้วส่ง → ยังขาด → ครั้งที่สองเปิดเส้นนับ
     await page.locator('#drawer .coin[data-v="5"]').click();
-    await page.waitForFunction(() => document.querySelector('#mark')?.classList.contains('over'));
+    await page.waitForFunction(() => document.querySelector('#mark')?.classList.contains('mark-over'));
     await page.locator('#counter .coin').first().click();
     await page.locator('#drawer .coin[data-v="1"]').click();
     await page.locator('#give').click();
@@ -278,6 +278,104 @@ const KITCHEN_KEY = 'happy-little-kitchen-v1';
     assert.equal((await readShop()).stock.cookie, 6);
     assert.equal((await readShop()).activeOrder?.lines[0].recipe, 'cookie', 'a customer comes for the new cookies');
 
+    // --- ระดับ 4–5: คิดราคาด้วยตั้งเลข, ของเหลือบนชั้น, แบงก์ 20 + ตั้งลบช่วย, คำถามตอนเติมของ
+    const orderOf = (fields) => ({
+      id: `order-test-${fields.checkpoint}-${Math.random().toString(36).slice(2, 7)}`, customer: 'turtle', status: 'picking', picked: [], createdAt: 3,
+      math: { attempts: 0, usedHelp: false, guided: false, ...(fields.math || {}) },
+      ...fields,
+      total: fields.lines.reduce((sum, line) => sum + line.qty * line.unitPrice, 0)
+    });
+    const setOrder = async (order, extra = {}) => {
+      const current = await readShop();
+      Object.assign(current, { ordersDone: 16, stock: { cookie: 6, cupcake: 6, pizza: 4 }, activeOrder: order, restockQuiz: null }, extra);
+      await writeShop(current);
+      await backHome();
+      await openShop();
+    };
+    const press = async (digits) => { for (const d of String(digits)) await page.locator(`.shop .key[data-k="${d}"]`).click(); };
+    const lastSale = async () => (await readShop()).transactions[0];
+
+    // คิดราคาแบบคิดเอง: คัพเค้ก 2 ชิ้น 7 + 7 — ตอบ 13 ก่อน (ยังขาด) แล้วตอบ 14
+    await setOrder(orderOf({ checkpoint: 'price', lines: [{ recipe: 'cupcake', qty: 2, unitPrice: 7 }], payment: { mode: 'auto', offered: [10, 2, 2], paid: 14, change: 0, changeCoins: [] }, math: { problem: { a: 7, op: '+', b: 7 } } }));
+    for (let i = 0; i < 2; i++) await page.locator('[data-product="cupcake"]').click();
+    await page.locator('.shop .col-flat').waitFor();
+    assert.equal(await page.locator('.order-bubble .priced-item').count(), 2, 'each cupcake shows its price');
+    await fits('price');
+    await shot('price');
+    await press(13);
+    await page.waitForFunction(() => document.querySelector('#mark')?.classList.contains('mark-short'));
+    await press(14);
+    await page.locator('#next').waitFor({ timeout: 15000 });
+    assert.equal((await lastSale()).checkpoint, 'price');
+    assert.equal((await lastSale()).attempts, 1);
+    assert.equal((await lastSale()).total, 14);
+
+    // คิดราคาแบบตั้งเลขช่วย: พิซซ่า + คัพเค้ก 8 + 7 = 15 (ทด 1, หลักสิบของตัวตั้งว่าง ไม่มี 08)
+    await setOrder(orderOf({ checkpoint: 'price', lines: [{ recipe: 'pizza', qty: 1, unitPrice: 8 }, { recipe: 'cupcake', qty: 1, unitPrice: 7 }], payment: { mode: 'auto', offered: [10, 5], paid: 15, change: 0, changeCoins: [] }, math: { problem: { a: 8, op: '+', b: 7 } } }));
+    await page.locator('[data-product="pizza"]').click();
+    await page.locator('[data-product="cupcake"]').click();
+    await page.locator('#col-help').click();
+    await page.locator('.shop .col-sum').waitFor();
+    assert.equal(await page.locator('.shop .col-sum .col-cell[data-slot="top"]').count(), 0, 'no tens digit on top: 8 not 08');
+    await fits('column');
+    await press(15);
+    await page.locator('.shop .col-cell.pulse[data-slot="answer"][data-col="units"]').click();
+    await page.locator('.shop .col-cell.pulse[data-slot="carry"]').click();
+    await shot('column-carry');
+    await page.locator('.shop .col-cell.pulse[data-slot="answer"][data-col="tens"]').click();
+    await page.locator('#next').waitFor({ timeout: 15000 });
+    assert.equal((await lastSale()).usedHelp, true);
+    assert.equal((await lastSale()).lines.length, 2);
+
+    // ของเหลือ: มีคุกกี้ 6 ขาย 2 เหลือ 4 — ตอบไม่ตรง 2 ครั้ง แล้วรูปมีเลขกำกับ
+    await setOrder(orderOf({ checkpoint: 'remaining', lines: [{ recipe: 'cookie', qty: 2, unitPrice: 5 }], payment: { mode: 'auto', offered: [10], paid: 10, change: 0, changeCoins: [] }, math: { problem: { a: 6, op: '-', b: 2 }, choices: [3, 4, 5] } }));
+    for (let i = 0; i < 2; i++) await page.locator('[data-product="cookie"]').click();
+    await page.locator('.shop .count-row').waitFor();
+    assert.equal(await page.locator('.shop .count-row .pic').count(), 6);
+    assert.equal(await page.locator('.shop .count-row .pic.gone').count(), 2);
+    await fits('remaining');
+    await page.locator('.shop .choice[data-n="3"]').click();
+    await page.locator('.shop .choice[data-n="5"]').click();
+    await page.locator('.shop .count-row .pic i').first().waitFor();
+    assert.equal(await page.locator('.shop .count-row .pic i').count(), 4, 'the four left are numbered');
+    await shot('remaining-help');
+    await page.locator('.shop .choice[data-n="4"]').click();
+    await page.locator('#next').waitFor({ timeout: 15000 });
+    assert.equal((await lastSale()).checkpoint, 'remaining');
+    assert.equal((await readShop()).stock.cookie, 4);
+
+    // แบงก์ 20: พิซซ่า + คุกกี้ 13 บาท ทอน 7 — ลิ้นชักมีเหรียญ 10, ตั้งลบช่วย 20 − 13 (ยืม, ไม่มี 07)
+    await setOrder(orderOf({ checkpoint: 'change', lines: [{ recipe: 'pizza', qty: 1, unitPrice: 8 }, { recipe: 'cookie', qty: 1, unitPrice: 5 }], payment: { mode: 'change', offered: [20], paid: 20, change: 7, changeCoins: [] } }), { ordersDone: 24 });
+    await page.locator('[data-product="pizza"]').click();
+    await page.locator('[data-product="cookie"]').click();
+    await page.locator('#drawer .coin[data-v="10"]').waitFor();
+    assert.equal(await page.locator('.paid-zone .coin.v20').count(), 1, 'customer paid with a 20 note');
+    await page.locator('#help').click();
+    await page.locator('#col-sub').click();
+    await page.locator('.shop-layer .col-sum').waitFor();
+    await page.locator('.shop-layer .col-cell.pulse[data-slot="top"][data-col="tens"]').click();
+        for (const d of '7') await page.locator(`.shop-layer .key[data-k="${d}"]`).click();
+    await page.locator('.shop-layer .col-cell.pulse[data-slot="answer"][data-col="units"]').click();
+    await page.locator('.shop-layer').waitFor({ state: 'detached', timeout: 15000 });
+    await page.locator('#drawer .coin[data-v="5"]').click();
+    await page.locator('#drawer .coin[data-v="2"]').click();
+    await page.locator('#next').waitFor({ timeout: 15000 });
+    assert.equal((await lastSale()).change, 7);
+    assert.equal((await lastSale()).paid, 20);
+    await shot('change-20');
+
+    // เติมของตอนมีของเดิม (ระดับ 4 ขึ้นไป): มีคุกกี้ 2 ทำเพิ่ม 6 รวมเป็นกี่ชิ้น
+    await setOrder(null, { restockQuiz: { recipe: 'cookie', before: 2, added: 6 }, stock: { cookie: 8, cupcake: 6, pizza: 4 } });
+    await page.locator('.shop .count-row .pic.fresh').first().waitFor();
+    assert.equal(await page.locator('.shop .count-row .pic').count(), 8);
+    assert.equal(await page.locator('.shop .count-row .pic.fresh').count(), 6);
+    await fits('restock-quiz');
+    await shot('restock-quiz');
+    await page.locator('.shop .choice[data-n="8"]').click();
+    await page.locator('.shop #desk .stock-card, .shop #desk .coins, .shop .col-flat, .shop .count-row').first().waitFor();
+    await page.waitForFunction((key) => JSON.parse(localStorage.getItem(key)).restockQuiz === null, SHOP_KEY);
+    await page.waitForFunction((key) => !!JSON.parse(localStorage.getItem(key)).activeOrder, SHOP_KEY);
+
     // --- ตลาด: เอาเงินในกระปุกไปซื้อของแต่งร้าน
     const setMoney = async (piggy, ordersDone) => {
       const current = await readShop();
@@ -316,7 +414,7 @@ const KITCHEN_KEY = 'happy-little-kitchen-v1';
     await openMarket();
     await page.locator('[data-item="lamp"]').click();
     await page.locator('#purse .coin[data-v="20"]').click();
-    await page.waitForFunction(() => document.querySelector('#mark')?.classList.contains('over'));
+    await page.waitForFunction(() => document.querySelector('#mark')?.classList.contains('mark-over'));
     assert.equal((await readShop()).decor.owned.includes('lamp'), false);
     await page.locator('#counter .coin').first().click();
     await page.locator('#help').click();
@@ -415,7 +513,7 @@ const KITCHEN_KEY = 'happy-little-kitchen-v1';
 
     assert.deepEqual(missing.filter((url) => !url.endsWith('favicon.ico')), [], 'no missing files');
     assert.deepEqual(errors, []);
-    console.log('PASS shop: first visit with seeded cookies, count/collect/change with gentle retries and help, reload keeps the order, sells once, cooking restocks once, market at levels 1-3 with decorations, parent stats and reset, broken shop data, kitchen save untouched, all screen sizes.');
+    console.log('PASS shop: first visit with seeded cookies, count/collect/change with gentle retries and help, level 4-5 price/remaining/20-baht change with the column engine, restock quiz, reload keeps the order, sells once, cooking restocks once, market at levels 1-3 with decorations, parent stats and reset, broken shop data, kitchen save untouched, all screen sizes.');
   } finally {
     await browser.close();
   }

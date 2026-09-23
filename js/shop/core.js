@@ -32,12 +32,17 @@ export const DECOR = {
   awning: { price: 18 }
 };
 
-// ปลดล็อกตามจำนวนออร์เดอร์ที่ขายสำเร็จ ไม่ลดระดับ ไม่อิงความแม่นยำ — ระดับ 4 ขึ้นไปมาใน Phase 5
+// ปลดล็อกตามจำนวนออร์เดอร์ที่ขายสำเร็จ ไม่ลดระดับ ไม่อิงความแม่นยำ
+// count = นับของ, collect = รับเงินพอดี, change = ทอนแบบนับต่อ, price = บวกราคา (ตั้งเลข), remaining = ของบนชั้นเหลือกี่ชิ้น
 export const LEVELS = [
   { level: 1, unlock: 0, checkpoints: ['count'] },
   { level: 2, unlock: 5, checkpoints: ['collect', 'count'] },
-  { level: 3, unlock: 10, checkpoints: ['change', 'collect'] }
+  { level: 3, unlock: 10, checkpoints: ['change', 'collect'] },
+  { level: 4, unlock: 16, checkpoints: ['price', 'remaining'] },
+  { level: 5, unlock: 24, checkpoints: ['price', 'change', 'remaining'] },
+  { level: 6, unlock: 32, checkpoints: ['count', 'collect', 'change', 'price', 'remaining'] }
 ];
+export const CHECKPOINTS = ['count', 'collect', 'change', 'price', 'remaining'];
 
 const clone = (value) => JSON.parse(JSON.stringify(value));
 const isInt = (value) => Number.isInteger(value);
@@ -89,6 +94,7 @@ export function freshShop() {
     activeOrder: null,
     activePurchase: null,
     lastRestockId: null,
+    restockQuiz: null,
     lastOrderKey: null,
     lastCustomer: null,
     lastPurchaseMode: null,
@@ -102,8 +108,9 @@ function validOrder(order) {
   if (!order || typeof order !== 'object' || typeof order.id !== 'string' || typeof order.customer !== 'string') return false;
   if (!Array.isArray(order.lines) || !order.lines.length) return false;
   if (!order.lines.every((line) => PRODUCTS[line.recipe] && isInt(line.qty) && line.qty > 0 && isInt(line.unitPrice))) return false;
-  if (!['count', 'collect', 'change'].includes(order.checkpoint)) return false;
-  if (!['arriving', 'picking', 'paying'].includes(order.status)) return false;
+  if (order.lines.length > 2 || new Set(order.lines.map((line) => line.recipe)).size !== order.lines.length) return false;
+  if (!CHECKPOINTS.includes(order.checkpoint)) return false;
+  if (!['arriving', 'picking', 'thinking', 'paying'].includes(order.status)) return false;
   const payment = order.payment;
   if (!payment || !['auto', 'collect', 'change'].includes(payment.mode) || !isInt(payment.paid) || !isInt(payment.change)) return false;
   return payment.paid - payment.change === orderTotal(order);
@@ -127,12 +134,19 @@ export function normalizeShop(raw) {
   if (shop.activeOrder) {
     const order = shop.activeOrder;
     order.picked = Array.isArray(order.picked) ? order.picked.filter((id) => PRODUCTS[id]).slice(0, 9) : [];
-    order.math = { attempts: nonNeg(order.math?.attempts), usedHelp: order.math?.usedHelp === true, guided: order.math?.guided === true };
+    order.payment.changeCoins = [];
+    const saved = order.math || {};
+    order.math = { attempts: nonNeg(saved.attempts), usedHelp: saved.usedHelp === true, guided: saved.guided === true };
+    if (saved.problem && isInt(saved.problem.a) && isInt(saved.problem.b) && ['+', '-'].includes(saved.problem.op)) order.math.problem = { a: saved.problem.a, op: saved.problem.op, b: saved.problem.b };
+    if (Array.isArray(saved.choices) && saved.choices.every(isInt)) order.math.choices = saved.choices.slice(0, 3);
+    if (['price', 'remaining'].includes(order.checkpoint) && !order.math.problem) shop.activeOrder = null;
     order.payment.changeCoins = [];
   }
   shop.activePurchase = validPurchase(raw.activePurchase) ? clone(raw.activePurchase) : null;
   if (shop.activePurchase) shop.activePurchase.math = { attempts: nonNeg(raw.activePurchase.math?.attempts), usedHelp: raw.activePurchase.math?.usedHelp === true, guided: raw.activePurchase.math?.guided === true };
   shop.lastRestockId = typeof raw.lastRestockId === 'string' ? raw.lastRestockId : null;
+  const quiz = raw.restockQuiz;
+  shop.restockQuiz = quiz && PRODUCTS[quiz.recipe] && isInt(quiz.before) && isInt(quiz.added) && quiz.before > 0 && quiz.added > 0 ? { recipe: quiz.recipe, before: quiz.before, added: quiz.added } : null;
   shop.recent = Array.isArray(raw.recent) ? raw.recent.filter((kind) => typeof kind === 'string').slice(-2) : [];
   shop.lastOrderKey = typeof raw.lastOrderKey === 'string' ? raw.lastOrderKey : null;
   shop.lastCustomer = typeof raw.lastCustomer === 'string' ? raw.lastCustomer : null;
@@ -219,43 +233,98 @@ export function suggestCoin(left, values = CHANGE_COINS) {
   return [...values].sort((x, y) => y - x).find((value) => value <= left) || null;
 }
 
-// สร้างออร์เดอร์จากสต็อกที่มีจริง คืน null ถ้าไม่มีของขาย
-export function makeOrder(shop, { customers, random = Math.random, now = Date.now() } = {}) {
+// ตัวเลือกคำตอบ 3 ตัว (ของเหลือ / รวมของ) มีคำตอบถูก 1 ตัว ไม่ติดลบ
+export function numberChoices(answer, random = Math.random) {
+  const options = new Set([answer]);
+  const near = [answer - 1, answer + 1, answer - 2, answer + 2, answer + 3].filter((n) => n >= 0 && n !== answer);
+  while (options.size < 3 && near.length) options.add(near.splice(Math.floor(random() * near.length), 1)[0]);
+  return [...options].sort((x, y) => x - y);
+}
+
+// รายการของในออร์เดอร์ตามชนิดจุดคำนวณ (null = สต็อกตอนนี้ทำจุดนี้ไม่ได้)
+function linesFor(shop, checkpoint, random) {
   const available = sellable(shop);
-  if (!available.length || !customers?.length) return null;
-  let best = null;
-  for (let attempt = 0; attempt < 6; attempt++) {
-    const checkpoint = chooseCheckpoint(shop, random);
+  const line = (recipe, qty) => ({ recipe, qty, unitPrice: PRODUCTS[recipe].price });
+  if (!available.length) return null;
+  if (checkpoint === 'count') {
     const recipe = pickFrom(random, available);
     const stock = shop.stock[recipe];
-    let qty = 1;
-    if (checkpoint === 'count') {
-      const low = shop.level >= 2 && stock >= 2 ? 2 : 1;
-      qty = randInt(random, low, Math.min(5, stock));
+    const low = shop.level >= 2 && stock >= 2 ? 2 : 1;
+    return [line(recipe, randInt(random, low, Math.min(5, stock)))];
+  }
+  if (checkpoint === 'collect') return [line(pickFrom(random, available), 1)];
+  if (checkpoint === 'remaining') {
+    // ต้องเหลือบนชั้นอย่างน้อย 1 ชิ้น และไม่เกิน 10 ให้นับรูปได้
+    const ok = available.filter((id) => shop.stock[id] >= 2 && shop.stock[id] <= 10);
+    if (!ok.length) return null;
+    const recipe = pickFrom(random, ok);
+    return [line(recipe, randInt(random, 1, Math.min(3, shop.stock[recipe] - 1)))];
+  }
+  // price / change (ระดับ 5 ขึ้นไป): สองเมนูเมนูละชิ้น หรือเมนูเดียว 2 ชิ้น — ยอดรวม 10–16 จ่ายแบงก์ 20
+  const twoItems = shop.level >= 5 || checkpoint === 'price';
+  if (checkpoint === 'change' && !twoItems) return [line(pickFrom(random, available), 1)];
+  if (shop.level >= 5 && available.length >= 2 && random() < .7) {
+    const first = pickFrom(random, available);
+    const second = pickFrom(random, available.filter((id) => id !== first));
+    return [line(first, 1), line(second, 1)];
+  }
+  const doubles = available.filter((id) => shop.stock[id] >= 2);
+  if (!doubles.length) return checkpoint === 'change' ? [line(pickFrom(random, available), 1)] : null;
+  return [line(pickFrom(random, doubles), 2)];
+}
+
+// โจทย์ของจุดคำนวณที่ต้องคิด (ราคา = บวก, ของเหลือ = ลบ)
+function problemFor(shop, checkpoint, lines) {
+  if (checkpoint === 'price') {
+    const prices = lines.flatMap((line) => Array.from({ length: line.qty }, () => line.unitPrice));
+    return { a: prices[0], op: '+', b: prices[1] };
+  }
+  if (checkpoint === 'remaining') return { a: shop.stock[lines[0].recipe], op: '-', b: lines[0].qty };
+  return null;
+}
+
+// สร้างออร์เดอร์จากสต็อกที่มีจริง คืน null ถ้าไม่มีของขาย
+export function makeOrder(shop, { customers, random = Math.random, now = Date.now() } = {}) {
+  if (!sellable(shop).length || !customers?.length) return null;
+  let best = null;
+  for (let attempt = 0; attempt < 6; attempt++) {
+    const first = chooseCheckpoint(shop, random);
+    // ถ้าสต็อกไม่พอสำหรับจุดที่สุ่มได้ ลองจุดอื่นของระดับเดียวกัน สุดท้ายค่อยเป็นนับของ 1 ชิ้น
+    const order = [first, ...levelInfo(shop.level).checkpoints.filter((kind) => kind !== first), 'count'];
+    let checkpoint = null;
+    let lines = null;
+    for (const kind of order) {
+      lines = linesFor(shop, kind, random);
+      if (lines) { checkpoint = kind; break; }
     }
     const others = customers.filter((id) => id !== shop.lastCustomer);
     const customer = pickFrom(random, others.length ? others : customers);
-    const key = `${recipe}:${qty}:${checkpoint}`;
-    best = { checkpoint, recipe, qty, customer, key };
+    const key = `${lines.map((line) => `${line.recipe}x${line.qty}`).join('+')}:${checkpoint}`;
+    best = { checkpoint, lines, customer, key };
     if (key !== shop.lastOrderKey) break;
   }
-  const unitPrice = PRODUCTS[best.recipe].price;
-  const total = best.qty * unitPrice;
+  const total = best.lines.reduce((sum, line) => sum + line.qty * line.unitPrice, 0);
   let payment;
   if (best.checkpoint === 'collect') payment = { mode: 'collect', offered: [], purse: purseFor(total, random), paid: total, change: 0 };
-  else if (best.checkpoint === 'change') payment = { mode: 'change', offered: [10], paid: 10, change: 10 - total };
-  else payment = { mode: 'auto', offered: greedyCoins(total), paid: total, change: 0 };
+  else if (best.checkpoint === 'change') {
+    const note = total < 10 ? 10 : 20;
+    payment = { mode: 'change', offered: [note], paid: note, change: note - total };
+  } else payment = { mode: 'auto', offered: greedyCoins(total), paid: total, change: 0 };
   payment.changeCoins = [];
+  const problem = problemFor(shop, best.checkpoint, best.lines);
+  const math = { attempts: 0, usedHelp: false, guided: shop.preferredMode === 'guided' };
+  if (problem) math.problem = problem;
+  if (best.checkpoint === 'remaining') math.choices = numberChoices(problem.a - problem.b, random);
   return {
     id: `order-${now.toString(36)}-${Math.floor(random() * 1e6).toString(36)}`,
     customer: best.customer,
-    lines: [{ recipe: best.recipe, qty: best.qty, unitPrice }],
+    lines: best.lines,
     total,
     checkpoint: best.checkpoint,
     status: 'arriving',
     picked: [],
     payment,
-    math: { attempts: 0, usedHelp: false, guided: shop.preferredMode === 'guided' },
+    math,
     createdAt: now
   };
 }
@@ -265,7 +334,7 @@ export function startOrder(shop, order) {
   const next = clone(shop);
   next.activeOrder = order ? clone(order) : null;
   if (order) {
-    next.lastOrderKey = `${order.lines[0].recipe}:${order.lines[0].qty}:${order.checkpoint}`;
+    next.lastOrderKey = `${order.lines.map((line) => `${line.recipe}x${line.qty}`).join('+')}:${order.checkpoint}`;
     next.lastCustomer = order.customer;
     next.recent = [...(shop.recent || []), order.checkpoint].slice(-2);
   }
@@ -317,8 +386,11 @@ export function addStock(shop, recipe, restockId) {
   const next = clone(shop);
   const room = STOCK_MAX - next.stock[recipe];
   const added = Math.max(0, Math.min(PRODUCTS[recipe].batch, room));
+  const before = next.stock[recipe];
   next.stock[recipe] += added;
   if (restockId) next.lastRestockId = restockId;
+  // ระดับ 4 ขึ้นไป: กลับเข้าร้านแล้วถามว่ารวมเป็นกี่ชิ้น (เฉพาะตอนที่มีของเดิมอยู่แล้ว)
+  next.restockQuiz = shop.level >= 4 && before > 0 && added > 0 ? { recipe, before, added } : null;
   return { shop: next, added, reason: added ? null : 'full' };
 }
 
