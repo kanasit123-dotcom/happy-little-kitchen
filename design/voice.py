@@ -54,8 +54,19 @@ async def main():
             todo.append((text, name))
     print(f'{len(manifest)} phrases, {len(todo)} to generate')
     for text, name in todo:
-        await edge_tts.Communicate(spoken(text), VOICE, rate=RATE, pitch=PITCH).save(str(OUT / name))
-        print(' ', name, text)
+        # เน็ตสะดุด → ลองใหม่ 3 ครั้ง; ข้อความที่ TTS ไม่ยอมอ่านเลย → ตัดออกจาก manifest (เกมใช้เสียงเครื่องแทน)
+        for attempt in range(3):
+            try:
+                await edge_tts.Communicate(spoken(text), VOICE, rate=RATE, pitch=PITCH).save(str(OUT / name))
+                print(' ', name, text)
+                break
+            except Exception as error:
+                print('  retry', name, text, type(error).__name__)
+                await asyncio.sleep(2)
+        else:
+            manifest.pop(text, None)
+            (OUT / name).unlink(missing_ok=True)
+            print('  no audio, skipped:', text)
     (OUT / 'manifest.json').write_text(json.dumps(manifest, ensure_ascii=False, indent=0), encoding='utf-8')
     # รายชื่อไฟล์ใน sw.js ให้เล่น offline ได้
     sw = ROOT / 'sw.js'

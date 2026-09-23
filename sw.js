@@ -1,15 +1,15 @@
-const CACHE = 'happy-little-kitchen-v36';
+const CACHE = 'happy-little-kitchen-v37';
 
 const FILES = [
   './',
   'index.html',
   'manifest.webmanifest',
-  'css/app.css?v=36',
-  'css/shop.css?v=36',
-  'js/app.js?v=36',
-  'js/shop/ui.js?v=36',
-  'js/shop/core.js?v=36',
-  'js/shop/column.js?v=36',
+  'css/app.css?v=37',
+  'css/shop.css?v=37',
+  'js/app.js?v=37',
+  'js/shop/ui.js?v=37',
+  'js/shop/core.js?v=37',
+  'js/shop/column.js?v=37',
   // voice-start (design/voice.py เขียนส่วนนี้เอง)
   'assets/voice/th/manifest.json',
   'assets/voice/th/010217000a.mp3',
@@ -132,6 +132,7 @@ const FILES = [
   'assets/voice/th/45ea26eb40.mp3',
   'assets/voice/th/460ecf7ae2.mp3',
   'assets/voice/th/4724666177.mp3',
+  'assets/voice/th/47befd2060.mp3',
   'assets/voice/th/48fedd8178.mp3',
   'assets/voice/th/499b2508aa.mp3',
   'assets/voice/th/4b7567ac1c.mp3',
@@ -144,6 +145,7 @@ const FILES = [
   'assets/voice/th/519c165054.mp3',
   'assets/voice/th/522cf97b0d.mp3',
   'assets/voice/th/52779728e3.mp3',
+  'assets/voice/th/53826d937b.mp3',
   'assets/voice/th/54229abfcf.mp3',
   'assets/voice/th/54383fd410.mp3',
   'assets/voice/th/55c6500542.mp3',

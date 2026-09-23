@@ -20,9 +20,12 @@ function allowedReturn(value) {
 const launchParams = new URLSearchParams(location.search);
 const launchMode = launchParams.get('mode');
 let returnUrl = allowedReturn(launchParams.get('return'));
+// จำที่อยู่กลับไว้เฉพาะตอนโหลดหน้าเดิมซ้ำ (อัปเดตเกม/รีเฟรช) หรือกดย้อน — ถ้าเข้าเกมครัวตรงๆ ในแท็บเดิม ต้องลืม
+const navigationType = performance.getEntriesByType?.('navigation')?.[0]?.type || 'navigate';
 try {
   if (returnUrl) sessionStorage.setItem(RETURN_KEY, returnUrl);
-  else returnUrl = allowedReturn(sessionStorage.getItem(RETURN_KEY));
+  else if (navigationType === 'reload' || navigationType === 'back_forward') returnUrl = allowedReturn(sessionStorage.getItem(RETURN_KEY));
+  else sessionStorage.removeItem(RETURN_KEY);
 } catch {}
 if (launchParams.has('mode') || launchParams.has('return')) history.replaceState(null, '', location.pathname);
 function backToLilly() {
@@ -2472,11 +2475,12 @@ async function finishForStock() {
   screen(`<div class="stage-zone stock-zone">
       ${stageHTML({ plate: true })}
       <div class="stock-batch" aria-hidden="true">${Array.from({ length: result.added }, (_, i) => `<img src="${dishSrc(recipe)}" alt="" style="--i:${i}">`).join('')}</div>
-      <button class="action-btn primary" id="to-shop">🏪 ${t('toShop')}</button>
+      <button class="action-btn primary" id="to-shop" hidden>🏪 ${t('toShop')}</button>
     </div>`, prompt);
   const dish = app.querySelector('#dish');
   syncPaint(dish);
-  app.querySelector('#to-shop').onclick = () => { tone(620); openShop(); };
+  const toShop = app.querySelector('#to-shop');
+  toShop.onclick = () => { tone(620); openShop(); };
   // เก็บรูปลงสมุดผลงานครั้งเดียว (ไม่นับเป็นการป้อนเพื่อน)
   if (stockSavedFor !== creation) {
     stockSavedFor = creation;
@@ -2486,7 +2490,9 @@ async function finishForStock() {
     state.made++;
     saveState();
   }
-  speak(t('toShop'));
+  // ปุ่มไปร้านโผล่หลังเสียง "ได้ … ชิ้น" และ "เอาไปวางขายที่ร้านกัน" จบ
+  await speak(t('toShop'));
+  if (app.contains(toShop)) toShop.hidden = false;
 }
 
 RENDERERS.serve = () => {

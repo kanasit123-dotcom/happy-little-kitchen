@@ -102,6 +102,12 @@ test('every sentence the shop can say is covered by recorded clips', () => {
   }
   for (let n = 0; n <= 12; n++) sentences.push(`${th('left')} ${n} ${th('piece')}`, `${th('altogether')} ${n} ${th('piece')}`, `${th('mustGive')} ${n} ${th('baht')}`);
   sentences.push(`${th('want')} ${names.pizza} 1 ${th('piece')} ${th('and')} ${names.cupcake} 1 ${th('piece')}`, th('thinkPrice'), th('lookPrice'));
+  // คำใบ้ครั้งแรกตอนนับของ: "ยังไม่ครบนะ … บนถาดมี 2 ชิ้น ลูกค้าขอ 3 ชิ้น"
+  for (let onTray = 0; onTray <= 9; onTray++) for (let want = 1; want <= 5; want++) {
+    for (const lead of [th('short'), th('over')]) sentences.push(`${lead} ${th('onTray')} ${onTray} ${th('piece')} ${th('customerWants')} ${want} ${th('piece')}`, `${lead} ${th('onTray')} ${onTray} ${th('piece')} ${th('customerWants')} ${want} ${th('piece')} ${th('letsCount')}`);
+  }
+  // ตลาดระดับ 1 จ่ายเกิน: คนขายนับเงินทอนคืน
+  for (const { price } of Object.values(DECOR)) for (let given = price + 1; given <= 40; given++) sentences.push(`${th('costs')} ${price} ${th('iGive')} ${given} ${th('baht')}`, `${th('countFrom')} ${price} ${th('upTo')} ${given} ${th('please')}`);
   sentences.push(copy('toShop'), copy('shelfFull'), copy('shop'));
   const missing = sentences.filter((text) => !covered(text));
   assert.deepEqual(missing, []);

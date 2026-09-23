@@ -35,6 +35,17 @@ Real play on the iPad mini found three bugs, all fixed in v26: Thai speech was s
 
 The user listened to demos and chose Microsoft Neural **Premwadee** (female) over Niwat and the iOS Kanya voice; all Thai prompts are now shipped as MP3 clips (`design/voice.py`, ~3 MB, cached offline). They also asked to drop finger-drawn frosting in the decorate step ("ตกแต่งปกติก็พอ หรือถ้ามีซอสก็ทาซอส"): decorate = toppings + plate colour, sauce pens only where a recipe has sauce; the spread cooking steps stay. If they later dislike rubbing cream on the cupcake/cake, turn those into a tap-to-frost step.
 
+## Status at hand-off (2026-09-23 evening)
+
+Built today, all from `RESTAURANT-MATH-PLAN.md` (read its section 0 first):
+- v32 shop levels 1–3 + restocking by cooking, v33 market (decorations), v34 fix for shop CSS leaking into the cooking screens, v35 column arithmetic + levels 4–6, v36 parent skill stats + opening the shop from game-lilly (game-lilly v37 playroom tile). **Live: kitchen v36, game-lilly v37.**
+- v37 = fixes from the user's review (committed, **not deployed yet**): buttons wait for speech after buying / restocking, a picture hint on every first miss, auto-guided mode counts as help, level-1 market seller counts change back coin by coin, the stall waits for its pictures, the return link to Lilly's world is forgotten on a fresh visit. Unit tests (47) and `tests/shop.cjs` (including a real-sound section) passed; the full `tests/app.cjs` + offline run was still going at hand-off.
+- To deploy v37: run `node --test "tests/shop/*.test.mjs"`, `node tests/shop.cjs`, `node tests/app.cjs` (NODE_PATH = Codex runtime bundle, `python -m http.server 5174` in this repo and 5173 in game-lilly), then `git push`, wait for Pages to serve `happy-little-kitchen-v37`, and rerun both e2e suites with `HAPPY_KITCHEN_URL=https://kanasit123-dotcom.github.io/happy-little-kitchen/`.
+
+Open with the user:
+- Try on the real iPad: cooking screens after the v34 fix, the shop and market by ear (automated tests mostly run muted), and the Lilly → shop tile, especially if Lilly is installed to the home screen (iOS may give it separate storage).
+- 50-baht note is not built (needs one Gemini image and bigger change amounts); the 20-baht note works at level 5.
+
 ## Status at hand-off (2026-09-19 evening, live v30)
 
 Session summary (all deployed, `tests/app.cjs` green locally and against the live URL):

@@ -10,7 +10,7 @@ const KITCHEN_KEY = 'happy-little-kitchen-v1';
 
 (async () => {
   const base = process.env.HAPPY_KITCHEN_URL || 'http://127.0.0.1:5174';
-  const browser = await chromium.launch({ channel: 'chrome', headless: true });
+  const browser = await chromium.launch({ channel: 'chrome', headless: true, args: ['--autoplay-policy=no-user-gesture-required'] });
   const output = path.join(__dirname, 'screenshots');
   fs.mkdirSync(output, { recursive: true });
   const errors = [];
@@ -76,6 +76,9 @@ const KITCHEN_KEY = 'happy-little-kitchen-v1';
     for (let i = 0; i < qty + 1; i++) await page.locator('[data-product="cookie"]').click();
     await page.locator('#give').click();
     await page.waitForFunction(() => document.querySelector('#mark')?.classList.contains('mark-over'));
+    // คำใบ้ภาพครั้งแรก: บนถาดมีกี่ชิ้น + ลูกโป่งคำพูดของลูกค้าเรืองแสง (ยังไม่ใช่โหมดช่วยเต็ม)
+    assert.equal(await page.locator('#tray .tray-count').innerText(), String(order.lines[0].qty + 1));
+    assert.equal(await page.locator('#bubble.bubble-hint').count(), 1);
     assert.equal((await readShop()).ordersDone, 0);
     assert.equal((await readShop()).activeOrder.math.attempts, 1);
     assert.equal(await page.locator('.shop .tray-slot').count(), 0, 'first miss keeps the child counting alone');
@@ -115,7 +118,7 @@ const KITCHEN_KEY = 'happy-little-kitchen-v1';
     assert.equal(shop.stock.cookie, 6 - qty);
     assert.equal(shop.piggy, 5 * qty);
     assert.equal(shop.transactions.length, 1);
-    assert.equal(shop.transactions[0].usedHelp, false);
+    assert.equal(shop.transactions[0].usedHelp, true, 'guided mode opened by the game counts as help');
     assert.equal(shop.transactions[0].attempts, 2);
 
     // --- ระดับ 2: รับเงินพอดีจากกระเป๋าลูกค้า
@@ -136,7 +139,9 @@ const KITCHEN_KEY = 'happy-little-kitchen-v1';
     // หยิบ 10 → เกิน (ลูกค้าทำหน้าตกใจ) แล้วหยิบคืน
     await page.locator('#purse .coin[data-v="10"]').click();
     await page.waitForFunction(() => document.querySelector('#mark')?.classList.contains('mark-over'));
+    assert.equal(await page.locator('#counter .coin.hint').count(), 1, 'first hint: the coin to take back glows');
     await page.locator('#counter .coin').first().click();
+    assert.equal(await page.locator('#purse .coin.hint').count(), 1, 'first hint: one coin to pick glows');
     // ขอความช่วยเหลือ → เหรียญที่ควรหยิบเรืองแสง
     await page.locator('#help').click();
     await page.locator('#purse .coin.hint').first().waitFor();
@@ -170,7 +175,10 @@ const KITCHEN_KEY = 'happy-little-kitchen-v1';
     // วาง 5 → เกิน, หยิบคืน, วาง 1 แล้วส่ง → ยังขาด → ครั้งที่สองเปิดเส้นนับ
     await page.locator('#drawer .coin[data-v="5"]').click();
     await page.waitForFunction(() => document.querySelector('#mark')?.classList.contains('mark-over'));
+    assert.equal(await page.locator('#counter .coin.hint').count(), 1, 'first hint: the coin to take back glows');
+    assert.equal(await page.locator('#line').count(), 0, 'number line waits for the second miss');
     await page.locator('#counter .coin').first().click();
+    assert.equal(await page.locator('#drawer .coin.hint').getAttribute('data-v'), '2', 'first hint: the next coin glows');
     await page.locator('#drawer .coin[data-v="1"]').click();
     await page.locator('#give').click();
     await page.locator('#line').waitFor();
@@ -335,6 +343,8 @@ const KITCHEN_KEY = 'happy-little-kitchen-v1';
     assert.equal(await page.locator('.shop .count-row .pic.gone').count(), 2);
     await fits('remaining');
     await page.locator('.shop .choice[data-n="3"]').click();
+    await page.locator('.shop .count-row .pic.pic-glow').first().waitFor();
+    assert.equal(await page.locator('.shop .count-row .pic.pic-glow').count(), 4, 'first hint: the four left glow');
     await page.locator('.shop .choice[data-n="5"]').click();
     await page.locator('.shop .count-row .pic i').first().waitFor();
     assert.equal(await page.locator('.shop .count-row .pic i').count(), 4, 'the four left are numbered');
@@ -396,12 +406,15 @@ const KITCHEN_KEY = 'happy-little-kitchen-v1';
     await setMoney(40, 1);
     await openMarket();
     assert.equal(await page.locator('.goods-card').count(), 10);
+    assert.equal(await page.locator('.goods-card img').evaluateAll((imgs) => imgs.filter((img) => !img.complete || !img.naturalWidth).length), 0, 'stall pictures are ready when it appears');
     await fits('market');
     await shot('market');
     await page.locator('[data-item="plant"]').click();
     await page.locator('#purse .coin').first().waitFor();
     await fits('market-pay');
     await page.locator('#purse .coin[data-v="10"]').click();
+    await page.locator('.seller-change #counter .coin[data-v="2"]').waitFor();   // คนขายวางเงินทอน 2 บาทคืนพร้อมนับต่อ
+    await shot('market-seller-change');
     await page.locator('#buy-more').waitFor({ timeout: 15000 });
     await shot('market-bought');
     shop = await readShop();
@@ -536,6 +549,36 @@ const KITCHEN_KEY = 'happy-little-kitchen-v1';
     await page.locator('#to-lilly').waitFor();
     await fits('home-from-lilly');
     await shot('home-from-lilly');
+    await page.reload();   // อัปเดตเกม/รีเฟรช: ยังจำทางกลับ
+    await page.locator('#to-lilly').waitFor();
+    await page.goto(kitchenUrl);   // เข้าเกมครัวตรงๆ ในแท็บเดิม: ต้องลืมทางกลับ
+    await page.locator('.brand h1').waitFor();
+    assert.equal(await page.locator('#to-lilly').count(), 0, 'opening the kitchen directly shows the normal title');
+
+    // --- เสียงจริง: หลังซื้อของ ปุ่มไปต่อยังไม่โผล่จนเสียงขอบคุณ/สรุปจบ (กติกา: ห้ามข้ามเสียงพูด)
+    await page.evaluate(([kitchenKey, shopKey]) => {
+      const kitchen = JSON.parse(localStorage.getItem(kitchenKey));
+      kitchen.sound = true;
+      localStorage.setItem(kitchenKey, JSON.stringify(kitchen));
+      const shop = JSON.parse(localStorage.getItem(shopKey));
+      shop.piggy = 30;
+      shop.ordersDone = 5;
+      shop.totals.sales = shop.totals.spent + 30;
+      shop.totals.customerPaid = shop.totals.sales + shop.totals.changeGiven;
+      shop.decor = { owned: [], placed: {} };
+      shop.activePurchase = null;
+      localStorage.setItem(shopKey, JSON.stringify(shop));
+    }, [KITCHEN_KEY, SHOP_KEY]);
+    await page.reload();
+    await page.locator('#shop').click();
+    await page.locator('#bank').click();
+    await page.locator('.market [data-item="lamp"]').click();
+    await page.locator('#purse .coin[data-v="10"]').click();
+    await page.locator('.bought-item').waitFor({ timeout: 30000 });
+    assert.equal(await page.locator('#buy-more, #to-shop').count(), 0, 'no way on while the thank-you is being spoken');
+    const spokenFor = Date.now();
+    await page.locator('#buy-more').waitFor({ timeout: 30000 });
+    assert.ok(Date.now() - spokenFor > 600, `buttons waited for the speech (${Date.now() - spokenFor} ms)`);
 
     assert.deepEqual(missing.filter((url) => !url.endsWith('favicon.ico')), [], 'no missing files');
     assert.deepEqual(errors, []);

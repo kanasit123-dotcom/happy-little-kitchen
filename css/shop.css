@@ -250,6 +250,12 @@
   .shop .pic, .shop-layer .pic { width: 34px; height: 34px; }
 }
 
+/* คำใบ้หลังตอบไม่ตรงครั้งแรก: ป้ายในลูกโป่งคำพูดเรืองแสง, ตัวเลขบนถาด, รูปที่เหลือเรืองแสง */
+.shop .order-bubble.bubble-hint { box-shadow: 0 0 0 5px var(--yellow), var(--shadow); animation: shop-ring .9s ease-in-out infinite alternate; }
+.shop .tray-count { position: absolute; top: 4px; right: 6px; min-width: 34px; height: 34px; padding: 0 8px; display: grid; place-items: center; border-radius: 999px; background: var(--sky); color: white; border: 3px solid white; font-size: 1.2rem; font-weight: 900; box-shadow: 0 3px 0 rgba(36,56,71,.15); }
+.shop .serve-tray { position: relative; }
+.shop .pic.pic-glow img { filter: drop-shadow(0 0 6px rgba(103,189,227,.95)); }
+.shop .seller-change { background: #fff7d6; }
 /* วงแสงกระพริบแบบไม่ขยายขนาด — ช่องในตารางตั้งเลขอยู่ชิดกัน ถ้าขยายจะไปทับช่องข้างๆ จนแตะไม่ติด */
 @keyframes shop-ring { from { box-shadow: 0 0 0 3px var(--yellow); } to { box-shadow: 0 0 0 7px rgba(244,189,63,.55); } }
 @keyframes shop-arrive { from { transform: translateX(60vw) scale(.7); opacity: 0; } to { transform: none; opacity: 1; } }
