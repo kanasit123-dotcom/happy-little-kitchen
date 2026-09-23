@@ -1,6 +1,34 @@
 const STORE_KEY = 'happy-little-kitchen-v1';
 const LEGACY_STORE_KEY = 'lilly-playhouse-v1';
 const SHOP_KEY = 'happy-little-kitchen-shop-v1';   // ร้านของหนูเก็บแยก key (js/shop/core.js) ไม่ปนกับเซฟครัว
+const RETURN_KEY = 'happy-little-kitchen-return';   // sessionStorage: เปิดมาจากโลกของลิลลี่ → กลับไปที่นั่น
+
+// เปิดจากห้องพักเล่นของโลกของลิลลี่: ?mode=restaurant&return=<หน้าโลกของลิลลี่>
+// กลับได้เฉพาะหน้าโลกของลิลลี่ (whitelist) กันลิงก์แปลกๆ พาเด็กออกไปเว็บอื่น
+function allowedReturn(value) {
+  if (!value) return null;
+  try {
+    const url = new URL(value, location.href);
+    const local = (host) => host === '127.0.0.1' || host === 'localhost';
+    const sameSite = url.origin === location.origin && url.pathname.startsWith('/game-lilly/');
+    const devServer = local(url.hostname) && local(location.hostname) && url.port === '5173' && url.protocol === 'http:';
+    return sameSite || devServer ? `${url.origin}${url.pathname}` : null;
+  } catch {
+    return null;
+  }
+}
+const launchParams = new URLSearchParams(location.search);
+const launchMode = launchParams.get('mode');
+let returnUrl = allowedReturn(launchParams.get('return'));
+try {
+  if (returnUrl) sessionStorage.setItem(RETURN_KEY, returnUrl);
+  else returnUrl = allowedReturn(sessionStorage.getItem(RETURN_KEY));
+} catch {}
+if (launchParams.has('mode') || launchParams.has('return')) history.replaceState(null, '', location.pathname);
+function backToLilly() {
+  stopSpeech();
+  location.assign(returnUrl);
+}
 
 // ชื่อ key ทุกตาราง = ชื่อไฟล์รูปใน assets/<กลุ่ม>/<key>.png
 // prep = ต้องเตรียมก่อนใส่: 'cut' ปาดนิ้วหั่น 3 ครั้ง, 'crack' แตะ 2 ครั้งให้แตก → รูปเปลี่ยนเป็น prepared
@@ -320,9 +348,13 @@ const COPY = {
     likesWord: 'ชอบ', hatesWord: 'ไม่ชอบ', parent: 'ผู้ปกครอง', parentHold: 'กดค้าง 2 วินาที', stats: 'สถิติ', madeCount: 'จานที่ทำ', servedCount: 'ป้อนเพื่อน', friendsCount: 'เพื่อนที่มาแล้ว', ordersCount: 'ทำตามที่เพื่อนขอ',
     resetAll: 'รีเซ็ตทั้งหมด (กดค้าง)', resetBook: 'ล้างสมุดผลงาน (กดค้าง)', resetDone: 'รีเซ็ตแล้ว เริ่มใหม่ได้เลย', resetNote: 'รีเซ็ตแล้วเพื่อนจะกลับไปเหลือ 3 ตัว สมุดผลงานว่าง', version: 'เวอร์ชัน',
     mixed: { stir: 'เข้ากันดีแล้ว', whisk: 'ฟูกำลังดี', roll: 'แบนสวยเลย', spread: 'ทาทั่วแล้ว' },
+    toLilly: 'กลับโลกของลิลลี่',
     freeTitle: 'ครัวอิสระ ✨ ทำอะไรก็ได้', mystery: 'ได้จานลึกลับแล้ว!', pickMachine: 'กดค้างให้เครื่องทำงาน ปล่อยเมื่อแถบเต็ม', burnt: 'โอ๊ะ ไหม้แล้ว! ก็ยังกินได้นะ', freeAdd: 'แตะของที่อยากใส่ ลงชามได้เลย',
     shop: 'ร้านของหนู', toShop: 'เอาไปวางขายที่ร้านกัน', gotStock: 'ได้', piece: 'ชิ้น', shelfFull: 'ชั้นเต็มแล้ว',
-    shopSold: 'ขายของ', shopBank: 'เงินในกระปุก', resetShop: 'ล้างร้าน (กดค้าง)'
+    shopSold: 'ขายของ', shopBank: 'เงินในกระปุก', resetShop: 'ล้างร้าน (กดค้าง)',
+    shopLevel: 'ระดับร้าน', shopSales: 'ยอดขาย (บาท)', shopDecor: 'ของแต่งที่ซื้อ', skillTitle: 'ร้านของหนู: ทักษะคณิต (100 รายการล่าสุด)',
+    skillTimes: 'ครั้ง', skillFirst: 'ถูกครั้งแรก', skillHelp: 'ใช้ตัวช่วย', skillNone: 'ยังไม่ได้ขายของ',
+    skills: { count: 'นับของ', collect: 'รับเงินพอดี', change: 'ทอนเงิน', price: 'บวกราคา', remaining: 'ของเหลือ', buy: 'ซื้อของที่ตลาด' }
   },
   en: {
     title: 'Happy Little Kitchen', subtitle: 'Pick a treat and make it your way', language: '🇬🇧 ENG',
@@ -339,9 +371,13 @@ const COPY = {
     likesWord: 'likes', hatesWord: 'does not like', parent: 'Parents', parentHold: 'Hold for 2 seconds', stats: 'Stats', madeCount: 'Dishes made', servedCount: 'Friends fed', friendsCount: 'Friends unlocked', ordersCount: 'Orders completed',
     resetAll: 'Reset everything (hold)', resetBook: 'Clear the cookbook (hold)', resetDone: 'Reset done, start fresh', resetNote: 'Resetting goes back to three friends and an empty cookbook', version: 'Version',
     mixed: { stir: 'Perfectly mixed', whisk: 'Nice and fluffy', roll: 'Rolled out nicely', spread: 'All spread out' },
+    toLilly: 'Back to Lilly’s world',
     freeTitle: 'Free kitchen ✨ make anything', mystery: 'A mystery dish!', pickMachine: 'Hold to run the machine, let go when the bar is full', burnt: 'Oops, it burned! Still tasty', freeAdd: 'Tap anything you want to put in the bowl',
     shop: 'My shop', toShop: 'Let us sell them in the shop', gotStock: 'We made', piece: '', shelfFull: 'The shelf is full',
-    shopSold: 'Orders sold', shopBank: 'Money in the bank', resetShop: 'Clear the shop (hold)'
+    shopSold: 'Orders sold', shopBank: 'Money in the bank', resetShop: 'Clear the shop (hold)',
+    shopLevel: 'Shop level', shopSales: 'Sales (baht)', shopDecor: 'Decorations bought', skillTitle: 'My shop: math skills (last 100)',
+    skillTimes: 'Times', skillFirst: 'First try', skillHelp: 'Used help', skillNone: 'Nothing sold yet',
+    skills: { count: 'Counting food', collect: 'Taking exact money', change: 'Giving change', price: 'Adding prices', remaining: 'How many left', buy: 'Buying at the market' }
   }
 };
 
@@ -879,6 +915,9 @@ function showParent() {
   activeRecipe = null;
   const unlocked = unlockedFriends().length;
   const shopData = readShop();
+  const skills = shopSkills(shopData);
+  // ระดับร้านคิดจากจำนวนออร์เดอร์ (ตรงกับ js/shop/core.js LEVELS)
+  const shopLevel = [0, 5, 10, 16, 24, 32].filter((unlock) => (shopData?.ordersDone || 0) >= unlock).length;
   app.innerHTML = `<div class="app-shell play-screen">
     ${topbar(`👪 ${t('parent')}`, true)}
     <section class="parent">
@@ -889,6 +928,15 @@ function showParent() {
         <div class="stat"><b>${state.ordersDone}</b><span>${t('ordersCount')}</span></div>
         <div class="stat"><b>${shopData?.ordersDone || 0}</b><span>🏪 ${t('shopSold')}</span></div>
         <div class="stat"><b>${shopData?.piggy || 0}</b><span>🪙 ${t('shopBank')}</span></div>
+        <div class="stat"><b>${shopLevel}</b><span>⭐ ${t('shopLevel')}</span></div>
+        <div class="stat"><b>${shopData?.totals?.sales || 0}</b><span>💰 ${t('shopSales')}</span></div>
+        <div class="stat"><b>${(shopData?.decor?.owned || []).length} / 10</b><span>🎈 ${t('shopDecor')}</span></div>
+      </div>
+      <div class="parent-skills">
+        <h3>${t('skillTitle')}</h3>
+        ${skills.length ? `<table><thead><tr><th></th><th>${t('skillTimes')}</th><th>${t('skillFirst')}</th><th>${t('skillHelp')}</th></tr></thead><tbody>
+          ${skills.map((row) => `<tr data-skill="${row.skill}"><td>${t('skills')[row.skill]}</td><td>${row.times}</td><td>${Math.round((row.first / row.times) * 100)}%</td><td>${row.help}</td></tr>`).join('')}
+        </tbody></table>` : `<p>${t('skillNone')}</p>`}
       </div>
       <p class="note">${t('resetNote')}</p>
       <button class="action-btn hold-btn" id="reset-book"><i></i><span>🖼️ ${t('resetBook')}</span></button>
@@ -989,7 +1037,9 @@ function showHome() {
   app.innerHTML = `<div class="app-shell">
     ${topbar(t('title'))}
     <section class="home">
-      <div class="brand"><h1>${t('title')}</h1><p>${t('subtitle')}</p></div>
+      ${returnUrl
+        ? `<button class="lilly-return" id="to-lilly" aria-label="${t('toLilly')}">🌈 <b>${t('toLilly')}</b></button>`
+        : `<div class="brand"><h1>${t('title')}</h1><p>${t('subtitle')}</p></div>`}
       <div class="recipes">
         ${Object.entries(RECIPES).filter(([, recipe]) => !recipe.free).map(([id, recipe]) => `<button class="recipe-card" data-recipe="${id}" aria-label="${local(recipe.name)}">
           <img class="recipe-icon" src="${dishSrc(id)}" alt=""><b>${local(recipe.name)}</b>
@@ -1007,6 +1057,8 @@ function showHome() {
   bindHold(app.querySelector('#parent'), showParent);
   const book = app.querySelector('#book');
   if (book) book.onclick = () => { tone(620); showBook(); };
+  const toLilly = app.querySelector('#to-lilly');
+  if (toLilly) toLilly.onclick = () => { tone(620); backToLilly(); };
   app.querySelector('#shop').onclick = async () => {
     unlockAudio();
     tone(620);
@@ -1075,6 +1127,7 @@ function shopApi() {
   return {
     app, lang: () => state.lang, speak, stopSpeech, tone, sfx: SFX, confetti, popup, flash, unlockAudio,
     topbar, bindTopbar, friendSrc, dishSrc, showHome, startRecipe,
+    exit: returnUrl ? backToLilly : showHome,   // ปุ่มย้อนในร้าน: เปิดมาจากโลกของลิลลี่ก็กลับไปที่นั่น
     friendName: (id) => local(FRIENDS[id].name),
     recipeName: (id) => local(RECIPES[id].name),
     customers: () => unlockedFriends()
@@ -1090,6 +1143,19 @@ async function openShop() {
 }
 function readShop() {
   try { return JSON.parse(localStorage.getItem(SHOP_KEY)) || null; } catch { return null; }
+}
+// สถิติสำหรับผู้ปกครอง: แต่ละทักษะทำไปกี่ครั้ง ถูกตั้งแต่ครั้งแรกกี่ % ใช้ตัวช่วยกี่ครั้ง (จากธุรกรรมล่าสุดในร้าน)
+function shopSkills(shopData) {
+  const rows = {};
+  for (const entry of Array.isArray(shopData?.transactions) ? shopData.transactions : []) {
+    const skill = entry.type === 'buy' ? 'buy' : entry.checkpoint;
+    if (!COPY.th.skills[skill]) continue;
+    const row = rows[skill] ||= { times: 0, first: 0, help: 0 };
+    row.times++;
+    if (!entry.attempts) row.first++;
+    if (entry.usedHelp) row.help++;
+  }
+  return Object.keys(COPY.th.skills).filter((skill) => rows[skill]).map((skill) => ({ skill, ...rows[skill] }));
 }
 
 function currentSteps() { return RECIPES[activeRecipe].steps; }
@@ -2623,7 +2689,7 @@ document.addEventListener('selectionchange', () => {
   const selection = window.getSelection();
   if (selection && !selection.isCollapsed) selection.removeAllRanges();
 });
-showHome();
+if (launchMode === 'restaurant') openShop(); else showHome();
 
 // อัปเดตเกม: เช็กเวอร์ชันใหม่ทุกครั้งที่เปิด และพอตัวใหม่พร้อมก็โหลดหน้าใหม่ให้เองตอนอยู่หน้าครัว (ไม่ขัดจังหวะตอนกำลังทำอาหาร)
 if ('serviceWorker' in navigator) {

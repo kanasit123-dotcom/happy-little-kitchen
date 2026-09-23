@@ -112,6 +112,10 @@ button:focus-visible { outline: 4px solid var(--sky); outline-offset: 4px; }
   box-shadow: var(--shadow);
 }
 
+/* เปิดมาจากโลกของลิลลี่: ปุ่มกลับแทนป้ายชื่อเกม (ขนาดเท่าเดิม หน้าครัวยังพอดีจอ) */
+.lilly-return { display: flex; align-items: center; gap: 10px; padding: 10px 22px; border: 3px solid white; border-bottom-color: var(--purple); border-radius: 8px; background: rgba(255,253,248,.96); box-shadow: var(--shadow); color: var(--ink); font-size: 1.6rem; cursor: pointer; }
+.lilly-return b { font-size: 1.25rem; }
+.lilly-return:active { transform: translateY(3px); }
 .brand h1 { margin: 0; font-size: 2.7rem; line-height: 1.1; }
 .brand p { margin: 6px 0 0; color: var(--ink-soft); font-size: 1.05rem; font-weight: 700; }
 
@@ -766,6 +770,13 @@ img.pop { animation: serve-pop .45s cubic-bezier(.2,1.4,.4,1) both; }
 .stat { background: var(--paper); border: 3px solid white; border-radius: 12px; box-shadow: var(--shadow); padding: 12px; display: flex; flex-direction: column; align-items: center; gap: 2px; }
 .stat b { font-size: 2rem; line-height: 1; color: var(--mint-dark); }
 .stat span { font-size: .95rem; font-weight: 700; color: var(--ink-soft); text-align: center; }
+.parent-skills { width: 100%; background: var(--paper); border: 3px solid white; border-radius: 12px; box-shadow: var(--shadow); padding: 12px; }
+.parent-skills h3 { margin: 0 0 8px; font-size: 1rem; color: var(--ink); }
+.parent-skills p { margin: 0; color: var(--ink-soft); font-weight: 700; }
+.parent-skills table { width: 100%; border-collapse: collapse; font-size: .95rem; }
+.parent-skills th { color: var(--ink-soft); font-weight: 800; font-size: .8rem; padding: 4px; }
+.parent-skills td { padding: 6px 4px; border-top: 1px solid var(--edge); text-align: center; font-weight: 800; }
+.parent-skills td:first-child { text-align: left; }
 .note { margin: 0; text-align: center; font-weight: 700; color: var(--ink); background: rgba(255,253,248,.9); border-radius: 8px; padding: 8px 12px; }
 .note.small { font-size: .85rem; color: var(--ink-soft); }
 .hold-btn { min-width: 260px; }

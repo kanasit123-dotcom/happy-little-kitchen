@@ -487,6 +487,9 @@ const KITCHEN_KEY = 'happy-little-kitchen-v1';
     await page.locator('#reset-shop').waitFor();
     const sold = String((await readShop()).ordersDone);
     assert.ok((await page.locator('.stat').allInnerTexts()).some((text) => text.includes('🏪') && text.includes(sold)), `shop orders sold shown (${sold})`);
+    for (const skill of ['count', 'collect', 'change', 'price', 'remaining', 'buy']) assert.equal(await page.locator(`.parent-skills tr[data-skill="${skill}"]`).count(), 1, `parent sees the ${skill} skill`);
+    await page.screenshot({ path: path.join(output, 'shop-parent.png'), fullPage: true });
+    await page.locator('#reset-shop').scrollIntoViewIfNeeded();   // หน้าผู้ปกครองยาวกว่าจอ (มีตารางทักษะ)
     const rbox = await page.locator('#reset-shop').boundingBox();
     await page.mouse.move(rbox.x + rbox.width / 2, rbox.y + rbox.height / 2);
     await page.mouse.down();
@@ -511,9 +514,32 @@ const KITCHEN_KEY = 'happy-little-kitchen-v1';
     assert.deepEqual(now.gallery.slice(1), original.gallery);
     assert.equal(Object.keys(now).some((key) => /shop|stock|piggy/.test(key)), false, 'no shop fields in the kitchen save');
 
+    // --- เปิดจากห้องพักเล่นของโลกของลิลลี่: เข้าร้านทันที ปุ่มกลับพากลับไป (เฉพาะที่อยู่ของโลกของลิลลี่)
+    const lillyUrl = base.includes('github.io') ? 'https://kanasit123-dotcom.github.io/game-lilly/' : 'http://127.0.0.1:5173/';
+    const kitchenUrl = base.endsWith('/') ? base : `${base}/`;
+    await page.goto(`${kitchenUrl}?mode=restaurant&return=${encodeURIComponent(lillyUrl)}`);
+    await page.locator('.shop #desk').waitFor();
+    assert.equal(new URL(page.url()).search, '', 'launch parameters are cleaned from the address');
+    await page.locator('#back').click();
+    await page.waitForURL((url) => url.href.startsWith(lillyUrl), { timeout: 15000 });
+    // ลิงก์กลับไปเว็บอื่น: ไม่ยอม กลับหน้าครัวแทน
+    await page.goto(`${kitchenUrl}?mode=restaurant&return=${encodeURIComponent('https://example.com/')}`);
+    await page.evaluate(() => sessionStorage.clear());
+    await page.goto(`${kitchenUrl}?mode=restaurant&return=${encodeURIComponent('https://example.com/')}`);
+    await page.locator('.shop #desk').waitFor();
+    await page.locator('#back').click();
+    await page.locator('#shop').waitFor();
+    assert.equal(await page.locator('#to-lilly').count(), 0);
+    assert.ok(page.url().startsWith(kitchenUrl));
+    // หน้าครัวตอนเปิดมาจากโลกของลิลลี่: ปุ่มกลับแทนป้ายชื่อ และยังพอดีจอ
+    await page.goto(`${kitchenUrl}?return=${encodeURIComponent(lillyUrl)}`);
+    await page.locator('#to-lilly').waitFor();
+    await fits('home-from-lilly');
+    await shot('home-from-lilly');
+
     assert.deepEqual(missing.filter((url) => !url.endsWith('favicon.ico')), [], 'no missing files');
     assert.deepEqual(errors, []);
-    console.log('PASS shop: first visit with seeded cookies, count/collect/change with gentle retries and help, level 4-5 price/remaining/20-baht change with the column engine, restock quiz, reload keeps the order, sells once, cooking restocks once, market at levels 1-3 with decorations, parent stats and reset, broken shop data, kitchen save untouched, all screen sizes.');
+    console.log('PASS shop: first visit with seeded cookies, count/collect/change with gentle retries and help, level 4-5 price/remaining/20-baht change with the column engine, restock quiz, reload keeps the order, sells once, cooking restocks once, market at levels 1-3 with decorations, parent stats and reset, broken shop data, kitchen save untouched, launch from Lilly world and back, all screen sizes.');
   } finally {
     await browser.close();
   }

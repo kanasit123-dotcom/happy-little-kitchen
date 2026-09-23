@@ -219,7 +219,7 @@ function renderShell() {
     </section>
     <section class="shop-desk" id="desk"></section>
   </div>`;
-  api.bindTopbar(() => { leave(); api.showHome(); });
+  api.bindTopbar(() => { leave(); api.exit(); });
   // กระปุก = ประตูไปตลาด (ซื้อของแต่งร้านด้วยเงินที่ขายได้)
   $('#bank').onclick = () => {
     if (busy) return;

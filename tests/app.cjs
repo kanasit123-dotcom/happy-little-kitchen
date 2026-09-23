@@ -525,6 +525,7 @@ const path = require('node:path');
       assert.equal(stats[0], '11', 'dishes made'); // 9 เมนู + ครัวอิสระ 2
       assert.ok(stats[2].startsWith('6 /'), 'six friends unlocked');
       await page.screenshot({ path: path.join(output, 'parent-mobile.png'), fullPage: true });
+      await page.locator('#reset-all').scrollIntoViewIfNeeded();   // หน้าผู้ปกครองยาวกว่าจอแล้ว (มีสถิติร้าน)
       const reset = await center(page.locator('#reset-all'));
       await page.mouse.move(reset.x, reset.y);
       await page.mouse.down();
