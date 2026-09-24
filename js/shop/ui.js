@@ -215,9 +215,11 @@ function renderShell() {
     ${api.topbar(`<img class="title-icon" src="assets/shop/bank.png" alt=""> ${tx('title')}`, true)}
     <div class="prompt" id="prompt"></div>
     <section class="shop-stage">
-      <div class="decor-layer" id="decor" aria-hidden="true">${decorHTML()}</div>
+      <div class="shop-scene" id="scene">
+        <div class="decor-layer" id="decor" aria-hidden="true">${decorHTML()}</div>
+        <div class="customer-spot" id="spot"></div>
+      </div>
       <button class="bank" id="bank" aria-label="${tx('market')}"><img src="assets/shop/bank.png" alt=""><b id="piggy">${shop.piggy}</b><i class="bag"><img src="assets/shop/bag.png" alt=""></i></button>
-      <div class="customer-spot" id="spot"></div>
     </section>
     <section class="shop-desk" id="desk"></section>
   </div>`;

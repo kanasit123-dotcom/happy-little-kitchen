@@ -153,23 +153,35 @@
 .shop .bank .bag { position: absolute; left: -8px; bottom: 4px; width: 30px; height: 30px; display: grid; place-items: center; border-radius: 50%; background: white; box-shadow: 0 3px 0 rgba(36,56,71,.15); }
 .shop .bank .bag img { width: 22px; height: 22px; object-fit: contain; filter: none; }
 
-/* ของแต่งร้าน: วางตามจุดประจำของแต่ละชิ้น อยู่หลังลูกค้า */
-.shop .decor-layer { position: absolute; inset: 0; pointer-events: none; z-index: 0; }
-.shop .customer-spot { position: relative; z-index: 1; }
+/* ฉากร้าน: รูปห้อง + ของแต่ง + ลูกค้า อยู่ในกรอบสัดส่วนเดียวกับรูป (1536×1030) ทุกขนาดจอ
+   ของแต่งจึงวางตามพิกัดในรูปได้จริง (พื้น y 62–70%, เคาน์เตอร์เริ่ม y 70%, ประตู x 28–50%, หน้าต่าง x 54–80%)
+   ก่อนหน้านี้ของแต่งอิงกรอบของหน้าจอ แต่รูปพื้นหลังถูกครอปต่างกันตามจอ พรมเลยไปอยู่บนผนัง กันสาดลอยกลางหน้าต่าง */
+.app-shell.shop { background-image: none; background: linear-gradient(180deg, #f8efe1 0%, #efe1ca 100%); }
+.shop .shop-stage { container-type: size; align-items: flex-end; padding: 4px 0 0; }
+.shop .shop-scene { position: relative; width: 100%; width: min(100%, calc(100cqh * 1536 / 1030)); aspect-ratio: 1536 / 1030; background: url('../assets/shop.jpg') center / 100% 100% no-repeat; border-radius: 18px 18px 0 0; overflow: hidden; box-shadow: 0 -4px 14px rgba(36,56,71,.12); }
+.shop .shop-scene .decor-layer { position: absolute; inset: 0; pointer-events: none; z-index: 0; }
+.shop .shop-scene .customer-spot { position: absolute; left: 50%; bottom: 27%; height: 46%; transform: translateX(-42%); display: flex; align-items: flex-end; gap: 6px; z-index: 1; }
+.shop .shop-scene .customer-wrap { height: 100%; }
+.shop .shop-scene .customer { height: 100%; width: auto; }
+.shop .shop-scene .order-bubble { align-self: center; margin-bottom: 0; flex: none; width: max-content; max-width: min(230px, 56cqw); }
+.shop .shop-scene .order-bubble .want { flex-wrap: nowrap; }
+.shop .shop-scene .order-bubble .want img { width: min(38px, 9cqw); height: min(38px, 9cqw); }
 .shop .decor { position: absolute; height: auto; filter: drop-shadow(0 4px 3px rgba(36,56,71,.15)); animation: shop-drop .5s cubic-bezier(.2,1.4,.4,1) both; }
-.shop .decor-bunting { top: 0; left: 2%; width: min(46%, 300px); }
-.shop .decor-awning { top: 0; left: 50%; width: min(26%, 200px); }
-.shop .decor-lamp { top: 0; left: 36%; width: min(12%, 80px); }
-.shop .decor-sign { top: 22%; left: 56%; width: min(20%, 140px); }
-.shop .decor-balloons { bottom: 26%; left: 1%; width: min(15%, 100px); }
-.shop .decor-plant { bottom: 0; left: 2%; width: min(15%, 110px); }
-.shop .decor-rug { bottom: -3%; left: 28%; width: min(44%, 300px); }
-.shop .decor-tablecloth { bottom: 0; right: 2%; width: min(20%, 150px); }
-.shop .decor-flowers { bottom: 24%; right: 7%; width: min(9%, 64px); }
-.shop .decor-chair { bottom: 0; right: 22%; width: min(13%, 100px); }
+/* บนผนัง / เพดาน */
+.shop .decor-awning { left: 51.5%; top: 9.5%; width: 30.5%; }
+.shop .decor-bunting { left: 24%; top: 7.5%; width: 28%; }
+.shop .decor-lamp { left: 48.6%; top: 0; width: 8.5%; }
+.shop .decor-sign { left: 4%; top: 17%; width: 15.5%; }
+.shop .decor-flowers { left: 73.5%; bottom: 48.8%; width: 5%; }
+.shop .decor-balloons { left: 10.5%; bottom: 36%; width: 8.5%; }
+/* บนพื้น (ยืนหลังเคาน์เตอร์ ขอบล่างอยู่ที่เส้นเคาน์เตอร์ y 70%) */
+.shop .decor-rug { left: 29%; bottom: 29.2%; width: 27%; }
+.shop .decor-plant { left: 17%; bottom: 29.5%; width: 9.5%; }
+.shop .decor-tablecloth { left: 73%; bottom: 29.5%; width: 13%; }
+.shop .decor-chair { left: 64.5%; bottom: 29.5%; width: 7.5%; }
 
 /* ตลาด */
-.app-shell.shop.market { background-image: url('../assets/market.jpg'); background-position: center 40%; }
+.app-shell.shop.market { background: url('../assets/market.jpg') center 40% / cover no-repeat; }
 .shop .bubble-icon { width: 54px; height: 54px; object-fit: contain; }
 .shop .bubble-item { width: 64px; height: 64px; object-fit: contain; }
 .shop .order-bubble .need { display: flex; flex-wrap: wrap; gap: 2px; justify-content: center; opacity: .55; }

@@ -1,15 +1,15 @@
-const CACHE = 'happy-little-kitchen-v37';
+const CACHE = 'happy-little-kitchen-v38';
 
 const FILES = [
   './',
   'index.html',
   'manifest.webmanifest',
-  'css/app.css?v=37',
-  'css/shop.css?v=37',
-  'js/app.js?v=37',
-  'js/shop/ui.js?v=37',
-  'js/shop/core.js?v=37',
-  'js/shop/column.js?v=37',
+  'css/app.css?v=38',
+  'css/shop.css?v=38',
+  'js/app.js?v=38',
+  'js/shop/ui.js?v=38',
+  'js/shop/core.js?v=38',
+  'js/shop/column.js?v=38',
   // voice-start (design/voice.py เขียนส่วนนี้เอง)
   'assets/voice/th/manifest.json',
   'assets/voice/th/010217000a.mp3',
