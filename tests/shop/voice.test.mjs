@@ -18,7 +18,8 @@ const copy = (key) => {
   assert.ok(match, `COPY.${key}`);
   return match[1];
 };
-const names = { cookie: 'คุกกี้', cupcake: 'คัพเค้ก', pizza: 'พิซซ่า' };
+const names = { cookie: 'คุกกี้', cupcake: 'คัพเค้ก', pizza: 'พิซซ่า', cake: 'เค้กวันเกิด', smoothie: 'สมูทตี' };
+const unitTh = (id) => (PRODUCTS[id].unit === 'glass' ? 'แก้ว' : 'ชิ้น');
 
 // เหมือน clipsFor() ใน js/app.js: ตรงทั้งประโยค หรือจับวลียาวสุดทีละช่วง
 function covered(text) {
@@ -52,7 +53,8 @@ test('every sentence the shop can say is covered by recorded clips', () => {
   const sentences = [];
   for (const [id, product] of Object.entries(PRODUCTS)) {
     for (let qty = 1; qty <= 5; qty++) {
-      sentences.push(`${th('want')} ${names[id]} ${qty} ${th('piece')}`);
+      if (qty * product.price > 99) continue;   // ออร์เดอร์ไม่เกิน 99 บาท
+      sentences.push(`${th('want')} ${names[id]} ${qty} ${unitTh(id)}`);
       sentences.push(`${th('total')} ${qty * product.price} ${th('baht')}`);
       sentences.push(`${th('got')} ${qty * product.price} ${th('baht')}`);
     }
@@ -60,7 +62,7 @@ test('every sentence the shop can say is covered by recorded clips', () => {
     sentences.push(`${th('collect')} ${product.price} ${th('baht')}`);
     sentences.push(`${th('costs')} ${product.price} ${th('gives')} 10 ${th('baht')}`);
     sentences.push(`${th('countFrom')} ${product.price} ${th('upTo')} 10 ${th('please')}`);
-    sentences.push(`${copy('gotStock')} ${names[id]} ${product.batch} ${copy('piece')}`);
+    sentences.push(`${copy('gotStock')} ${names[id]} ${product.batch} ${unitTh(id)}`);
   }
   for (let n = 0; n <= 20; n++) sentences.push(`${n} ${th('moneyOver')}`);
   for (const n of [0, 7, 99, 100, 101, 135, 200, 999, 1000, 1001, 2345, 9999]) sentences.push(`${th('bank')} ${spokenNumber(n)} ${th('baht')}`);
@@ -97,11 +99,17 @@ test('every sentence the shop can say is covered by recorded clips', () => {
   for (let n = 0; n <= 9; n++) sentences.push(`${ct('write')} ${n}`, `${ct('bundle')} ${ct('write')} ${n}`);
   for (const key of ['carry', 'carryDown', 'bringPlus', 'bringMinus', 'borrowed', 'zero', 'tryAgain', 'glowKey']) sentences.push(ct(key));
   for (const [id] of Object.entries(PRODUCTS)) {
-    for (let have = 2; have <= 10; have++) for (let sold = 1; sold < have && sold <= 3; sold++) sentences.push(`${th('have')} ${names[id]} ${have} ${th('piece')} ${th('sold')} ${sold} ${th('piece')} ${th('leftQ')}`);
-    for (let before = 1; before <= 11; before++) sentences.push(`${th('have')} ${names[id]} ${before} ${th('piece')} ${th('madeMore')} ${PRODUCTS[id].batch} ${th('piece')} ${th('altogetherQ')}`);
+    for (let have = 2; have <= 10; have++) for (let sold = 1; sold < have && sold <= 3; sold++) sentences.push(`${th('have')} ${names[id]} ${have} ${unitTh(id)} ${th('sold')} ${sold} ${unitTh(id)} ${th('leftQ')}`);
+    for (let before = 1; before <= 11; before++) sentences.push(`${th('have')} ${names[id]} ${before} ${unitTh(id)} ${th('madeMore')} ${PRODUCTS[id].batch} ${unitTh(id)} ${th('altogetherQ')}`);
   }
   for (let n = 0; n <= 12; n++) sentences.push(`${th('left')} ${n} ${th('piece')}`, `${th('altogether')} ${n} ${th('piece')}`, `${th('mustGive')} ${n} ${th('baht')}`);
   sentences.push(`${th('want')} ${names.pizza} 1 ${th('piece')} ${th('and')} ${names.cupcake} 1 ${th('piece')}`, th('thinkPrice'), th('lookPrice'));
+  // ระดับ 7–8: ยอดใหญ่ แบงก์ 50/100
+  for (let total = 21; total <= 99; total++) {
+    const note = total < 50 ? 50 : 100;
+    sentences.push(`${th('total')} ${total} ${th('baht')}`, `${th('costs')} ${total} ${th('gives')} ${note} ${th('baht')}`, `${th('countFrom')} ${total} ${th('upTo')} ${note} ${th('please')} ${th('tensTip')}`);
+  }
+  sentences.push(`${th('want')} ${names.cake} 1 ${unitTh('cake')} ${th('and')} ${names.smoothie} 1 ${unitTh('smoothie')}`, th('newMenu'));
   // คำใบ้ครั้งแรกตอนนับของ: "ยังไม่ครบนะ … บนถาดมี 2 ชิ้น ลูกค้าขอ 3 ชิ้น"
   for (let onTray = 0; onTray <= 9; onTray++) for (let want = 1; want <= 5; want++) {
     for (const lead of [th('short'), th('over')]) sentences.push(`${lead} ${th('onTray')} ${onTray} ${th('piece')} ${th('customerWants')} ${want} ${th('piece')}`, `${lead} ${th('onTray')} ${onTray} ${th('piece')} ${th('customerWants')} ${want} ${th('piece')} ${th('letsCount')}`);

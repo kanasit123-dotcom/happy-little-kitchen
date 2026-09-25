@@ -44,6 +44,8 @@ Built today, all from `RESTAURANT-MATH-PLAN.md` (read its section 0 first):
 
 v38 (2026-09-24): the user said bought decorations looked odd — they were placed in percentages of the screen area while the room picture was cropped differently per screen (rug on the wall, awning floating). The shop now draws the room, the decorations and the customer inside one scene box with the picture's own 1536×1030 ratio (`.shop-scene`, container query units), so every decoration sits at picture coordinates. `design/PROMPTS-gemini-6.md` holds the next art order (50/100 notes, cake slice, basket, cup, cash register, ten more decorations).
 
+v39 (2026-09-25): from art sheets C and D — levels 7–8 (cake slice 35 and smoothie 25 from level 7, 50-baht note at level 7, 100 at level 8, big change counted on to the next ten then in tens), a cash register in the shop scene, a basket in the market, and a second set of ten decorations that opens after the first set is complete (market tabs).
+
 Open with the user:
 - Try on the real iPad: cooking screens after the v34 fix, the shop and market by ear (automated tests mostly run muted), and the Lilly → shop tile, especially if Lilly is installed to the home screen (iOS may give it separate storage).
 - 50-baht note is not built (needs one Gemini image and bigger change amounts); the 20-baht note works at level 5.

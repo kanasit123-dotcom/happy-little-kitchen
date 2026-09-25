@@ -62,6 +62,10 @@ const TXT = {
   mustGive: { th: 'ต้องทอน', en: 'The change is' },
   onTray: { th: 'บนถาดมี', en: 'On the tray:' },
   customerWants: { th: 'ลูกค้าสั่ง', en: 'The customer wants' },
+  // ระดับ 7–8: เค้ก น้ำปั่น แบงก์ใหญ่
+  glass: { th: 'แก้ว', en: '' },
+  newMenu: { th: 'ร้านขายเค้กกับน้ำปั่นได้แล้ว', en: 'Now your shop sells cake and smoothies!' },
+  tensTip: { th: 'นับให้ถึงสิบถัดไปก่อน แล้วนับทีละสิบ', en: 'Count up to the next ten, then count on in tens' },
   one: { th: 'เอ็ด', en: 'one' },
   // ตลาด (เด็กเป็นคนซื้อ)
   market: { th: 'ตลาด', en: 'Market' },
@@ -95,12 +99,26 @@ const DECOR_NAMES = {
   tablecloth: { th: 'โต๊ะ', en: 'Table' },
   chair: { th: 'เก้าอี้', en: 'Chair' },
   sign: { th: 'ป้ายร้าน', en: 'Shop sign' },
-  awning: { th: 'กันสาด', en: 'Awning' }
+  awning: { th: 'กันสาด', en: 'Awning' },
+  stars: { th: 'ธงดาว', en: 'Star garland' },
+  stool: { th: 'เก้าอี้กลม', en: 'Stool' },
+  flowerbox: { th: 'กระบะดอกไม้', en: 'Flower box' },
+  fairylights: { th: 'ไฟประดับ', en: 'Fairy lights' },
+  hangingplant: { th: 'กระถางแขวน', en: 'Hanging plant' },
+  clock: { th: 'นาฬิกา', en: 'Clock' },
+  lanterns: { th: 'โคมกระดาษ', en: 'Paper lanterns' },
+  picture: { th: 'รูปภาพ', en: 'Picture' },
+  cakedome: { th: 'ครอบเค้ก', en: 'Cake dome' },
+  teaset: { th: 'ชุดน้ำชา', en: 'Tea set' }
 };
 const SELLER = 'squirrel';
 // ชื่อสินค้าภาษาอังกฤษแบบหลายชิ้น (ภาษาไทยใช้ชื่อเมนูเดิมของเกมครัว)
-const MANY = { cookie: 'cookies', cupcake: 'cupcakes', pizza: 'slices of pizza' };
-const ONE = { cookie: 'cookie', cupcake: 'cupcake', pizza: 'slice of pizza' };
+const MANY = { cookie: 'cookies', cupcake: 'cupcakes', pizza: 'slices of pizza', cake: 'slices of cake', smoothie: 'smoothies' };
+const ONE = { cookie: 'cookie', cupcake: 'cupcake', pizza: 'slice of pizza', cake: 'slice of cake', smoothie: 'smoothie' };
+// รูปของที่ขาย: เค้กขายเป็นชิ้น น้ำปั่นใส่แก้วมีฝา ที่เหลือใช้รูปเมนูเดิมของเกมครัว
+const PRODUCT_ART = { cake: 'assets/shop/cakeslice.png', smoothie: 'assets/shop/cup.png' };
+const productImg = (id) => PRODUCT_ART[id] || api.dishSrc(id);
+const unitOf = (id) => (PRODUCTS[id]?.unit === 'glass' ? tx('glass') : tx('piece'));
 
 let api = null;
 let shop = null;
@@ -108,6 +126,7 @@ let run = 0;          // เลขรอบของหน้าจอ — อ�
 let busy = false;     // ระหว่างเล่นแอนิเมชันจบออร์เดอร์ ไม่รับแตะ
 let pay = null;       // สิ่งที่วางบนเคาน์เตอร์ตอนรับเงิน/ทอน (ไม่ต้องเก็บ reload แล้วเริ่มขั้นนี้ใหม่)
 let view = 'shop';    // 'shop' = ขายของ, 'market' = ไปซื้อของแต่งร้าน
+let goodsSet = null;  // ชุดของแต่งที่เปิดดูอยู่ในตลาด (null = เลือกชุดที่ยังมีของให้ซื้อ)
 let mathJob = null;   // ตั้งเลขที่เปิดค้างอยู่ (ยกเลิกเมื่อออกจากหน้า)
 // งานคณิตที่กำลังทำอยู่ (ออร์เดอร์ในร้าน หรือการซื้อที่ตลาด) — ใช้ร่วมกันตอนตอบไม่ตรง/ขอความช่วยเหลือ
 const task = () => (view === 'market' ? shop.activePurchase : shop.activeOrder);
@@ -117,7 +136,7 @@ const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 const th = () => api.lang() === 'th';
 const tx = (key) => TXT[key][api.lang()];
 const say = (text) => api.speak(text);
-const coinSrc = (value) => `assets/coins/${value === 20 ? 'note20' : value}.png`;
+const coinSrc = (value) => `assets/coins/${value >= 20 ? `note${value}` : value}.png`;
 const productName = (id, qty = 1) => (th() ? api.recipeName(id) : (qty > 1 ? MANY[id] : ONE[id]));
 // ตัวเลขสำหรับพูด: คลิปมี 0–100 และหลักร้อย/พันถ้วน — 135 พูดเป็น "100 35", 101 พูดเป็น "100 เอ็ด"
 function spokenNumber(n) {
@@ -147,12 +166,12 @@ function save() {
 }
 
 // ---------------------------------------------------------------- ประโยค (ไทยต่อจากคลิปทีละวลี อังกฤษใช้เสียงเครื่อง)
-const lineWords = (line) => (th() ? `${productName(line.recipe)} ${line.qty} ${tx('piece')}` : `${line.qty} ${productName(line.recipe, line.qty)}`);
+const lineWords = (line) => (th() ? `${productName(line.recipe)} ${line.qty} ${unitOf(line.recipe)}` : `${line.qty} ${productName(line.recipe, line.qty)}`);
 const lines = {
   order: (order) => `${tx('want')} ${order.lines.map(lineWords).join(` ${tx('and')} `)}${th() ? '' : '?'}`,
   wrongItem: (order) => (th() ? `${tx('want')} ${order.lines.map((line) => productName(line.recipe)).join(` ${tx('and')} `)} ${tx('please')}` : `${order.lines.map((line) => productName(line.recipe, 2)).join(` ${tx('and')} `)}, ${tx('please')}`),
-  remaining: (name, have, sold) => (th() ? `${tx('have')} ${name} ${have} ${tx('piece')} ${tx('sold')} ${sold} ${tx('piece')} ${tx('leftQ')}` : `${tx('have')} ${have} ${name}, ${tx('sold')} ${sold}. ${tx('leftQ')}`),
-  restock: (name, before, added) => (th() ? `${tx('have')} ${name} ${before} ${tx('piece')} ${tx('madeMore')} ${added} ${tx('piece')} ${tx('altogetherQ')}` : `${tx('have')} ${before} ${name}, ${tx('madeMore')} ${added} more. ${tx('altogetherQ')}`),
+  remaining: (name, have, sold, unit = tx('piece')) => (th() ? `${tx('have')} ${name} ${have} ${unit} ${tx('sold')} ${sold} ${unit} ${tx('leftQ')}` : `${tx('have')} ${have} ${name}, ${tx('sold')} ${sold}. ${tx('leftQ')}`),
+  restock: (name, before, added, unit = tx('piece')) => (th() ? `${tx('have')} ${name} ${before} ${unit} ${tx('madeMore')} ${added} ${unit} ${tx('altogetherQ')}` : `${tx('have')} ${before} ${name}, ${tx('madeMore')} ${added} more. ${tx('altogetherQ')}`),
   total: (n) => `${tx('total')} ${n} ${tx('baht')}`,
   got: (n) => `${tx('got')} ${n} ${tx('baht')}`,
   collect: (n) => `${tx('collect')} ${n} ${tx('baht')}`,
@@ -205,7 +224,7 @@ export function restock(recipe, restockId) {
   const result = core.addStock(shop, recipe, restockId);
   shop = result.shop;
   save();
-  return { added: result.added, reason: result.reason, stock: shop.stock[recipe] };
+  return { added: result.added, reason: result.reason, stock: shop.stock[recipe], unit: PRODUCTS[recipe]?.unit || 'piece', img: PRODUCT_ART[recipe] || null };
 }
 
 export const isProduct = (recipe) => !!PRODUCTS[recipe];
@@ -218,6 +237,7 @@ function renderShell() {
       <div class="shop-scene" id="scene">
         <div class="decor-layer" id="decor" aria-hidden="true">${decorHTML()}</div>
         <div class="customer-spot" id="spot"></div>
+        <img class="register" id="register" src="assets/shop/register.png" alt="">
       </div>
       <button class="bank" id="bank" aria-label="${tx('market')}"><img src="assets/shop/bank.png" alt=""><b id="piggy">${shop.piggy}</b><i class="bag"><img src="assets/shop/bag.png" alt=""></i></button>
     </section>
@@ -248,8 +268,8 @@ function drawBubble(order, { price = false, done = false, unitPrices = false } =
   // คิดราคา: ขนมทุกชิ้นมีป้ายราคาของตัวเอง ให้เห็นว่าบวกอะไรกับอะไร
   const items = order.lines.flatMap((line) => Array.from({ length: line.qty }, () => line));
   bubble.innerHTML = unitPrices
-    ? `<span class="want priced">${items.map((line) => `<span class="priced-item"><img src="${api.dishSrc(line.recipe)}" alt=""><b>${line.unitPrice}</b></span>`).join('')}</span>`
-    : `${order.lines.map((line) => `<span class="want">${Array.from({ length: line.qty }, () => `<img src="${api.dishSrc(line.recipe)}" alt="">`).join('')}</span><b class="qty">×${line.qty}</b>`).join('')}
+    ? `<span class="want priced">${items.map((line) => `<span class="priced-item"><img src="${productImg(line.recipe)}" alt=""><b>${line.unitPrice}</b></span>`).join('')}</span>`
+    : `${order.lines.map((line) => `<span class="want">${Array.from({ length: line.qty }, () => `<img src="${productImg(line.recipe)}" alt="">`).join('')}</span><b class="qty">×${line.qty}</b>`).join('')}
        ${price ? `<span class="price-tag"><img src="assets/shop/pricetag.png" alt=""><b>${order.total}</b></span>` : ''}`;
 }
 
@@ -332,16 +352,16 @@ function renderPicking() {
   const picked = order.picked;
   const trayItems = slots
     ? Array.from({ length: Math.max(qty, picked.length) }, (_, i) => (picked[i]
-      ? `<button class="tray-item tray-slot filled ${i >= qty ? 'extra' : ''}" data-index="${i}" aria-label="${i + 1}"><img src="${api.dishSrc(picked[i])}" alt=""><i>${i + 1}</i></button>`
+      ? `<button class="tray-item tray-slot filled ${i >= qty ? 'extra' : ''}" data-index="${i}" aria-label="${i + 1}"><img src="${productImg(picked[i])}" alt=""><i>${i + 1}</i></button>`
       : `<span class="tray-slot ${i === picked.length ? 'slot-next' : ''}"><i>${i + 1}</i></span>`)).join('')
-    : picked.map((item, i) => `<button class="tray-item" data-index="${i}" aria-label="${i + 1}"><img src="${api.dishSrc(item)}" alt=""></button>`).join('');
+    : picked.map((item, i) => `<button class="tray-item" data-index="${i}" aria-label="${i + 1}"><img src="${productImg(item)}" alt=""></button>`).join('');
   $('#desk').innerHTML = `
     <div class="desk-row">
       <div class="shelf" id="shelf">
-        ${Object.keys(PRODUCTS).map((product) => {
+        ${core.productsFor(shop.level).map((product) => {
           const left = shop.stock[product] - picked.filter((item) => item === product).length;
           return `<button class="stock-card ${left <= 0 ? 'stock-empty' : ''} ${wantedCount(order, product) ? 'wanted' : ''}" data-product="${product}" aria-label="${productName(product)} ${left}">
-            <img src="${api.dishSrc(product)}" alt=""><b>${left}</b></button>`;
+            <img src="${productImg(product)}" alt=""><b>${left}</b></button>`;
         }).join('')}
         <button class="stock-card more" id="cook-more" aria-label="${tx('cookMore')}"><span>＋</span><small>${tx('cookMore')}</small></button>
       </div>
@@ -405,7 +425,8 @@ function giveCounted() {
   const verdict = core.judge(order.lines[0].qty, order.picked.length);
   if (verdict === 'exact') { pickedAll(run); return; }
   // บอกเป็นภาพ + เสียง: บนถาดมีกี่ชิ้น ลูกค้าขอกี่ชิ้น
-  const compare = `${tx('onTray')} ${order.picked.length} ${tx('piece')} ${tx('customerWants')} ${order.lines[0].qty} ${tx('piece')}`.replace(/\s+/g, ' ').trim();
+  const unit = unitOf(order.lines[0].recipe);
+  const compare = `${tx('onTray')} ${order.picked.length} ${unit} ${tx('customerWants')} ${order.lines[0].qty} ${unit}`.replace(/\s+/g, ' ').trim();
   miss(verdict, `${verdict === 'over' ? tx('over') : tx('short')} ${compare}`, renderPicking);
 }
 
@@ -471,7 +492,7 @@ async function enterThinking(id) {
   const order = shop.activeOrder;
   if (order.checkpoint === 'remaining') {
     renderRemaining();
-    say(lines.remaining(productName(order.lines[0].recipe, 2), order.math.problem.a, order.math.problem.b));
+    say(lines.remaining(productName(order.lines[0].recipe, 2), order.math.problem.a, order.math.problem.b, unitOf(order.lines[0].recipe)));
     return;
   }
   drawBubble(order, { unitPrices: true });
@@ -516,7 +537,7 @@ function picturesHTML(recipe, count, { faded = 0, fresh = 0, numbered = false, g
     const gone = i < faded;
     const isNew = i >= count - fresh;
     const label = numbered && !gone ? `<i>${++n}</i>` : '';
-    return `<span class="pic ${gone ? 'gone' : ''} ${isNew ? 'fresh' : ''} ${glow && !gone ? 'pic-glow' : ''}"><img src="${api.dishSrc(recipe)}" alt="">${label}</span>`;
+    return `<span class="pic ${gone ? 'gone' : ''} ${isNew ? 'fresh' : ''} ${glow && !gone ? 'pic-glow' : ''}"><img src="${productImg(recipe)}" alt="">${label}</span>`;
   }).join('')}</div>`;
 }
 
@@ -545,7 +566,7 @@ async function answerRemaining(n, button) {
   const id = run;
   api.sfx.ding();
   button.classList.add('right');
-  await say(`${tx('left')} ${answer} ${tx('piece')}`);
+  await say(`${tx('left')} ${answer} ${unitOf(order.lines[0].recipe)}`);
   if (id !== run) return;
   order.status = 'paying';
   save();
@@ -559,7 +580,7 @@ function restockQuiz(id) {
   const total = quiz.before + quiz.added;
   const choices = core.numberChoices(total);
   let misses = 0;
-  $('#spot').innerHTML = `<div class="order-bubble"><img class="bubble-item" src="${api.dishSrc(quiz.recipe)}" alt=""><b class="qty">+${quiz.added}</b></div>`;
+  $('#spot').innerHTML = `<div class="order-bubble"><img class="bubble-item" src="${productImg(quiz.recipe)}" alt=""><b class="qty">+${quiz.added}</b></div>`;
   const draw = () => {
     $('#desk').innerHTML = `
       ${picturesHTML(quiz.recipe, total, { fresh: quiz.added, numbered: misses >= 2, glow: misses === 1 })}
@@ -579,7 +600,7 @@ function restockQuiz(id) {
         busy = true;
         api.sfx.ding();
         button.classList.add('right');
-        await say(`${tx('altogether')} ${total} ${tx('piece')}`);
+        await say(`${tx('altogether')} ${total} ${unitOf(quiz.recipe)}`);
         busy = false;
         if (id !== run) return;
         shop.restockQuiz = null;
@@ -589,7 +610,7 @@ function restockQuiz(id) {
     });
   };
   draw();
-  const question = lines.restock(productName(quiz.recipe, 2), quiz.before, quiz.added);
+  const question = lines.restock(productName(quiz.recipe, 2), quiz.before, quiz.added, unitOf(quiz.recipe));
   setPrompt(`${quiz.before} + ${quiz.added} = ?`);
   say(question);
 }
@@ -625,7 +646,7 @@ async function enterPaying(id) {
   setPrompt(lines.changeHow(order.total, order.payment.paid));
   await say(lines.changeIntro(order.total, order.payment.paid));
   if (id !== run) return;
-  say(lines.changeHow(order.total, order.payment.paid));
+  say(order.payment.paid >= 50 ? `${lines.changeHow(order.total, order.payment.paid)} ${tx('tensTip')}` : lines.changeHow(order.total, order.payment.paid));
 }
 
 const coinHTML = (value, attrs = '') => `<button class="coin v${value}" data-v="${value}" ${attrs} aria-label="${value} ${tx('baht')}"><img src="${coinSrc(value)}" alt=""><b>${value}</b></button>`;
@@ -709,7 +730,12 @@ function renderChange() {
   const price = order.total;
   const target = order.payment.paid;
   const running = price + core.coinSum(pay.coins);
-  const suggestion = (order.math.guided || firstHint(order)) && running < target ? core.suggestCoin(target - running, drawerCoins(order)) : null;
+  const big = target >= 50;
+  const suggestion = (order.math.guided || firstHint(order)) && running < target
+    ? (big ? core.suggestChange(running, target, drawerCoins(order)) : core.suggestCoin(target - running, drawerCoins(order)))
+    : null;
+  // เส้นนับ: ยอดเล็กนับทีละหนึ่ง ยอดใหญ่ (แบงก์ 50/100) นับถึงสิบถัดไปแล้วทีละสิบ
+  const stops = big ? core.countOnStops(price, target) : Array.from({ length: target - price }, (_, i) => price + i + 1);
   $('#desk').innerHTML = `
     <div class="money-row">
       <div class="paid-zone"><span class="zone-label">${tx('paid')}</span><div class="coins">${order.payment.offered.map((value) => coinHTML(value, 'tabindex="-1" disabled')).join('')}</div></div>
@@ -717,11 +743,11 @@ function renderChange() {
         ${pay.coins.map((value, k) => coinHTML(value, `data-k="${k}"`)).join('')}
       </div></div>
     </div>
-    ${order.math.guided ? `<div class="numberline" id="line" aria-hidden="true"><b>${price}</b>${Array.from({ length: target - price }, (_, i) => `<i class="${price + i + 1 <= running ? 'on' : ''}">${price + i + 1}</i>`).join('')}</div>` : ''}
+    ${order.math.guided ? `<div class="numberline ${big ? 'tens' : ''}" id="line" aria-hidden="true"><b>${price}</b>${stops.map((stop) => `<i class="${stop <= running ? 'on' : ''}">${stop}</i>`).join('')}</div>` : ''}
     <div class="drawer" id="drawer"><span class="zone-label">${tx('drawer')}</span>${drawerCoins(order).map((value) => coinHTML(value)).join('')}</div>
     <div class="desk-actions">
       ${order.math.guided ? '' : `<button class="action-btn help-btn" id="help">💡 ${tx('help')}</button>`}
-      ${order.math.guided && target >= 20 ? `<button class="action-btn help-btn" id="col-sub">✏️ ${tx('columnHelp')}</button>` : ''}
+      ${order.math.guided && target >= 20 && target <= 99 ? `<button class="action-btn help-btn" id="col-sub">✏️ ${tx('columnHelp')}</button>` : ''}
       <button class="action-btn primary" id="give" ${pay.coins.length ? '' : 'disabled'}>🤲 ${tx('full')}</button>
     </div>`;
   $('#drawer').querySelectorAll('.coin').forEach((coin) => {
@@ -741,7 +767,7 @@ function renderChange() {
 }
 
 // ลิ้นชักทอน: เหรียญ 1 2 5 (ลูกค้าให้แบงก์ 20 มีเหรียญ 10 ด้วย)
-const drawerCoins = (order) => (order.payment.paid >= 20 ? [...CHANGE_COINS, 10] : CHANGE_COINS);
+const drawerCoins = (order) => (order.payment.paid >= 50 ? [...CHANGE_COINS, 10, 20] : order.payment.paid >= 20 ? [...CHANGE_COINS, 10] : CHANGE_COINS);
 
 // ตั้งลบช่วย (ระดับ 5 ขึ้นไป): เปิดตั้งเลขแบบทีละหลักในหน้าต่างซ้อน แล้วกลับมาทอนต่อ
 async function columnPopup(problem) {
@@ -824,7 +850,10 @@ async function finish(id) {
   await say(tx('thanks'));
   if (id !== run) return;
   if (result.levelUp) {
-    await api.popup(`<img class="popup-friend" src="assets/shop/bank.png" alt=""><h2>⭐ ${tx('levelUp')}</h2>`, tx('levelUp'));
+    const newMenu = shop.level === 7;
+    await api.popup(newMenu
+      ? `<span style="display:flex;gap:12px;justify-content:center"><img class="popup-friend" style="width:96px" src="${productImg('cake')}" alt=""><img class="popup-friend" style="width:96px" src="${productImg('smoothie')}" alt=""></span><h2>⭐ ${tx('newMenu')}</h2>`
+      : `<img class="popup-friend" src="assets/shop/bank.png" alt=""><h2>⭐ ${tx('levelUp')}</h2>`, newMenu ? tx('newMenu') : tx('levelUp'));
     if (id !== run) return;
   }
   $('#desk').innerHTML = `<div class="desk-actions"><button class="action-btn primary btn-big" id="next">▶ ${tx('next')}</button></div>`;
@@ -832,8 +861,9 @@ async function finish(id) {
   busy = false;
 }
 
+// เงินที่ขายได้บินเข้าเครื่องคิดเงินบนเคาน์เตอร์ (ลิ้นชักเด้ง) แล้วยอดในกระปุกเพิ่ม
 function flyToBank() {
-  const bank = $('#bank');
+  const bank = $('#register') || $('#bank');
   const from = $('#counter') || $('#desk');
   const piggy = $('#piggy');
   if (!bank || !from) { if (piggy) piggy.textContent = shop.piggy; return; }
@@ -855,19 +885,22 @@ function flyToBank() {
   }
   setTimeout(() => {
     if (piggy) piggy.textContent = shop.piggy;
-    bank.classList.remove('shop-bump');
-    void bank.offsetWidth;
-    bank.classList.add('shop-bump');
+    for (const target of [bank, $('#bank')]) {
+      if (!target) continue;
+      target.classList.remove('shop-bump');
+      void target.offsetWidth;
+      target.classList.add('shop-bump');
+    }
     api.sfx.ding();
   }, 900);
 }
 
 // ---------------------------------------------------------------- ของหมด / ทำเพิ่ม
 function cookCardsHTML() {
-  return Object.keys(PRODUCTS).map((product) => {
+  return core.productsFor(shop.level).map((product) => {
     const full = !core.canRestock(shop, product);
     return `<button class="cook-card" data-cook="${product}" ${full ? 'disabled' : ''} aria-label="${productName(product)}">
-      <img src="${api.dishSrc(product)}" alt=""><b>${full ? tx('shelfFull') : `+${PRODUCTS[product].batch}`}</b><small>${productName(product)} · ${shop.stock[product]}</small></button>`;
+      <img src="${productImg(product)}" alt=""><b>${full ? tx('shelfFull') : `+${PRODUCTS[product].batch}`}</b><small>${productName(product)} · ${shop.stock[product]}</small></button>`;
   }).join('');
 }
 
@@ -922,6 +955,7 @@ const decorName = (id) => DECOR_NAMES[id][api.lang()];
 // ---------------------------------------------------------------- ตลาด: เด็กเป็นคนซื้อ จ่ายเงิน รับเงินทอน
 function openMarket() {
   stopMath();
+  goodsSet = null;   // เข้าตลาดใหม่: เปิดชุดที่ยังมีของให้ซื้อก่อน
   run++;
   pay = null;
   busy = false;
@@ -978,14 +1012,22 @@ async function showGoods(id, greet = false) {
   pay = null;
   $('#customer').src = api.friendSrc(SELLER);
   $('#bubble').innerHTML = '<img class="bubble-icon" src="assets/shop/bag.png" alt="">';
+  const open = core.decorSetsOpen(shop);
+  const unowned = (set) => Object.keys(DECOR).some((id) => DECOR[id].set === set && !shop.decor.owned.includes(id));
+  if (!open.includes(goodsSet)) goodsSet = open.find(unowned) || open[open.length - 1];
   const everything = Object.keys(DECOR).every((item) => shop.decor.owned.includes(item));
-  $('#desk').innerHTML = `<div class="goods">${Object.entries(DECOR).map(([item, { price }]) => {
+  // แท็บชุดของแต่ง (ชุด 2 โผล่เมื่อซื้อชุด 1 ครบ) — ใช้รูปแทนตัวหนังสือ
+  const tabs = open.length > 1 ? `<div class="goods-tabs">${open.map((set) => `<button class="goods-tab ${set === goodsSet ? 'active' : ''}" data-set="${set}" aria-label="${set}"><img src="assets/decor/${set === 1 ? 'balloons' : 'lanterns'}.png" alt=""><b>${set}</b></button>`).join('')}</div>` : '';
+  $('#desk').innerHTML = `${tabs}<div class="goods">${Object.entries(DECOR).filter(([, { set }]) => set === goodsSet).map(([item, { price }]) => {
     const owned = shop.decor.owned.includes(item);
     return `<button class="goods-card ${owned ? 'owned' : ''} ${owned && !shop.decor.placed[item] ? 'stored' : ''} ${!owned && shop.piggy < price ? 'dear' : ''}" data-item="${item}" aria-label="${decorName(item)}">
       <img src="assets/decor/${item}.png" alt="">${owned ? '<i class="owned-mark">✓</i>' : `<span class="price-chip">${price}</span>`}</button>`;
   }).join('')}</div>
     <div class="desk-actions"><button class="action-btn" id="to-shop">🏪 ${tx('backShop')}</button></div>`;
   $('#desk').querySelectorAll('[data-item]').forEach((button) => { button.onclick = () => tapGoods(button); });
+  $('#desk').querySelectorAll('[data-set]').forEach((button) => {
+    button.onclick = () => { api.tone(620); goodsSet = Number(button.dataset.set); showGoods(run); };
+  });
   $('#to-shop').onclick = () => { api.tone(620); backToShop(); };
   const prompt = everything ? tx('allBought') : tx('pickGoods');
   setPrompt(prompt);
@@ -1034,7 +1076,7 @@ async function enterPurchase(id) {
   const purchase = shop.activePurchase;
   const name = decorName(purchase.item);
   pay = { placed: [], answered: false, change: [] };
-  $('#bubble').innerHTML = `<img class="bubble-item" src="assets/decor/${purchase.item}.png" alt=""><span class="price-tag"><img src="assets/shop/pricetag.png" alt=""><b>${purchase.price}</b></span>`;
+  $('#bubble').innerHTML = `<span class="in-basket"><img class="basket" src="assets/shop/basket.png" alt=""><img class="bubble-item" src="assets/decor/${purchase.item}.png" alt=""></span><span class="price-tag"><img src="assets/shop/pricetag.png" alt=""><b>${purchase.price}</b></span>`;
   if (purchase.mode === 'change') {
     renderPayBig();
     const prompt = `${tx('payWith')} ${purchase.paidWith} ${tx('baht')}`;

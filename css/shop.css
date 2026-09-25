@@ -160,11 +160,11 @@
 .shop .shop-stage { container-type: size; align-items: flex-end; padding: 4px 0 0; }
 .shop .shop-scene { position: relative; width: 100%; width: min(100%, calc(100cqh * 1536 / 1030)); aspect-ratio: 1536 / 1030; background: url('../assets/shop.jpg') center / 100% 100% no-repeat; border-radius: 18px 18px 0 0; overflow: hidden; box-shadow: 0 -4px 14px rgba(36,56,71,.12); }
 .shop .shop-scene .decor-layer { position: absolute; inset: 0; pointer-events: none; z-index: 0; }
-.shop .shop-scene .customer-spot { position: absolute; left: 50%; bottom: 27%; height: 46%; transform: translateX(-42%); display: flex; align-items: flex-end; gap: 6px; z-index: 1; }
+/* กว้างเต็มฉากแล้วจัดกลาง (ถ้าวางที่ left 50% กล่องจะกว้างได้แค่ครึ่งฉาก ลูกโป่งคำพูดยาวๆ ดันลูกค้าล้นขอบขวา) */
+.shop .shop-scene .customer-spot { position: absolute; left: 2%; right: 2%; bottom: 27%; height: 46%; display: flex; align-items: flex-end; justify-content: center; gap: 6px; z-index: 1; }
 .shop .shop-scene .customer-wrap { height: 100%; }
 .shop .shop-scene .customer { height: 100%; width: auto; }
-.shop .shop-scene .order-bubble { align-self: center; margin-bottom: 0; flex: none; width: max-content; max-width: min(230px, 56cqw); }
-.shop .shop-scene .order-bubble .want { flex-wrap: nowrap; }
+.shop .shop-scene .order-bubble { align-self: center; margin-bottom: 0; flex: 0 1 auto; min-width: 0; max-width: min(230px, 62%); }
 .shop .shop-scene .order-bubble .want img { width: min(38px, 9cqw); height: min(38px, 9cqw); }
 .shop .decor { position: absolute; height: auto; filter: drop-shadow(0 4px 3px rgba(36,56,71,.15)); animation: shop-drop .5s cubic-bezier(.2,1.4,.4,1) both; }
 /* บนผนัง / เพดาน */
@@ -180,12 +180,29 @@
 .shop .decor-tablecloth { left: 73%; bottom: 29.5%; width: 13%; }
 .shop .decor-chair { left: 64.5%; bottom: 29.5%; width: 7.5%; }
 
+/* ของแต่งชุดที่ 2 (พิกัด % ของรูปห้องร้าน) */
+.shop .decor-fairylights { left: 1.5%; top: 2.5%; width: 21%; }
+.shop .decor-hangingplant { left: 21.5%; top: 0; width: 7.5%; }
+.shop .decor-lanterns { left: 58%; top: 0; width: 14%; z-index: 1; }
+.shop .decor-stars { left: 84%; top: 4%; width: 15%; }
+.shop .decor-clock { left: 86.5%; top: 17%; width: 9%; }
+.shop .decor-picture { left: 86%; top: 34%; width: 10%; }
+.shop .decor-flowerbox { left: 55%; bottom: 47%; width: 16%; }
+.shop .decor-stool { left: 88%; bottom: 29.5%; width: 7%; }
+.shop .decor-cakedome { left: 5%; bottom: 17%; width: 12%; z-index: 2; }
+.shop .decor-teaset { left: 59%; bottom: 17%; width: 13%; z-index: 2; }
+
 /* ตลาด */
 .app-shell.shop.market { background: url('../assets/market.jpg') center 40% / cover no-repeat; }
 .shop .bubble-icon { width: 54px; height: 54px; object-fit: contain; }
 .shop .bubble-item { width: 64px; height: 64px; object-fit: contain; }
 .shop .order-bubble .need { display: flex; flex-wrap: wrap; gap: 2px; justify-content: center; opacity: .55; }
 .shop .order-bubble .need img { width: 30px; height: 30px; object-fit: contain; }
+.shop .goods-tabs { display: flex; justify-content: center; gap: 10px; }
+.shop .goods-tab { display: flex; align-items: center; gap: 6px; padding: 4px 14px; border: 3px solid white; border-radius: 999px; background: #fff3dc; box-shadow: 0 4px 0 rgba(36,56,71,.12); cursor: pointer; }
+.shop .goods-tab img { width: 30px; height: 30px; object-fit: contain; }
+.shop .goods-tab b { font-size: 1.2rem; color: var(--ink); }
+.shop .goods-tab.active { background: var(--yellow); }
 .shop .goods { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px; }
 .shop .goods-card { position: relative; min-width: 0; aspect-ratio: 1; display: grid; place-items: center; padding: 4px; border: 3px solid white; border-radius: 10px; background: #fff3dc; box-shadow: 0 4px 0 rgba(36,56,71,.12); cursor: pointer; }
 .shop .goods-card img { width: 100%; height: 100%; object-fit: contain; }
@@ -268,6 +285,20 @@
 .shop .serve-tray { position: relative; }
 .shop .pic.pic-glow img { filter: drop-shadow(0 0 6px rgba(103,189,227,.95)); }
 .shop .seller-change { background: #fff7d6; }
+/* ระดับ 7–8: แบงก์ 50/100, เส้นนับทีละสิบ, เครื่องคิดเงิน, ตะกร้าในตลาด, เมนูใหม่ */
+.shop .coin.v50, .shop .coin.v100 { --size: 84px; }
+.shop .coin.v50 b { color: #2f5e8a; }
+.shop .coin.v100 b { color: #9b2f2a; }
+.shop .numberline.tens i { width: 44px; border-radius: 12px; }
+.shop .shop-scene .register { position: absolute; left: 76%; bottom: 3%; width: 17%; height: auto; z-index: 2; filter: drop-shadow(0 5px 4px rgba(36,56,71,.2)); }
+.shop .register.shop-bump { animation: shop-pop .45s cubic-bezier(.2,1.6,.4,1); }
+.shop .in-basket { position: relative; display: grid; place-items: center; width: 84px; height: 76px; }
+.shop .in-basket .basket { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; }
+.shop .in-basket .bubble-item { position: relative; width: 50px; height: 50px; margin-top: -6px; }
+@media (max-height: 720px) {
+  .shop .coin.v50, .shop .coin.v100 { --size: 72px; }
+}
+
 /* วงแสงกระพริบแบบไม่ขยายขนาด — ช่องในตารางตั้งเลขอยู่ชิดกัน ถ้าขยายจะไปทับช่องข้างๆ จนแตะไม่ติด */
 @keyframes shop-ring { from { box-shadow: 0 0 0 3px var(--yellow); } to { box-shadow: 0 0 0 7px rgba(244,189,63,.55); } }
 @keyframes shop-arrive { from { transform: translateX(60vw) scale(.7); opacity: 0; } to { transform: none; opacity: 1; } }

@@ -39,6 +39,19 @@ const KITCHEN_KEY = 'happy-little-kitchen-v1';
         scroll: document.querySelector('#app').scrollHeight - document.querySelector('#app').clientHeight
       }));
       assert.equal(result.sideways, false, `${tag}: no sideways scroll`);
+      // ลูกค้าและลูกโป่งคำพูดต้องอยู่ในฉากร้านทั้งตัว (ไม่ถูกขอบฉากตัด)
+      const cut = await page.evaluate(() => {
+        const scene = document.querySelector('.shop-scene');
+        if (!scene) return [];
+        const box = scene.getBoundingClientRect();
+        return ['#customer', '#bubble'].filter((sel) => {
+          const el = document.querySelector(`.shop-scene ${sel}`);
+          if (!el) return false;
+          const r = el.getBoundingClientRect();
+          return r.left < box.left - 1 || r.right > box.right + 1;
+        });
+      });
+      assert.deepEqual(cut, [], `${tag}: customer and bubble inside the scene`);
       assert.ok(result.scroll <= 1, `${tag}: fits 390x664 without scrolling (${result.scroll}px)`);
     };
     const openShop = async () => {
@@ -58,7 +71,7 @@ const KITCHEN_KEY = 'happy-little-kitchen-v1';
     await fits('home');
     await openShop();
     let shop = await readShop();
-    assert.deepEqual(shop.stock, { cookie: 6, cupcake: 0, pizza: 0 });
+    assert.deepEqual(shop.stock, { cookie: 6, cupcake: 0, pizza: 0, cake: 0, smoothie: 0 });
     let order = shop.activeOrder;
     assert.equal(order.checkpoint, 'count');
     assert.equal(order.lines[0].recipe, 'cookie');
@@ -386,6 +399,40 @@ const KITCHEN_KEY = 'happy-little-kitchen-v1';
     await page.waitForFunction((key) => JSON.parse(localStorage.getItem(key)).restockQuiz === null, SHOP_KEY);
     await page.waitForFunction((key) => !!JSON.parse(localStorage.getItem(key)).activeOrder, SHOP_KEY);
 
+    // --- ระดับ 7–8: เค้ก/น้ำปั่น, แบงก์ 50/100, ทอนนับต่อทีละสิบ, เครื่องคิดเงินบนเคาน์เตอร์
+    const bigStock = { stock: { cookie: 6, cupcake: 6, pizza: 4, cake: 8, smoothie: 4 } };
+    await setOrder(orderOf({ checkpoint: 'change', lines: [{ recipe: 'cake', qty: 1, unitPrice: 35 }, { recipe: 'cookie', qty: 1, unitPrice: 5 }], payment: { mode: 'change', offered: [50], paid: 50, change: 10, changeCoins: [] } }), { ...bigStock, ordersDone: 42 });
+    assert.equal(await page.locator('.shop .stock-card[data-product="cake"]').count(), 1, 'cake is on the shelf at level 7');
+    assert.equal(await page.locator('.shop .stock-card[data-product="smoothie"]').count(), 1);
+    assert.equal(await page.locator('.shop-scene #register').count(), 1, 'cash register on the counter');
+    await page.locator('[data-product="cake"]').click();
+    await page.locator('[data-product="cookie"]').click();
+    await page.locator('.paid-zone .coin.v50').waitFor();
+    assert.equal(await page.locator('#drawer .coin[data-v="20"]').count(), 1, '20-baht notes in the drawer for big change');
+    await page.locator('#help').click();
+    assert.deepEqual(await page.locator('#line.tens i').allInnerTexts(), ['50'], '40 → 50 in one ten');
+    await fits('change-50');
+    await shot('change-50');
+    await page.locator('#drawer .coin[data-v="10"]').click();
+    await page.locator('#next').waitFor({ timeout: 15000 });
+    assert.equal((await lastSale()).paid, 50);
+    assert.equal((await lastSale()).change, 10);
+
+    await setOrder(orderOf({ checkpoint: 'change', lines: [{ recipe: 'cake', qty: 1, unitPrice: 35 }, { recipe: 'smoothie', qty: 1, unitPrice: 25 }], payment: { mode: 'change', offered: [100], paid: 100, change: 40, changeCoins: [] } }), { ...bigStock, ordersDone: 54 });
+    await page.locator('[data-product="cake"]').click();
+    await page.locator('[data-product="smoothie"]').click();
+    await page.locator('.paid-zone .coin.v100').waitFor();
+    await page.locator('#help').click();
+    assert.deepEqual(await page.locator('#line.tens i').allInnerTexts(), ['70', '80', '90', '100'], 'count on in tens from 60');
+    assert.equal(await page.locator('#col-sub').count(), 0, 'no column subtraction from 100');
+    assert.equal(await page.locator('#drawer .coin.hint').getAttribute('data-v'), '20');
+    await shot('change-100');
+    await page.locator('#drawer .coin[data-v="20"]').click();
+    await page.locator('#drawer .coin[data-v="20"]').click();
+    await page.locator('#next').waitFor({ timeout: 15000 });
+    assert.equal((await lastSale()).paid, 100);
+    assert.equal((await lastSale()).change, 40);
+
     // --- ตลาด: เอาเงินในกระปุกไปซื้อของแต่งร้าน
     const setMoney = async (piggy, ordersDone) => {
       const current = await readShop();
@@ -478,6 +525,36 @@ const KITCHEN_KEY = 'happy-little-kitchen-v1';
     await fits('shop-decorated');
     await shot('decorated');
 
+    // ของแต่งชุดที่ 2: เปิดเมื่อซื้อชุดแรกครบ, ของที่เลือกลงตะกร้า
+    await page.evaluate((key) => {
+      const current = JSON.parse(localStorage.getItem(key));
+      const set1 = ['balloons', 'flowers', 'bunting', 'plant', 'rug', 'lamp', 'tablecloth', 'chair', 'sign', 'awning'];
+      current.decor = { owned: set1, placed: Object.fromEntries(set1.map((id) => [id, id])) };
+      current.piggy = 40;
+      current.ordersDone = 1;
+      current.totals.sales = current.totals.spent + 40;
+      current.totals.customerPaid = current.totals.sales + current.totals.changeGiven;
+      current.activePurchase = null;
+      localStorage.setItem(key, JSON.stringify(current));
+    }, SHOP_KEY);
+    await openMarket();
+    assert.equal(await page.locator('.goods-tab').count(), 2, 'second set tab appears');
+    assert.equal(await page.locator('.goods-tab.active').getAttribute('data-set'), '2');
+    assert.equal(await page.locator('[data-item="teaset"]').count(), 1);
+    await fits('market-set2');
+    await shot('market-set2');
+    await page.locator('[data-item="stars"]').click();
+    await page.locator('.order-bubble .in-basket').waitFor();
+    await page.locator('#purse .coin[data-v="10"]').click();
+    await page.locator('#buy-more').waitFor({ timeout: 15000 });
+    assert.ok((await readShop()).decor.owned.includes('stars'));
+    await page.locator('#buy-more').click();
+    await page.locator('.goods-tab[data-set="1"]').click();
+    assert.equal(await page.locator('[data-item="balloons"]').count(), 1, 'tab switches back to the first set');
+    await page.locator('#to-shop').click();
+    await page.locator('.shop:not(.market) .decor-stars').waitFor();
+    await shot('decorated-set2');
+
     // --- ทุกขนาดจอ: ไม่ล้นด้านข้าง
     for (const [width, height] of [[390, 844], [768, 950], [834, 1100], [1024, 660], [1280, 900]]) {
       await page.setViewportSize({ width, height });
@@ -516,7 +593,7 @@ const KITCHEN_KEY = 'happy-little-kitchen-v1';
     await page.locator('#back').click();
     await openShop();
     assert.equal(await page.evaluate(() => localStorage.getItem('happy-little-kitchen-shop-broken')), '{broken');
-    assert.deepEqual((await readShop()).stock, { cookie: 6, cupcake: 0, pizza: 0 });
+    assert.deepEqual((await readShop()).stock, { cookie: 6, cupcake: 0, pizza: 0, cake: 0, smoothie: 0 });
 
     // เซฟครัวเดิม (ตัวอย่าง v31) ไม่ถูกแตะตลอดการเล่นร้าน ยกเว้นส่วนที่ทำอาหารเพิ่ม (made + รูปในสมุด)
     const original = JSON.parse(kitchenBefore);
@@ -582,7 +659,7 @@ const KITCHEN_KEY = 'happy-little-kitchen-v1';
 
     assert.deepEqual(missing.filter((url) => !url.endsWith('favicon.ico')), [], 'no missing files');
     assert.deepEqual(errors, []);
-    console.log('PASS shop: first visit with seeded cookies, count/collect/change with gentle retries and help, level 4-5 price/remaining/20-baht change with the column engine, restock quiz, reload keeps the order, sells once, cooking restocks once, market at levels 1-3 with decorations, parent stats and reset, broken shop data, kitchen save untouched, launch from Lilly world and back, all screen sizes.');
+    console.log('PASS shop: first visit with seeded cookies, count/collect/change with gentle retries and help, level 4-5 price/remaining/20-baht change with the column engine, restock quiz, reload keeps the order, sells once, cooking restocks once, market at levels 1-3 with decorations and the second set, levels 7-8 with 50/100 notes, parent stats and reset, broken shop data, kitchen save untouched, launch from Lilly world and back, all screen sizes.');
   } finally {
     await browser.close();
   }

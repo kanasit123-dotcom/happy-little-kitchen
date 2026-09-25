@@ -21,7 +21,7 @@ function settle(shop, order) {
 
 test('fresh shop starts with six cookies so the first customer can come at once', () => {
   const shop = freshShop();
-  assert.deepEqual(shop.stock, { cookie: 6, cupcake: 0, pizza: 0 });
+  assert.deepEqual(shop.stock, { cookie: 6, cupcake: 0, pizza: 0, cake: 0, smoothie: 0 });
   assert.equal(shop.level, 1);
   assert.equal(shop.piggy, 0);
 });
@@ -184,7 +184,9 @@ test('levels unlock by completed orders and never go down', () => {
   assert.equal(levelFor(16), 4);
   assert.equal(levelFor(24), 5);
   assert.equal(levelFor(32), 6);
-  assert.equal(levelFor(500), 6);
+  assert.equal(levelFor(42), 7);
+  assert.equal(levelFor(54), 8);
+  assert.equal(levelFor(500), 8);
 });
 
 test('restocking adds one batch once per restock id and stops at the shelf limit', () => {
@@ -207,7 +209,7 @@ test('normalizing broken or odd data gives a usable shop', () => {
   assert.deepEqual(normalizeShop(null).stock, freshShop().stock);
   assert.deepEqual(normalizeShop('nope').stock, freshShop().stock);
   const odd = normalizeShop({ stock: { cookie: -3, cupcake: 99, pizza: 'x', noodles: 5 }, piggy: -1, ordersDone: 12, activeOrder: { id: 1 } });
-  assert.deepEqual(odd.stock, { cookie: 0, cupcake: STOCK_MAX, pizza: 0 });
+  assert.deepEqual(odd.stock, { cookie: 0, cupcake: STOCK_MAX, pizza: 0, cake: 0, smoothie: 0 });
   assert.equal(odd.piggy, 0);
   assert.equal(odd.level, 3);
   assert.equal(odd.activeOrder, null);

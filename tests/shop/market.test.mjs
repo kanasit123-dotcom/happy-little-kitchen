@@ -20,7 +20,7 @@ const richShop = (level = 1, piggy = 60) => {
 
 test('decorations cost 5 to 20 baht', () => {
   const prices = Object.values(DECOR).map((item) => item.price);
-  assert.equal(prices.length, 10);
+  assert.equal(prices.length, 20);
   assert.ok(prices.every((price) => price >= 5 && price <= 20));
 });
 
@@ -124,4 +124,14 @@ test('a saved purchase survives reload; bad decor data is cleaned', () => {
   assert.deepEqual(odd.decor.owned, ['rug']);
   assert.deepEqual(odd.decor.placed, { rug: 'rug' });
   assert.equal(odd.activePurchase, null);
+});
+
+test('the second set of decorations opens once the first set is complete', async () => {
+  const { decorSetsOpen } = await import('../../js/shop/core.js');
+  const shop = richShop(1, 100);
+  assert.deepEqual(decorSetsOpen(shop), [1]);
+  assert.equal(makePurchase(shop, 'teaset'), null, 'set 2 is not sold yet');
+  shop.decor.owned = Object.keys(DECOR).filter((id) => DECOR[id].set === 1);
+  assert.deepEqual(decorSetsOpen(shop), [1, 2]);
+  assert.ok(makePurchase(shop, 'teaset'));
 });

@@ -7,30 +7,52 @@ export const SHOP_KEY = 'happy-little-kitchen-shop-v1';
 export const SCHEMA = 1;
 
 // จำนวนต่อรอบต้องเท่ากับที่เด็กเห็นตอนทำอาหาร: ปั้นคุกกี้ 6 ก้อน, ถาดคัพเค้ก 6 หลุม, พิซซ่าตัด 2 ครั้ง = 4 ชิ้น
+// from = ระดับร้านที่เริ่มขาย (เค้กกับน้ำปั่นแพงกว่า มาพร้อมแบงก์ 50/100 ตั้งแต่ระดับ 7)
+// เค้กวันเกิด 1 ก้อนตัดได้ 8 ชิ้น, สมูทตี 1 รอบได้ 4 แก้ว
 export const PRODUCTS = {
-  cookie: { price: 5, batch: 6 },
-  cupcake: { price: 7, batch: 6 },
-  pizza: { price: 8, batch: 4 }
+  cookie: { price: 5, batch: 6, from: 1, unit: 'piece' },
+  cupcake: { price: 7, batch: 6, from: 1, unit: 'piece' },
+  pizza: { price: 8, batch: 4, from: 1, unit: 'piece' },
+  cake: { price: 35, batch: 8, from: 7, unit: 'piece' },
+  smoothie: { price: 25, batch: 4, from: 7, unit: 'glass' }
 };
+const BIG = ['cake', 'smoothie'];
 export const STOCK_MAX = 12;
-export const SEED_STOCK = { cookie: 6, cupcake: 0, pizza: 0 };
+export const SEED_STOCK = { cookie: 6, cupcake: 0, pizza: 0, cake: 0, smoothie: 0 };
 export const TRANSACTIONS_MAX = 100;
 export const COIN_VALUES = [1, 2, 5, 10];
 export const CHANGE_COINS = [1, 2, 5];     // ลิ้นชักเหรียญทอน (มีไม่จำกัด)
 
 // ของแต่งร้านที่ตลาด: ราคา 5–20 บาท ขาย 1–3 ออร์เดอร์ก็ซื้อได้ 1 ชิ้น มีขายตลอด ไม่มีสุ่ม ไม่หมดอายุ
+// set 2 เปิดขายเมื่อซื้อ set 1 ครบทุกชิ้นแล้ว
 export const DECOR = {
-  balloons: { price: 5 },
-  flowers: { price: 6 },
-  bunting: { price: 7 },
-  plant: { price: 8 },
-  rug: { price: 9 },
-  lamp: { price: 10 },
-  tablecloth: { price: 12 },
-  chair: { price: 14 },
-  sign: { price: 15 },
-  awning: { price: 18 }
+  balloons: { price: 5, set: 1 },
+  flowers: { price: 6, set: 1 },
+  bunting: { price: 7, set: 1 },
+  plant: { price: 8, set: 1 },
+  rug: { price: 9, set: 1 },
+  lamp: { price: 10, set: 1 },
+  tablecloth: { price: 12, set: 1 },
+  chair: { price: 14, set: 1 },
+  sign: { price: 15, set: 1 },
+  awning: { price: 18, set: 1 },
+  stars: { price: 6, set: 2 },
+  stool: { price: 8, set: 2 },
+  flowerbox: { price: 9, set: 2 },
+  fairylights: { price: 10, set: 2 },
+  hangingplant: { price: 11, set: 2 },
+  clock: { price: 12, set: 2 },
+  lanterns: { price: 13, set: 2 },
+  picture: { price: 14, set: 2 },
+  cakedome: { price: 15, set: 2 },
+  teaset: { price: 18, set: 2 }
 };
+
+// ชุดของแต่งที่ซื้อได้ตอนนี้: ชุด 1 เสมอ, ชุด 2 เมื่อซื้อชุด 1 ครบแล้ว
+export function decorSetsOpen(shop) {
+  const set1 = Object.keys(DECOR).filter((id) => DECOR[id].set === 1);
+  return set1.every((id) => shop.decor.owned.includes(id)) ? [1, 2] : [1];
+}
 
 // ปลดล็อกตามจำนวนออร์เดอร์ที่ขายสำเร็จ ไม่ลดระดับ ไม่อิงความแม่นยำ
 // count = นับของ, collect = รับเงินพอดี, change = ทอนแบบนับต่อ, price = บวกราคา (ตั้งเลข), remaining = ของบนชั้นเหลือกี่ชิ้น
@@ -40,7 +62,10 @@ export const LEVELS = [
   { level: 3, unlock: 10, checkpoints: ['change', 'collect'] },
   { level: 4, unlock: 16, checkpoints: ['price', 'remaining'] },
   { level: 5, unlock: 24, checkpoints: ['price', 'change', 'remaining'] },
-  { level: 6, unlock: 32, checkpoints: ['count', 'collect', 'change', 'price', 'remaining'] }
+  { level: 6, unlock: 32, checkpoints: ['count', 'collect', 'change', 'price', 'remaining'] },
+  // ระดับ 7–8: เค้ก/น้ำปั่น ยอด 21–99 บาท ลูกค้าจ่ายแบงก์ 50 (ระดับ 7) หรือ 100 (ระดับ 8) ทอนแบบนับต่อทีละสิบ
+  { level: 7, unlock: 42, checkpoints: ['change', 'price', 'remaining'] },
+  { level: 8, unlock: 54, checkpoints: ['change', 'price', 'remaining'] }
 ];
 export const CHECKPOINTS = ['count', 'collect', 'change', 'price', 'remaining'];
 
@@ -172,8 +197,35 @@ export function orderQty(order) {
   return order.lines.reduce((sum, line) => sum + line.qty, 0);
 }
 
+// เมนูที่ร้านขายได้ในระดับนี้ (มีหรือไม่มีของก็ได้)
+export function productsFor(level) {
+  return Object.keys(PRODUCTS).filter((id) => PRODUCTS[id].from <= level);
+}
+
 export function sellable(shop) {
-  return Object.keys(PRODUCTS).filter((id) => shop.stock[id] > 0);
+  return productsFor(shop.level).filter((id) => shop.stock[id] > 0);
+}
+
+// ลูกค้าจ่ายด้วยเหรียญ/แบงก์ใบเดียวที่มากกว่ายอด
+export function noteFor(total) {
+  return [10, 20, 50, 100].find((note) => note > total) || null;
+}
+
+// ทอนแบบนับต่อทีละสิบ (ยอดใหญ่): จุดที่นับไปถึง เช่น ราคา 63 ลูกค้าให้ 100 → [70, 80, 90, 100]
+export function countOnStops(price, paid) {
+  const stops = [];
+  let at = price % 10 ? Math.min(paid, Math.ceil(price / 10) * 10) : price;
+  if (at !== price) stops.push(at);
+  while (at < paid) { at = Math.min(paid, at + 10); stops.push(at); }
+  return stops;
+}
+
+// เหรียญที่ควรวางต่อไปตอนทอนยอดใหญ่: เติมให้ถึงสิบถัดไปก่อน แล้วค่อยทีละ 10/20
+export function suggestChange(running, paid, values = [1, 2, 5, 10, 20]) {
+  const left = paid - running;
+  if (left <= 0) return null;
+  const toTen = running % 10 ? Math.min(left, 10 - (running % 10)) : left;
+  return [...values].sort((x, y) => y - x).find((value) => value <= toTen) || null;
 }
 
 // เลือกจุดคำนวณของออร์เดอร์นี้ 1 ชนิด ไม่ใช้ชนิดเดิมติดกันเกิน 2 ครั้ง
@@ -249,27 +301,49 @@ function linesFor(shop, checkpoint, random) {
   if (checkpoint === 'count') {
     const recipe = pickFrom(random, available);
     const stock = shop.stock[recipe];
-    const low = shop.level >= 2 && stock >= 2 ? 2 : 1;
-    return [line(recipe, randInt(random, low, Math.min(5, stock)))];
+    const most = Math.min(5, stock, Math.max(1, Math.floor(99 / PRODUCTS[recipe].price)));   // ยอดไม่เกิน 99 บาท
+    const low = shop.level >= 2 && most >= 2 ? 2 : 1;
+    return [line(recipe, randInt(random, low, most))];
   }
-  if (checkpoint === 'collect') return [line(pickFrom(random, available), 1)];
+  if (checkpoint === 'collect') {
+    const cheap = available.filter((id) => !BIG.includes(id));
+    return cheap.length ? [line(pickFrom(random, cheap), 1)] : null;
+  }
   if (checkpoint === 'remaining') {
     // ต้องเหลือบนชั้นอย่างน้อย 1 ชิ้น และไม่เกิน 10 ให้นับรูปได้
     const ok = available.filter((id) => shop.stock[id] >= 2 && shop.stock[id] <= 10);
     if (!ok.length) return null;
     const recipe = pickFrom(random, ok);
-    return [line(recipe, randInt(random, 1, Math.min(3, shop.stock[recipe] - 1)))];
+    return [line(recipe, randInt(random, 1, Math.max(1, Math.min(3, shop.stock[recipe] - 1, Math.floor(99 / PRODUCTS[recipe].price)))))];
+  }
+  // ระดับ 7–8: มีเค้ก/น้ำปั่นอย่างน้อย 1 ชิ้น ยอด 25–49 (จ่าย 50) หรือ 50–99 (จ่าย 100)
+  if (shop.level >= 7 && (checkpoint === 'change' || checkpoint === 'price')) {
+    const big = available.filter((id) => BIG.includes(id));
+    const small = available.filter((id) => !BIG.includes(id));
+    if (big.length) {
+      const first = pickFrom(random, big);
+      if (shop.level >= 8 && checkpoint === 'change') {
+        // ระดับ 8: เค้ก + น้ำปั่น (60), เค้ก 2 ชิ้น (70), หรือของใหญ่ 1 + ของเล็ก 1 + ของใหญ่อีกชิ้น
+        const second = big.find((id) => id !== first && shop.stock[id] >= 1) || (shop.stock[first] >= 2 ? first : null);
+        if (second && second !== first) return [line(first, 1), line(second, 1)];
+        if (second) return [line(first, 2)];
+      }
+      if (small.length) return [line(first, 1), line(pickFrom(random, small), 1)];
+      if (big.length > 1) return [line(big[0], 1), line(big[1], 1)];
+      return checkpoint === 'price' && shop.stock[first] >= 2 ? [line(first, 2)] : [line(first, 1)];
+    }
   }
   // price / change (ระดับ 5 ขึ้นไป): สองเมนูเมนูละชิ้น หรือเมนูเดียว 2 ชิ้น — ยอดรวม 10–16 จ่ายแบงก์ 20
   const twoItems = shop.level >= 5 || checkpoint === 'price';
-  if (checkpoint === 'change' && !twoItems) return [line(pickFrom(random, available), 1)];
-  if (shop.level >= 5 && available.length >= 2 && random() < .7) {
-    const first = pickFrom(random, available);
-    const second = pickFrom(random, available.filter((id) => id !== first));
+  const cheap = available.filter((id) => !BIG.includes(id));
+  if (checkpoint === 'change' && !twoItems) return cheap.length ? [line(pickFrom(random, cheap), 1)] : null;
+  if (shop.level >= 5 && cheap.length >= 2 && random() < .7) {
+    const first = pickFrom(random, cheap);
+    const second = pickFrom(random, cheap.filter((id) => id !== first));
     return [line(first, 1), line(second, 1)];
   }
-  const doubles = available.filter((id) => shop.stock[id] >= 2);
-  if (!doubles.length) return checkpoint === 'change' ? [line(pickFrom(random, available), 1)] : null;
+  const doubles = cheap.filter((id) => shop.stock[id] >= 2);
+  if (!doubles.length) return checkpoint === 'change' && cheap.length ? [line(pickFrom(random, cheap), 1)] : null;
   return [line(pickFrom(random, doubles), 2)];
 }
 
@@ -307,7 +381,7 @@ export function makeOrder(shop, { customers, random = Math.random, now = Date.no
   let payment;
   if (best.checkpoint === 'collect') payment = { mode: 'collect', offered: [], purse: purseFor(total, random), paid: total, change: 0 };
   else if (best.checkpoint === 'change') {
-    const note = total < 10 ? 10 : 20;
+    const note = noteFor(total);
     payment = { mode: 'change', offered: [note], paid: note, change: note - total };
   } else payment = { mode: 'auto', offered: greedyCoins(total), paid: total, change: 0 };
   payment.changeCoins = [];
@@ -424,7 +498,7 @@ export function changeChoices(change, random = Math.random) {
 // ระดับ 3 สลับจ่ายพอดี กับจ่ายเหรียญ 10/แบงก์ 20 แล้วตอบว่าต้องได้เงินทอนเท่าไร
 export function makePurchase(shop, item, { random = Math.random, now = Date.now() } = {}) {
   const decor = DECOR[item];
-  if (!decor || shop.decor.owned.includes(item) || shop.piggy < decor.price) return null;
+  if (!decor || shop.decor.owned.includes(item) || shop.piggy < decor.price || !decorSetsOpen(shop).includes(decor.set)) return null;
   const price = decor.price;
   let mode = shop.level >= 3 ? 'change' : shop.level === 2 ? 'exact' : 'free';
   const paidWith = price < 10 ? 10 : 20;
@@ -494,5 +568,5 @@ export function toggleDecor(shop, item) {
 }
 
 export function canRestock(shop, recipe) {
-  return !!PRODUCTS[recipe] && shop.stock[recipe] < STOCK_MAX;
+  return !!PRODUCTS[recipe] && PRODUCTS[recipe].from <= shop.level && shop.stock[recipe] < STOCK_MAX;
 }

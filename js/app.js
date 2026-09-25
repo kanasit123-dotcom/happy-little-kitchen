@@ -353,7 +353,7 @@ const COPY = {
     mixed: { stir: 'เข้ากันดีแล้ว', whisk: 'ฟูกำลังดี', roll: 'แบนสวยเลย', spread: 'ทาทั่วแล้ว' },
     toLilly: 'กลับโลกของลิลลี่',
     freeTitle: 'ครัวอิสระ ✨ ทำอะไรก็ได้', mystery: 'ได้จานลึกลับแล้ว!', pickMachine: 'กดค้างให้เครื่องทำงาน ปล่อยเมื่อแถบเต็ม', burnt: 'โอ๊ะ ไหม้แล้ว! ก็ยังกินได้นะ', freeAdd: 'แตะของที่อยากใส่ ลงชามได้เลย',
-    shop: 'ร้านของหนู', toShop: 'เอาไปวางขายที่ร้านกัน', gotStock: 'ได้', piece: 'ชิ้น', shelfFull: 'ชั้นเต็มแล้ว',
+    shop: 'ร้านของหนู', toShop: 'เอาไปวางขายที่ร้านกัน', gotStock: 'ได้', piece: 'ชิ้น', glass: 'แก้ว', shelfFull: 'ชั้นเต็มแล้ว',
     shopSold: 'ขายของ', shopBank: 'เงินในกระปุก', resetShop: 'ล้างร้าน (กดค้าง)',
     shopLevel: 'ระดับร้าน', shopSales: 'ยอดขาย (บาท)', shopDecor: 'ของแต่งที่ซื้อ', skillTitle: 'ร้านของหนู: ทักษะคณิต (100 รายการล่าสุด)',
     skillTimes: 'ครั้ง', skillFirst: 'ถูกครั้งแรก', skillHelp: 'ใช้ตัวช่วย', skillNone: 'ยังไม่ได้ขายของ',
@@ -376,7 +376,7 @@ const COPY = {
     mixed: { stir: 'Perfectly mixed', whisk: 'Nice and fluffy', roll: 'Rolled out nicely', spread: 'All spread out' },
     toLilly: 'Back to Lilly’s world',
     freeTitle: 'Free kitchen ✨ make anything', mystery: 'A mystery dish!', pickMachine: 'Hold to run the machine, let go when the bar is full', burnt: 'Oops, it burned! Still tasty', freeAdd: 'Tap anything you want to put in the bowl',
-    shop: 'My shop', toShop: 'Let us sell them in the shop', gotStock: 'We made', piece: '', shelfFull: 'The shelf is full',
+    shop: 'My shop', toShop: 'Let us sell them in the shop', gotStock: 'We made', piece: '', glass: '', shelfFull: 'The shelf is full',
     shopSold: 'Orders sold', shopBank: 'Money in the bank', resetShop: 'Clear the shop (hold)',
     shopLevel: 'Shop level', shopSales: 'Sales (baht)', shopDecor: 'Decorations bought', skillTitle: 'My shop: math skills (last 100)',
     skillTimes: 'Times', skillFirst: 'First try', skillHelp: 'Used help', skillNone: 'Nothing sold yet',
@@ -920,7 +920,7 @@ function showParent() {
   const shopData = readShop();
   const skills = shopSkills(shopData);
   // ระดับร้านคิดจากจำนวนออร์เดอร์ (ตรงกับ js/shop/core.js LEVELS)
-  const shopLevel = [0, 5, 10, 16, 24, 32].filter((unlock) => (shopData?.ordersDone || 0) >= unlock).length;
+  const shopLevel = [0, 5, 10, 16, 24, 32, 42, 54].filter((unlock) => (shopData?.ordersDone || 0) >= unlock).length;
   app.innerHTML = `<div class="app-shell play-screen">
     ${topbar(`👪 ${t('parent')}`, true)}
     <section class="parent">
@@ -933,7 +933,7 @@ function showParent() {
         <div class="stat"><b>${shopData?.piggy || 0}</b><span>🪙 ${t('shopBank')}</span></div>
         <div class="stat"><b>${shopLevel}</b><span>⭐ ${t('shopLevel')}</span></div>
         <div class="stat"><b>${shopData?.totals?.sales || 0}</b><span>💰 ${t('shopSales')}</span></div>
-        <div class="stat"><b>${(shopData?.decor?.owned || []).length} / 10</b><span>🎈 ${t('shopDecor')}</span></div>
+        <div class="stat"><b>${(shopData?.decor?.owned || []).length} / 20</b><span>🎈 ${t('shopDecor')}</span></div>
       </div>
       <div class="parent-skills">
         <h3>${t('skillTitle')}</h3>
@@ -2471,10 +2471,11 @@ async function finishForStock() {
   let result;
   try { result = (await loadShop()).restock(recipe, restockId); } catch { return showHome(); }
   if (activeRecipe !== recipe) return;
-  const prompt = result.added ? `${t('gotStock')} ${local(RECIPES[recipe].name)} ${result.added} ${t('piece')}`.trim() : t('shelfFull');
+  const unit = result.unit === 'glass' ? t('glass') : t('piece');
+  const prompt = result.added ? `${t('gotStock')} ${local(RECIPES[recipe].name)} ${result.added} ${unit}`.trim() : t('shelfFull');
   screen(`<div class="stage-zone stock-zone">
       ${stageHTML({ plate: true })}
-      <div class="stock-batch" aria-hidden="true">${Array.from({ length: result.added }, (_, i) => `<img src="${dishSrc(recipe)}" alt="" style="--i:${i}">`).join('')}</div>
+      <div class="stock-batch" aria-hidden="true">${Array.from({ length: result.added }, (_, i) => `<img src="${result.img || dishSrc(recipe)}" alt="" style="--i:${i}">`).join('')}</div>
       <button class="action-btn primary" id="to-shop" hidden>🏪 ${t('toShop')}</button>
     </div>`, prompt);
   const dish = app.querySelector('#dish');
